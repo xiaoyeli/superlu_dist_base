@@ -2,9 +2,9 @@ SRC = ./SRC
 TST = ./TESTING
 EXM = ./EXAMPLE
 BLS = ./CBLAS
-TGTSRC = ../SuperLU_DIST_3.1/SRC
-TGTTST = ../SuperLU_DIST_3.1/TESTING
-TGTEXM = ../SuperLU_DIST_3.1/EXAMPLE
+TGTSRC = ../SuperLU_DIST-branch/SRC
+TGTTST = ../SuperLU_DIST-branch/TESTING
+TGTEXM = ../SuperLU_DIST-branch/EXAMPLE
 
 all: double dcomplex
 
@@ -31,6 +31,9 @@ double:	\
 	$(TGTSRC)/dldperm.c \
 	$(TGTSRC)/dutil.c \
 	$(TGTSRC)/dmyblas2.c \
+	$(TGTSRC)/dreadhb.c \
+	$(TGTSRC)/dreadtriple.c \
+	$(TGTSRC)/dreadMM.c \
 	$(TGTEXM)/pddrive_ABglobal.c \
 	$(TGTEXM)/pddrive1_ABglobal.c \
 	$(TGTEXM)/pddrive2_ABglobal.c \
@@ -42,8 +45,6 @@ double:	\
 	$(TGTEXM)/pddrive3.c \
 	$(TGTEXM)/pddrive4.c \
 	$(TGTEXM)/dcreate_matrix.c \
-	$(TGTEXM)/dreadhb.c \
-	$(TGTEXM)/dreadtriple.c \
 
 $(TGTSRC)/superlu_ddefs.h:	$(SRC)/superlu_xdefs.h.base
 	extract -b $? -o $@ precision=double
@@ -89,6 +90,12 @@ $(TGTSRC)/dutil.c:	$(SRC)/xutil.c.base
 	extract -b $? -o $@ precision=double
 $(TGTSRC)/dmyblas2.c:	$(SRC)/xmyblas2.c.base
 	extract -b $? -o $@ precision=double
+$(TGTSRC)/dreadhb.c:	$(SRC)/xreadhb.c.base
+	extract -b $? -o $@ precision=double
+$(TGTSRC)/dreadtriple.c:	$(SRC)/xreadtriple.c.base
+	extract -b $? -o $@ precision=double
+$(TGTSRC)/dreadMM.c:	$(SRC)/xreadMM.c.base
+	extract -b $? -o $@ precision=double
 $(TGTEXM)/pddrive_ABglobal.c:	$(EXM)/pxdrive_ABglobal.c.base
 	extract -b $? -o $@ precision=double
 $(TGTEXM)/pddrive1_ABglobal.c:	$(EXM)/pxdrive1_ABglobal.c.base
@@ -110,10 +117,6 @@ $(TGTEXM)/pddrive3.c:	$(EXM)/pxdrive3.c.base
 $(TGTEXM)/pddrive4.c:	$(EXM)/pxdrive4.c.base
 	extract -b $? -o $@ precision=double
 $(TGTEXM)/dcreate_matrix.c:	$(EXM)/xcreate_matrix.c.base
-	extract -b $? -o $@ precision=double
-$(TGTEXM)/dreadhb.c:	$(EXM)/xreadhb.c.base
-	extract -b $? -o $@ precision=double
-$(TGTEXM)/dreadtriple.c:	$(EXM)/xreadtriple.c.base
 	extract -b $? -o $@ precision=double
 
 dcomplex: \
@@ -139,6 +142,9 @@ dcomplex: \
 	$(TGTSRC)/zldperm.c \
 	$(TGTSRC)/zutil.c \
 	$(TGTSRC)/zmyblas2.c \
+	$(TGTSRC)/zreadhb.c \
+	$(TGTSRC)/zreadtriple.c \
+	$(TGTSRC)/zreadMM.c \
 	$(TGTEXM)/pzdrive_ABglobal.c \
 	$(TGTEXM)/pzdrive1_ABglobal.c \
 	$(TGTEXM)/pzdrive2_ABglobal.c \
@@ -150,8 +156,6 @@ dcomplex: \
 	$(TGTEXM)/pzdrive3.c \
 	$(TGTEXM)/pzdrive4.c \
 	$(TGTEXM)/zcreate_matrix.c \
-	$(TGTEXM)/zreadhb.c \
-	$(TGTEXM)/zreadtriple.c \
 
 $(TGTSRC)/superlu_zdefs.h:	$(SRC)/superlu_xdefs.h.base
 	extract -b $? -o $@ precision=dcomplex
@@ -197,6 +201,12 @@ $(TGTSRC)/zldperm.c:	$(SRC)/xldperm.c.base
 	extract -b $? -o $@ precision=dcomplex
 $(TGTSRC)/zmyblas2.c:	$(SRC)/xmyblas2.c.base
 	extract -b $? -o $@ precision=dcomplex
+$(TGTSRC)/zreadhb.c:	$(SRC)/xreadhb.c.base
+	extract -b $? -o $@ precision=dcomplex
+$(TGTSRC)/zreadtriple.c:	$(SRC)/xreadtriple.c.base
+	extract -b $? -o $@ precision=dcomplex
+$(TGTSRC)/zreadMM.c:	$(SRC)/xreadMM.c.base
+	extract -b $? -o $@ precision=dcomplex
 $(TGTEXM)/pzdrive_ABglobal.c:	$(EXM)/pxdrive_ABglobal.c.base
 	extract -b $? -o $@ precision=dcomplex
 $(TGTEXM)/pzdrive1_ABglobal.c:	$(EXM)/pxdrive1_ABglobal.c.base
@@ -218,8 +228,4 @@ $(TGTEXM)/pzdrive3.c:	$(EXM)/pxdrive3.c.base
 $(TGTEXM)/pzdrive4.c:	$(EXM)/pxdrive4.c.base
 	extract -b $? -o $@ precision=dcomplex
 $(TGTEXM)/zcreate_matrix.c:	$(EXM)/xcreate_matrix.c.base
-	extract -b $? -o $@ precision=dcomplex
-$(TGTEXM)/zreadhb.c:	$(EXM)/xreadhb.c.base
-	extract -b $? -o $@ precision=dcomplex
-$(TGTEXM)/zreadtriple.c:	$(EXM)/xreadtriple.c.base
 	extract -b $? -o $@ precision=dcomplex
