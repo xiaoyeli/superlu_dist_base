@@ -2,6 +2,7 @@
 
 /*! @file 
  * \brief 
+ * Contributed by Francois-Henry Rouet.
  *
  */
 #include <stdio.h>
