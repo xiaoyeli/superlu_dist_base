@@ -161,7 +161,7 @@ int main(int argc, char *argv[])
     /* Set the default input options:
         options.Fact = DOFACT;
         options.Equil = YES;
-        options.ColPerm = MMD_AT_PLUS_A;
+        options.ColPerm = METIS_AT_PLUS_A;
         options.RowPerm = LargeDiag;
         options.ReplaceTinyPivot = YES;
         options.Trans = NOTRANS;

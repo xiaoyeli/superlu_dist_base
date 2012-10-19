@@ -2580,7 +2580,7 @@ static void p@(pre)gstrf2
     int    incx = 1, incy = 1;
     int    nsupr; /* number of rows in the block (LDA) */
     int    luptr;
-    int_t  i, krow, j, jfst, jlst, u_diag_cnt;
+    int_t  i, myrow, krow, j, jfst, jlst, u_diag_cnt;
     int_t  nsupc; /* number of columns in the block */
     int_t  *xsup = Glu_persist->xsup;
     @(type) *lusup, temp;
@@ -2600,6 +2600,7 @@ static void p@(pre)gstrf2
     /* Initialization. */
     iam   = grid->iam;
     Pr    = grid->nprow;
+    myrow = MYROW( iam, grid );
     krow  = PROW( k, grid );
     pkk   = PNUM( PROW(k, grid), PCOL(k, grid), grid );
     j     = LBj( k, grid ); /* Local block number */
@@ -2614,15 +2615,15 @@ static void p@(pre)gstrf2
     cols_left = nsupc; /* supernode size */
     u_diag_cnt = 0;
 
-    if ( iam == pkk ) { /* diagonal process */
+    if ( U_diag_blk_send_req && U_diag_blk_send_req[myrow] ) {
+        /* There are pending sends - wait for all Isend to complete */
+        for (pr = 0; pr < Pr; ++pr)
+            if (pr != myrow) {
+                MPI_Wait(U_diag_blk_send_req + pr, &status);
+	}
+    }
 
-        if ( U_diag_blk_send_req && U_diag_blk_send_req[krow] ) {
-	    /* There are pending sends - wait for all Isend to complete */
-            for (pr = 0; pr < Pr; ++pr)
-                if (pr != krow) {
-                    MPI_Wait(U_diag_blk_send_req + pr, &status);
-		}
-        }
+    if ( iam == pkk ) { /* diagonal process */
 
         for (j = 0; j < jlst - jfst; ++j) { /* for each column in panel */
 
