@@ -3,9 +3,9 @@
  * \brief Performs LU factorization in parallel
  *
  * <pre>
- * -- Distributed SuperLU routine (version 3.0) --
+ * -- Distributed SuperLU routine (version 3.2) --
  * Lawrence Berkeley National Lab, Univ. of California Berkeley.
- * July 12, 2011
+ * October 22, 2012
  *
  * Modified:
  *     September 1, 1999

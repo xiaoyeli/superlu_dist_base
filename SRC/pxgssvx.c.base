@@ -3,10 +3,10 @@
  * \brief Solves a system of linear equations A*X=B
  *
  * <pre>
- * -- Distributed SuperLU routine (version 2.2) --
+ * -- Distributed SuperLU routine (version 3.2) --
  * Lawrence Berkeley National Lab, Univ. of California Berkeley.
  * November 1, 2007
- * Feburary 20, 2008
+ * October 22, 2012
  * </pre>
  */
 
@@ -918,14 +918,31 @@ p@(pre)gssvx(superlu_options_t *options, SuperMatrix *A,
 	    nprocs_num = grid->nprow * grid->npcol;
   	    noDomains = (int) ( pow(2, ((int) LOG2( nprocs_num ))));
 
-	    /* create a new communicator for the first noDomains processors in
-	       grid->comm */
+	    /* create a new communicator for the first noDomains
+               processes in grid->comm */
 	    key = iam;
     	    if (iam < noDomains) col = 0;
 	    else col = MPI_UNDEFINED;
 	    MPI_Comm_split (grid->comm, col, key, &symb_comm );
 
-	    permc_spec = PARMETIS; /* only works with PARMETIS */
+	    if ( permc_spec == NATURAL || permc_spec == MY_PERMC ) {
+		if ( permc_spec == NATURAL ) {
+		     for (j = 0; j < n; ++j) perm_c[j] = j;
+                }
+		if ( !(sizes = intMalloc_dist(2 * noDomains)) ) 
+		     ABORT("SUPERLU_MALLOC fails for sizes.");
+		if ( !(fstVtxSep = intMalloc_dist(2 * noDomains)) )
+		    ABORT("SUPERLU_MALLOC fails for fstVtxSep.");
+		for (i = 0; i < 2*noDomains - 2; ++i) {
+		    sizes[i] = 0;
+		    fstVtxSep[i] = 0;
+		}
+		sizes[2*noDomains - 2] = m;
+		fstVtxSep[2*noDomains - 2] = 0;
+	    } else if ( permc_spec != PARMETIS ) {   /* same as before */
+		printf("{%4d,%4d}: p@(pre)gssvx: invalid ColPerm option when ParSymbfact is used\n",
+		       MYROW(grid->iam, grid), MYCOL(grid->iam, grid));
+	    }
         }
 
 	if ( permc_spec != MY_PERMC && Fact == DOFACT ) {
