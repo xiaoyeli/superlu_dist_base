@@ -42,13 +42,13 @@ typedef struct {
 #if 0
     int_t   *Lsub_buf;        /* Buffer for the remote subscripts of L */
     double  *Lval_buf;        /* Buffer for the remote nonzeros of L   */
+    int_t   *Usub_buf;        /* Buffer for the remote subscripts of U */
+    @(type)  *Uval_buf;        /* Buffer for the remote nonzeros of U   */
 #endif
     int_t   *Lsub_buf_2[MAX_LOOKAHEADS];   /* Buffers for the remote subscripts of L*/
     @(type)  *Lval_buf_2[MAX_LOOKAHEADS];   /* Buffers for the remote nonzeros of L  */
     int_t   *Usub_buf_2[MAX_LOOKAHEADS];   /* Buffer for the remote subscripts of U */
     @(type)  *Uval_buf_2[MAX_LOOKAHEADS];   /* Buffer for the remote nonzeros of U   */
-    int_t   *Usub_buf;        /* Buffer for the remote subscripts of U */
-    @(type)  *Uval_buf;        /* Buffer for the remote nonzeros of U   */
     @(type)  *ujrow;           /* used in panel factorization.          */
     int_t   bufmax[NBUFFERS]; /* Buffer size; 5 entries
 			       *     0 : size of Lsub_buf[]

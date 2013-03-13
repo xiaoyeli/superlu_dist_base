@@ -12,6 +12,7 @@
  *     Feburary 7, 2001  use MPI_Isend/MPI_Irecv
  *     October 15, 2008  latency-reducing panel factorization
  *     July    12, 2011  static scheduling and arbitrary look-ahead
+ *     March   13, 2013  change NTAGS to MPI_TAG_UB
  *
  * Sketch of the algorithm
  * =======================
@@ -40,7 +41,7 @@
  *
  * Handle the first block of columns separately.
  *     * Factor diagonal and subdiagonal blocks and test for exact
- *       singularity. ( pdgstrf2(0), one column at a time )
+ *       singularity. ( p@(pre)gstrf2(0), one column at a time )
  *     * Compute block row of U
  *     * Update trailing matrix
  * 
@@ -56,7 +57,7 @@
  *     * Factor diagonal and subdiagonal blocks and test for exact
  *       singularity.
  *       if ( mycol == kcol ) {
- *           pdgstrf2(k), one column at a time 
+ *           p@(pre)gstrf2(k), one column at a time 
  *       }
  *
  *     * Parallel triangular solve
@@ -252,8 +253,16 @@ int_t p@(pre)gstrf
 #ifdef ISORT
     int_t *iperm_u;
 #endif
-    int *msgcnt, **msgcnts, **msgcntsU, k0, kk0, kk1, kk2, jj0, iukp0, rukp0, flag0, flag1,
-        *factored, *factoredU, nnodes, *sendcnts, *sdispls, *recvcnts, *rdispls, *srows, *rrows;
+    int *msgcnt;  /* Count the size of the message xfer'd in each buffer:
+                   *     0 : transferred in Lsub_buf[]
+           	   *     1 : transferred in Lval_buf[]
+                   *     2 : transferred in Usub_buf[]
+                   *     3 : transferred in Uval_buf[]
+                   */
+    int **msgcnts, **msgcntsU;
+    int k0; /* counter of the next supernode to be factored */
+    int kk0, kk1, kk2, jj0, iukp0, rukp0, flag0, flag1;
+    int *factored, *factoredU, nnodes, *sendcnts, *sdispls, *recvcnts, *rdispls, *srows, *rrows;
     etree_node *head, *tail, *ptr;
     int *num_child;
     int num_look_aheads, look_id, *look_ahead;
@@ -298,6 +307,10 @@ int_t p@(pre)gstrf
     s_eps = slamch_("Epsilon");
     thresh = s_eps * anorm;
 
+#if ( PRNTlevel>=1 )
+    if ( !iam ) printf("MPI_TAG_UB = %d\n", MPI_TAG_UB);
+#endif
+
 #if ( DEBUGlevel>=1 )
     if( s_eps == 0.0 ) printf( " ***** warning s_eps = %e *****\n",s_eps );
     CHECK_MALLOC(iam, "Enter p@(pre)gstrf()");
@@ -331,14 +344,14 @@ int_t p@(pre)gstrf
 	i = Llu->bufmax[2];
 	if ( i != 0 ) {
 	    if ( !(Llu->Usub_buf_2[0] = intMalloc_dist((num_look_aheads+1)*i)) )
-		ABORT("Malloc fails for Usub_buf[].");
+		ABORT("Malloc fails for Usub_buf_2[].");
 	    for( jj=0; jj<num_look_aheads; jj++ )
 		Llu->Usub_buf_2[jj+1] = Llu->Usub_buf_2[jj] + i;
 	}
 	i = Llu->bufmax[3];
 	if ( i != 0 ) {
 	    if ( !(Llu->Uval_buf_2[0] = @(type)Malloc_dist((num_look_aheads+1)*i)) )
-		ABORT("Malloc fails for Uval_buf[].");
+		ABORT("Malloc fails for Uval_buf_2[].");
 	    for( jj=0; jj<num_look_aheads; jj++ )
 		Llu->Uval_buf_2[jj+1] = Llu->Uval_buf_2[jj] + i;
 	}
@@ -374,24 +387,24 @@ int_t p@(pre)gstrf
     if ( !(send_reqs_u = SUPERLU_MALLOC( (1+num_look_aheads) * sizeof(MPI_Request*) )) )
 	ABORT("Malloc fails for send_reqs_u[].");
     if ( !(send_reqs   = SUPERLU_MALLOC( (1+num_look_aheads) * sizeof(MPI_Request*) )) )
-	ABORT("Malloc fails for send_reqs[].");
+	ABORT("Malloc fails for send_reqs_u[].");
     if ( !(recv_reqs   = SUPERLU_MALLOC( (1+num_look_aheads) * sizeof(MPI_Request*) )) )
 	ABORT("Malloc fails for recv_reqs[].");
     for( i=0; i<=num_look_aheads; i++ ) {
       if ( !(recv_reqs_u[i] =
          (MPI_Request *) SUPERLU_MALLOC(2*sizeof(MPI_Request))))
-        ABORT("Malloc fails for recv_req_u[].");
+        ABORT("Malloc fails for recv_req_u[i].");
       if ( !(send_reqs_u[i] =
          (MPI_Request *) SUPERLU_MALLOC(2*Pr*sizeof(MPI_Request))))
-        ABORT("Malloc fails for send_req_u[].");
+        ABORT("Malloc fails for send_req_u[i].");
       if ( !(send_reqs[i] =
          (MPI_Request *) SUPERLU_MALLOC(2*Pc*sizeof(MPI_Request))))
-        ABORT("Malloc fails for send_req[].");
+        ABORT("Malloc fails for send_reqs[i].");
       if ( !(recv_reqs[i] =
          (MPI_Request *) SUPERLU_MALLOC(4*sizeof(MPI_Request))))
         ABORT("Malloc fails for recv_req[].");
-      send_reqs[i][0] = send_reqs[i][1] = MPI_COMM_NULL;
-      recv_reqs[i][0] = recv_reqs[i][1] = MPI_COMM_NULL;
+      send_reqs[i][0] = send_reqs[i][1] = MPI_REQUEST_NULL;
+      recv_reqs[i][0] = recv_reqs[i][1] = MPI_REQUEST_NULL;
     }
     if ( !(factored  = SUPERLU_MALLOC( nsupers * sizeof(int_t) )) )
 	ABORT("Malloc fails for factored[].");
@@ -1374,9 +1387,9 @@ int_t p@(pre)gstrf
 	    Usub_buf = Llu->Usub_buf_2[0];
 	    Uval_buf = Llu->Uval_buf_2[0];
 	    MPI_Irecv( Usub_buf, Llu->bufmax[2], mpi_int_t, krow,
-	              2%NTAGS, scp->comm, &recv_reqs_u[0][0] );
+	              2%MPI_TAG_UB, scp->comm, &recv_reqs_u[0][0] );
 	    MPI_Irecv( Uval_buf, Llu->bufmax[3], @(MPI_TYPE), krow,
-	              3%NTAGS, scp->comm, &recv_reqs_u[0][1] ); 
+	              3%MPI_TAG_UB, scp->comm, &recv_reqs_u[0][1] ); 
 	}
     } 
 #endif
@@ -1391,17 +1404,17 @@ int_t p@(pre)gstrf
 	 * ======== look-ahead the new columns ======== *
          * ============================================ */
 	/* tt1 = SuperLU_timer_(); */
-        if( k0 == 0 ) { /* look-ahead all the column in the window */
+        if( k0 == 0 ) { /* look-ahead all the columns in the window */
           kk1 = k0+1;
           kk2 = SUPERLU_MIN( k0+num_look_aheads, nsupers-1 );
-        } else { /* look-ahead the new column */
+        } else { /* look-ahead one new column after the current window */
           kk1 = k0+num_look_aheads;
 	  kk2 = SUPERLU_MIN( kk1, nsupers-1 );
         }
 
-	for( kk0 = kk1; kk0<=kk2; kk0++ ) {
-	    kk = perm_c_supno[kk0];
-	    look_id = kk0 % (1+num_look_aheads);
+	for( kk0 = kk1; kk0<=kk2; kk0++ ) { /* loop through look-ahead window */
+	    kk = perm_c_supno[kk0]; /* use the ordering from static scheduling */
+	    look_id = kk0 % (1+num_look_aheads); /* which column in window */
 
 	    if( look_ahead[kk] < k0 ) { /* dose not depends on the current column */
 
@@ -1419,7 +1432,7 @@ int_t p@(pre)gstrf
 	        /* Process column *kcol+1* multicasts numeric values of L(:,k+1) 
 	           to process rows. */
 		/* ttt1 = SuperLU_timer_(); */
-	        msgcnt   = msgcnts[look_id];
+	        msgcnt   = msgcnts[look_id]; /* point to the proper count array */
 	        send_req = send_reqs[look_id];
 
 	        lk = LBj( kk, grid ); /* Local block number. */
@@ -1436,9 +1449,9 @@ int_t p@(pre)gstrf
 		  if ( ToSendR[lk][pj] != EMPTY ) {
 		    lusup1 = Lnzval_bc_ptr[lk];
 		    MPI_Isend( lsub1, msgcnt[0], mpi_int_t, pj,
-			      (4*kk0)%NTAGS, scp->comm, &send_req[pj] );
+			      (4*kk0)%MPI_TAG_UB, scp->comm, &send_req[pj] );
 		    MPI_Isend( lusup1, msgcnt[1], @(MPI_TYPE), pj,
-			      (4*kk0+1)%NTAGS, scp->comm, &send_req[pj+Pc] );
+			      (4*kk0+1)%MPI_TAG_UB, scp->comm, &send_req[pj+Pc] );
 		  } 
 	        } 
 		/* stat->time9 += SuperLU_timer_() - ttt1; */
@@ -1449,9 +1462,9 @@ int_t p@(pre)gstrf
 		  recv_req = recv_reqs[look_id];
 
 		  MPI_Irecv(Lsub_buf_2[look_id], Llu->bufmax[0], mpi_int_t, kcol,
-			    (4*kk0)%NTAGS, scp->comm, &recv_req[0]);
+			    (4*kk0)%MPI_TAG_UB, scp->comm, &recv_req[0]);
 		  MPI_Irecv(Lval_buf_2[look_id], Llu->bufmax[1], @(MPI_TYPE), kcol, 
-			    (4*kk0+1)%NTAGS, scp->comm, &recv_req[1]);
+			    (4*kk0+1)%MPI_TAG_UB, scp->comm, &recv_req[1]);
 	        } 
 		/* stat->time10 += SuperLU_timer_() - ttt1; */
 	      } /* if mycol == Pc(k+1) */
@@ -1467,9 +1480,9 @@ int_t p@(pre)gstrf
 	        Uval_buf = Llu->Uval_buf_2[look_id];
 
 	        MPI_Irecv( Usub_buf, Llu->bufmax[2], mpi_int_t, krow,
-	                  (4*kk0+2)%NTAGS, scp->comm, &recv_reqs_u[look_id][0] );
+	                  (4*kk0+2)%MPI_TAG_UB, scp->comm, &recv_reqs_u[look_id][0] );
 	        MPI_Irecv( Uval_buf, Llu->bufmax[3], @(MPI_TYPE), krow,
-	                  (4*kk0+3)%NTAGS, scp->comm, &recv_reqs_u[look_id][1] ); 
+	                  (4*kk0+3)%MPI_TAG_UB, scp->comm, &recv_reqs_u[look_id][1] ); 
   	      }
 	    }
 #endif
@@ -1503,18 +1516,18 @@ int_t p@(pre)gstrf
 	      } else {
 	        flag0 = flag1 = 0;
 	        if( ToRecv[kk] >= 1 ) {
-		  if( recv_req[0] != MPI_COMM_NULL ) {
+		  if( recv_req[0] != MPI_REQUEST_NULL ) {
 		    MPI_Test( &recv_req[0], &flag0, &status );
 		    if( flag0 ) {
 		      MPI_Get_count( &status, mpi_int_t, &msgcnt[0] );
-		      recv_req[0] = MPI_COMM_NULL;
+		      recv_req[0] = MPI_REQUEST_NULL;
 		    } 
 		  } else flag0 = 1;
-		  if( recv_req[1] != MPI_COMM_NULL ) {
+		  if( recv_req[1] != MPI_REQUEST_NULL ) {
 		    MPI_Test( &recv_req[1], &flag1, &status );
 		    if( flag1 ) {
 		      MPI_Get_count( &status, mpi_int_t, &msgcnt[1] );
-		      recv_req[1] = MPI_COMM_NULL;
+		      recv_req[1] = MPI_REQUEST_NULL;
 		    }
 		  } else flag1 = 1;
 	        } else msgcnt[0] = 0;
@@ -1556,9 +1569,11 @@ int_t p@(pre)gstrf
 				VT_begin(3);
 #endif
 				MPI_Isend( usub, msgcnt[2], mpi_int_t, pi,
-					 (4*kk0+2)%NTAGS, scp->comm, &send_reqs_u[look_id][pi]);
+					   (4*kk0+2)%MPI_TAG_UB, scp->comm,
+                                           &send_reqs_u[look_id][pi]);
 				MPI_Isend( uval, msgcnt[3], @(MPI_TYPE), pi,
-					 (4*kk0+3)%NTAGS, scp->comm, &send_reqs_u[look_id][pi+Pr]);
+					   (4*kk0+3)%MPI_TAG_UB, scp->comm,
+					   &send_reqs_u[look_id][pi+Pr]);
 #if ( VAMPIR>=1 )
 				VT_end(3);
 #endif
@@ -1574,11 +1589,13 @@ int_t p@(pre)gstrf
 			    } /* if pi ... */
 			} /* for pi ... */
 		    } /* if ToSendD ... */
+
 		    /* stat->time2 += SuperLU_timer_()-tt1; */
-		} 
-	      }
-	    }
-	}
+
+		} /* if myrow == krow */
+	      } /* if flag0 ... */
+	    } /* if factoredU[] ... */
+	} /* for kk0 ... */
 
         /* ============================================== *
 	 * == start of processing the current row of U == *
@@ -1624,18 +1641,18 @@ int_t p@(pre)gstrf
 		VT_begin(2);
 #endif
 @precision !
-		if( recv_req[0] != MPI_COMM_NULL ) {
+		if( recv_req[0] != MPI_REQUEST_NULL ) {
 		  MPI_Wait( &recv_req[0], &status );
 		  MPI_Get_count( &status, mpi_int_t, &msgcnt[0] );
-		  recv_req[0] = MPI_COMM_NULL;
+		  recv_req[0] = MPI_REQUEST_NULL;
 		} else {
 		  msgcnt[0] = msgcntsU[look_id][0];
 		}
 
-		if( recv_req[1] != MPI_COMM_NULL ) {
+		if( recv_req[1] != MPI_REQUEST_NULL ) {
 		  MPI_Wait( &recv_req[1], &status );
 		  MPI_Get_count( &status, MPI_DOUBLE, &msgcnt[1] );
-		  recv_req[1] = MPI_COMM_NULL;
+		  recv_req[1] = MPI_REQUEST_NULL;
 		} else {
 		  msgcnt[1] = msgcntsU[look_id][1];
 		}
@@ -1704,9 +1721,9 @@ int_t p@(pre)gstrf
 #endif
 @precision !
 			MPI_Send( usub, msgcnt[2], mpi_int_t, pi,
-				 (4*k0+2)%NTAGS, scp->comm);
+				 (4*k0+2)%MPI_TAG_UB, scp->comm);
 			MPI_Send( uval, msgcnt[3], @(MPI_TYPE), pi,
-				 (4*k0+3)%NTAGS, scp->comm);
+				 (4*k0+3)%MPI_TAG_UB, scp->comm);
 @precision DOUBLE
 #if ( VAMPIR>=1 )
 			VT_end(3);
@@ -1764,10 +1781,10 @@ int_t p@(pre)gstrf
 		MPI_Get_count( &status, @(MPI_TYPE), &msgcnt[3] );
 #else
 		MPI_Recv( Usub_buf, Llu->bufmax[2], mpi_int_t, krow,
-		 	 (4*k0+2)%NTAGS, scp->comm, &status );
+		 	 (4*k0+2)%MPI_TAG_UB, scp->comm, &status );
 		MPI_Get_count( &status, mpi_int_t, &msgcnt[2] );
 		MPI_Recv( Uval_buf, Llu->bufmax[3], @(MPI_TYPE), krow, 
-		  	 (4*k0+3)%NTAGS, scp->comm, &status );
+		  	 (4*k0+3)%MPI_TAG_UB, scp->comm, &status );
 		MPI_Get_count( &status, @(MPI_TYPE), &msgcnt[3] );
 #endif
 
@@ -1870,7 +1887,7 @@ int_t p@(pre)gstrf
 
 	    j ++;
 	    jb = usub[iukp];   /* Global block number of block U(k,j). */
-	    { 
+	    { /* unlabeled */
 		jj0 ++;
 
 		lptr = lptr0;
@@ -2036,7 +2053,7 @@ int_t p@(pre)gstrf
 		} /* for lb ... */
 		rukp += usub[iukp - 1]; /* Move to block U(k,j+1) */
 		iukp += nsupc;
-	    }  /* if jb == k+1 */
+	    }  /* unlabeled */
 
             /* ==================================== *
 	     * == factorize and send if possible == *
@@ -2099,9 +2116,9 @@ int_t p@(pre)gstrf
 #endif
 @precision !
 		    MPI_Isend( lsub1, msgcnt[0], mpi_int_t, pj,
-			      (4*kk0)%NTAGS, scp->comm, &send_req[pj] );
+			      (4*kk0)%MPI_TAG_UB, scp->comm, &send_req[pj] );
 		    MPI_Isend( lusup1, msgcnt[1], @(MPI_TYPE), pj,
-			      (4*kk0+1)%NTAGS, scp->comm, &send_req[pj+Pc] );
+			      (4*kk0+1)%MPI_TAG_UB, scp->comm, &send_req[pj+Pc] );
 @precision DOUBLE
 #if ( VAMPIR>=1 )
                     VT_end(1);
@@ -2141,9 +2158,9 @@ int_t p@(pre)gstrf
 	          look_id = kk0 % (1+num_look_aheads);
 	          recv_req = recv_reqs[look_id];
 	          MPI_Irecv(Lsub_buf_2[look_id], Llu->bufmax[0], mpi_int_t, kcol,
-			    (4*kk0)%NTAGS, scp->comm, &recv_req[0]);
+			    (4*kk0)%MPI_TAG_UB, scp->comm, &recv_req[0]);
 	          MPI_Irecv(Lval_buf_2[look_id], Llu->bufmax[1], @(MPI_TYPE), kcol, 
-			    (4*kk0+1)%NTAGS, scp->comm, &recv_req[1]);
+			    (4*kk0+1)%MPI_TAG_UB, scp->comm, &recv_req[1]);
                 }
 	      } else {
 	        lk = LBj( kk, grid ); /* Local block number. */
@@ -2178,9 +2195,9 @@ int_t p@(pre)gstrf
 	          for (pj = 0; pj < Pc; ++pj) {
 		    if ( ToSendR[lk][pj] != EMPTY ) {
 		      MPI_Isend( lsub1, msgcnt[0], mpi_int_t, pj,
-			        (4*kk0)%NTAGS, scp->comm, &send_req[pj] );
+			        (4*kk0)%MPI_TAG_UB, scp->comm, &send_req[pj] );
 		      MPI_Isend( lusup1, msgcnt[1], @(MPI_TYPE), pj,
-			        (4*kk0+1)%NTAGS, scp->comm, &send_req[pj+Pc] );
+			        (4*kk0+1)%MPI_TAG_UB, scp->comm, &send_req[pj+Pc] );
 		    }
 		  }
 	        } /* for pj ... */
@@ -2379,9 +2396,10 @@ int_t p@(pre)gstrf
 		} /* for lb ... */
 	    } /* for j ... */
 	} /* if  k L(:,k) and U(k,:) are not empty */
-	/* stat->time5 += SuperLU_timer_()-tt1; */
 
-    } 
+	/* stat->time5 += SuperLU_timer_()-tt1; */
+    } /* for k0 = 0, ... */
+
     /* ------------------------------------------
        END MAIN LOOP: for k = ...
        ------------------------------------------ */
@@ -2536,6 +2554,15 @@ int_t p@(pre)gstrf
  * 
  * Arguments
  * =========
+ * options (input) superlu_options_t* (global)
+ *         The structure defines the input parameters to control
+ *         how the LU decomposition will be performed.
+ *
+ * nsupers (input) int_t (global)
+ *         Number of supernodes.
+ *
+ * k0     (input) int (global)
+ *        Counter of the next supernode to be factorized.
  *
  * k      (input) int (global)
  *        The column number of the block column to be factorized.
@@ -2711,8 +2738,8 @@ static void p@(pre)gstrf2
 	    /** ALWAYS SEND TO ALL OTHERS - TO FIX **/
 	    for (pr = 0; pr < Pr; ++pr)
 		if (pr != krow) {
-		    tag = ((k0<<2)+2)%NTAGS;
-		    tag = (4*(nsupers+k0)+2)%NTAGS;
+		    tag = ((k0<<2)+2) % MPI_TAG_UB;
+		    tag = (4*(nsupers+k0)+2) % MPI_TAG_UB;
 		    MPI_Isend(ublk_ptr, u_diag_cnt, @(MPI_TYPE), pr,
 			      tag, comm, U_diag_blk_send_req + pr);
 		}
@@ -2728,8 +2755,8 @@ static void p@(pre)gstrf2
 	 * but panel factorization of U(:,k) don't          *
 	 * ================================================ */
 
-	tag = ((k0<<2)+2)%NTAGS;
-	tag = (4*(nsupers+k0)+2)%NTAGS;
+	tag = ((k0<<2)+2) % MPI_TAG_UB;
+	tag = (4*(nsupers+k0)+2) % MPI_TAG_UB;
         MPI_Recv(ublk_ptr, (nsupc*(nsupc+1))>>1, @(MPI_TYPE),
 		 krow, tag, comm, &status);
 
