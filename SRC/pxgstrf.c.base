@@ -131,6 +131,12 @@ typedef struct {
   int id, key;
   void *next;
 } etree_node;
+/* return the mpi_tag assuming 5 pairs of communications and MPI_TAG_UB >= 5 *
+ * for each supernodal column, the five communications are:                  *
+ * 0,1: for sending L to "right"                                             *
+ * 2,3: for sending off-diagonal blocks of U "down"                          *
+ * 4  : for sending the diagonal blcok down (in pxgstrf2)                    */
+#define SLU_MPI_TAG(id,num) (5*(num)+id)%MPI_TAG_UB
 
 /************************************************************************/
 
@@ -1346,10 +1352,12 @@ int_t p@(pre)gstrf
                 VT_begin(1);
 #endif
 @precision !
-		MPI_Isend( lsub, msgcnt[0], mpi_int_t, pj, 0, scp->comm,
-			  &send_req[pj] );
-		MPI_Isend( lusup, msgcnt[1], @(MPI_TYPE), pj, 1, scp->comm,
-			  &send_req[pj+Pc] );
+		MPI_Isend( lsub, msgcnt[0], mpi_int_t, pj, 
+                           SLU_MPI_TAG(0,0) /* 0 */, 
+                           scp->comm, &send_req[pj] );
+		MPI_Isend( lusup, msgcnt[1], @(MPI_TYPE), pj, 
+                           SLU_MPI_TAG(1,0) /* 1 */, 
+                           scp->comm, &send_req[pj+Pc] );
 #if ( DEBUGlevel>=2 )
                 printf("(%d) Send L(:,%4d): lsub %4d, lusup %4d to Pc %2d\n",
                        iam, 0, msgcnt[0], msgcnt[1], pj);
@@ -1371,9 +1379,11 @@ int_t p@(pre)gstrf
 	if ( ToRecv[k] >= 1 ) { /* Recv block column L(:,0). */
 	    scp = &grid->rscp; /* The scope of process row. */
 	    MPI_Irecv( Lsub_buf_2[0], Llu->bufmax[0], mpi_int_t, kcol,
-		      0, scp->comm, &recv_req[0] );
+		       SLU_MPI_TAG(0,0) /* 0 */, 
+                       scp->comm, &recv_req[0] );
 	    MPI_Irecv( Lval_buf_2[0], Llu->bufmax[1], @(MPI_TYPE), kcol,
-		      1, scp->comm, &recv_req[1] );
+		       SLU_MPI_TAG(1,0) /* 1 */, 
+                       scp->comm, &recv_req[1] );
 	}
     } /* if mycol == 0 */
     factored[k] = 0;
@@ -1387,9 +1397,11 @@ int_t p@(pre)gstrf
 	    Usub_buf = Llu->Usub_buf_2[0];
 	    Uval_buf = Llu->Uval_buf_2[0];
 	    MPI_Irecv( Usub_buf, Llu->bufmax[2], mpi_int_t, krow,
-	              2%MPI_TAG_UB, scp->comm, &recv_reqs_u[0][0] );
+	               SLU_MPI_TAG(2,0) /* 2%MPI_TAG_UB */, 
+                       scp->comm, &recv_reqs_u[0][0] );
 	    MPI_Irecv( Uval_buf, Llu->bufmax[3], @(MPI_TYPE), krow,
-	              3%MPI_TAG_UB, scp->comm, &recv_reqs_u[0][1] ); 
+	               SLU_MPI_TAG(3,0) /* 3%MPI_TAG_UB */, 
+                       scp->comm, &recv_reqs_u[0][1] ); 
 	}
     } 
 #endif
@@ -1449,9 +1461,11 @@ int_t p@(pre)gstrf
 		  if ( ToSendR[lk][pj] != EMPTY ) {
 		    lusup1 = Lnzval_bc_ptr[lk];
 		    MPI_Isend( lsub1, msgcnt[0], mpi_int_t, pj,
-			      (4*kk0)%MPI_TAG_UB, scp->comm, &send_req[pj] );
+			       SLU_MPI_TAG(0,kk0) /* (4*kk0)%MPI_TAG_UB */, 
+                               scp->comm, &send_req[pj] );
 		    MPI_Isend( lusup1, msgcnt[1], @(MPI_TYPE), pj,
-			      (4*kk0+1)%MPI_TAG_UB, scp->comm, &send_req[pj+Pc] );
+			       SLU_MPI_TAG(1,kk0) /* (4*kk0+1)%MPI_TAG_UB */, 
+                               scp->comm, &send_req[pj+Pc] );
 		  } 
 	        } 
 		/* stat->time9 += SuperLU_timer_() - ttt1; */
@@ -1461,10 +1475,12 @@ int_t p@(pre)gstrf
 		  scp = &grid->rscp; /* The scope of process row. */
 		  recv_req = recv_reqs[look_id];
 
-		  MPI_Irecv(Lsub_buf_2[look_id], Llu->bufmax[0], mpi_int_t, kcol,
-			    (4*kk0)%MPI_TAG_UB, scp->comm, &recv_req[0]);
-		  MPI_Irecv(Lval_buf_2[look_id], Llu->bufmax[1], @(MPI_TYPE), kcol, 
-			    (4*kk0+1)%MPI_TAG_UB, scp->comm, &recv_req[1]);
+		  MPI_Irecv( Lsub_buf_2[look_id], Llu->bufmax[0], mpi_int_t, kcol,
+			     SLU_MPI_TAG(0,kk0) /* (4*kk0)%MPI_TAG_UB */, 
+                             scp->comm, &recv_req[0] );
+		  MPI_Irecv( Lval_buf_2[look_id], Llu->bufmax[1], @(MPI_TYPE), kcol, 
+			     SLU_MPI_TAG(1,kk0) /* (4*kk0+1)%MPI_TAG_UB */, 
+                             scp->comm, &recv_req[1] );
 	        } 
 		/* stat->time10 += SuperLU_timer_() - ttt1; */
 	      } /* if mycol == Pc(k+1) */
@@ -1480,9 +1496,11 @@ int_t p@(pre)gstrf
 	        Uval_buf = Llu->Uval_buf_2[look_id];
 
 	        MPI_Irecv( Usub_buf, Llu->bufmax[2], mpi_int_t, krow,
-	                  (4*kk0+2)%MPI_TAG_UB, scp->comm, &recv_reqs_u[look_id][0] );
+	                   SLU_MPI_TAG(2,kk0) /* (4*kk0+2)%MPI_TAG_UB */, 
+                           scp->comm, &recv_reqs_u[look_id][0] );
 	        MPI_Irecv( Uval_buf, Llu->bufmax[3], @(MPI_TYPE), krow,
-	                  (4*kk0+3)%MPI_TAG_UB, scp->comm, &recv_reqs_u[look_id][1] ); 
+	                   SLU_MPI_TAG(3,kk0) /* (4*kk0+3)%MPI_TAG_UB */, 
+                           scp->comm, &recv_reqs_u[look_id][1] ); 
   	      }
 	    }
 #endif
@@ -1569,11 +1587,11 @@ int_t p@(pre)gstrf
 				VT_begin(3);
 #endif
 				MPI_Isend( usub, msgcnt[2], mpi_int_t, pi,
-					   (4*kk0+2)%MPI_TAG_UB, scp->comm,
-                                           &send_reqs_u[look_id][pi]);
+					   SLU_MPI_TAG(2,kk0) /* (4*kk0+2)%MPI_TAG_UB */, 
+                                           scp->comm, &send_reqs_u[look_id][pi] );
 				MPI_Isend( uval, msgcnt[3], @(MPI_TYPE), pi,
-					   (4*kk0+3)%MPI_TAG_UB, scp->comm,
-					   &send_reqs_u[look_id][pi+Pr]);
+					   SLU_MPI_TAG(3,kk0) /* (4*kk0+3)%MPI_TAG_UB */, 
+                                           scp->comm, &send_reqs_u[look_id][pi+Pr] );
 #if ( VAMPIR>=1 )
 				VT_end(3);
 #endif
@@ -1721,9 +1739,11 @@ int_t p@(pre)gstrf
 #endif
 @precision !
 			MPI_Send( usub, msgcnt[2], mpi_int_t, pi,
-				 (4*k0+2)%MPI_TAG_UB, scp->comm);
+				  SLU_MPI_TAG(2,k0) /* (4*k0+2)%MPI_TAG_UB */, 
+                                  scp->comm );
 			MPI_Send( uval, msgcnt[3], @(MPI_TYPE), pi,
-				 (4*k0+3)%MPI_TAG_UB, scp->comm);
+				  SLU_MPI_TAG(3,k0) /* (4*k0+3)%MPI_TAG_UB */, 
+                                  scp->comm );
 @precision DOUBLE
 #if ( VAMPIR>=1 )
 			VT_end(3);
@@ -1781,10 +1801,12 @@ int_t p@(pre)gstrf
 		MPI_Get_count( &status, @(MPI_TYPE), &msgcnt[3] );
 #else
 		MPI_Recv( Usub_buf, Llu->bufmax[2], mpi_int_t, krow,
-		 	 (4*k0+2)%MPI_TAG_UB, scp->comm, &status );
+		 	  SLU_MPI_TAG(2,k0) /* (4*k0+2)%MPI_TAG_UB */, 
+                          scp->comm, &status );
 		MPI_Get_count( &status, mpi_int_t, &msgcnt[2] );
 		MPI_Recv( Uval_buf, Llu->bufmax[3], @(MPI_TYPE), krow, 
-		  	 (4*k0+3)%MPI_TAG_UB, scp->comm, &status );
+		  	  SLU_MPI_TAG(3,k0) /* (4*k0+3)%MPI_TAG_UB */, 
+                          scp->comm, &status );
 		MPI_Get_count( &status, @(MPI_TYPE), &msgcnt[3] );
 #endif
 
@@ -2116,9 +2138,11 @@ int_t p@(pre)gstrf
 #endif
 @precision !
 		    MPI_Isend( lsub1, msgcnt[0], mpi_int_t, pj,
-			      (4*kk0)%MPI_TAG_UB, scp->comm, &send_req[pj] );
+			       SLU_MPI_TAG(0,kk0) /* (4*kk0)%MPI_TAG_UB */, 
+                               scp->comm, &send_req[pj] );
 		    MPI_Isend( lusup1, msgcnt[1], @(MPI_TYPE), pj,
-			      (4*kk0+1)%MPI_TAG_UB, scp->comm, &send_req[pj+Pc] );
+			       SLU_MPI_TAG(1,kk0) /* (4*kk0+1)%MPI_TAG_UB */, 
+                               scp->comm, &send_req[pj+Pc] );
 @precision DOUBLE
 #if ( VAMPIR>=1 )
                     VT_end(1);
@@ -2157,10 +2181,12 @@ int_t p@(pre)gstrf
 
 	          look_id = kk0 % (1+num_look_aheads);
 	          recv_req = recv_reqs[look_id];
-	          MPI_Irecv(Lsub_buf_2[look_id], Llu->bufmax[0], mpi_int_t, kcol,
-			    (4*kk0)%MPI_TAG_UB, scp->comm, &recv_req[0]);
-	          MPI_Irecv(Lval_buf_2[look_id], Llu->bufmax[1], @(MPI_TYPE), kcol, 
-			    (4*kk0+1)%MPI_TAG_UB, scp->comm, &recv_req[1]);
+	          MPI_Irecv( Lsub_buf_2[look_id], Llu->bufmax[0], mpi_int_t, kcol,
+			     SLU_MPI_TAG(0,kk0) /* (4*kk0)%MPI_TAG_UB */, 
+                             scp->comm, &recv_req[0]);
+	          MPI_Irecv( Lval_buf_2[look_id], Llu->bufmax[1], @(MPI_TYPE), kcol, 
+			     SLU_MPI_TAG(1,kk0) /* (4*kk0+1)%MPI_TAG_UB */, 
+                             scp->comm, &recv_req[1]);
                 }
 	      } else {
 	        lk = LBj( kk, grid ); /* Local block number. */
@@ -2195,9 +2221,11 @@ int_t p@(pre)gstrf
 	          for (pj = 0; pj < Pc; ++pj) {
 		    if ( ToSendR[lk][pj] != EMPTY ) {
 		      MPI_Isend( lsub1, msgcnt[0], mpi_int_t, pj,
-			        (4*kk0)%MPI_TAG_UB, scp->comm, &send_req[pj] );
+			         SLU_MPI_TAG(0,kk0) /* (4*kk0)%MPI_TAG_UB */, 
+                                 scp->comm, &send_req[pj] );
 		      MPI_Isend( lusup1, msgcnt[1], @(MPI_TYPE), pj,
-			        (4*kk0+1)%MPI_TAG_UB, scp->comm, &send_req[pj+Pc] );
+			         SLU_MPI_TAG(1,kk0) /* (4*kk0+1)%MPI_TAG_UB */, 
+                                 scp->comm, &send_req[pj+Pc] );
 		    }
 		  }
 	        } /* for pj ... */
@@ -2738,10 +2766,11 @@ static void p@(pre)gstrf2
 	    /** ALWAYS SEND TO ALL OTHERS - TO FIX **/
 	    for (pr = 0; pr < Pr; ++pr)
 		if (pr != krow) {
-		    tag = ((k0<<2)+2) % MPI_TAG_UB;
-		    tag = (4*(nsupers+k0)+2) % MPI_TAG_UB;
-		    MPI_Isend(ublk_ptr, u_diag_cnt, @(MPI_TYPE), pr,
-			      tag, comm, U_diag_blk_send_req + pr);
+		    /* tag = ((k0<<2)+2) % MPI_TAG_UB;        */
+		    /* tag = (4*(nsupers+k0)+2) % MPI_TAG_UB; */
+		    MPI_Isend( ublk_ptr, u_diag_cnt, @(MPI_TYPE), pr,
+			       SLU_MPI_TAG(5,k0) /* tag */, 
+                               comm, U_diag_blk_send_req + pr );
 		}
 	    U_diag_blk_send_req[krow] = 1; /* flag outstanding Isend */
 	}
@@ -2755,10 +2784,11 @@ static void p@(pre)gstrf2
 	 * but panel factorization of U(:,k) don't          *
 	 * ================================================ */
 
-	tag = ((k0<<2)+2) % MPI_TAG_UB;
-	tag = (4*(nsupers+k0)+2) % MPI_TAG_UB;
-        MPI_Recv(ublk_ptr, (nsupc*(nsupc+1))>>1, @(MPI_TYPE),
-		 krow, tag, comm, &status);
+	/* tag = ((k0<<2)+2) % MPI_TAG_UB;        */
+	/* tag = (4*(nsupers+k0)+2) % MPI_TAG_UB; */
+        MPI_Recv( ublk_ptr, (nsupc*(nsupc+1))>>1, @(MPI_TYPE), krow, 
+                  SLU_MPI_TAG(5,k0) /* tag */, 
+                  comm, &status );
 
 	for (j = 0; j < jlst - jfst; ++j) { /* for each column in panel */
 	    u_diag_cnt += cols_left;
@@ -3046,3 +3076,5 @@ void isort1(int_t N, int_t *ARRAY)
 }
 #endif
 @precision !
+
+#undef SLU_MPI_TAG
