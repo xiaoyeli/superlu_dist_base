@@ -113,9 +113,11 @@ static void p@(pre)gstrs2(int_t, int_t, int_t, Glu_persist_t *, gridinfo_t *,
 		     LocalLU_t *, SuperLUStat_t *);
 #endif
 
+#define ISORT  /* Note: qsort() has bug on Mac */
+
 #ifdef ISORT
-void isort(int_t N, int_t *ARRAY1, int_t *ARRAY2);
-void isort1(int_t N, int_t *ARRAY);
+extern void isort(int_t N, int_t *ARRAY1, int_t *ARRAY2);
+extern void isort1(int_t N, int_t *ARRAY);
 #else
 @precision DOUBLE
 int superlu_sort_perm(const void* arg1,const void* arg2) {
@@ -127,10 +129,12 @@ int superlu_sort_perm(const void* arg1,const void* arg2) {
 int superlu_sort_perm(const void* arg1,const void* arg2);
 @precision !
 #endif
+
 typedef struct {
   int id, key;
   void *next;
 } etree_node;
+
 /* return the mpi_tag assuming 5 pairs of communications and MPI_TAG_UB >= 5 *
  * for each supernodal column, the five communications are:                  *
  * 0,1: for sending L to "right"                                             *
@@ -2984,97 +2988,5 @@ probe_recv(int iam, int source, int tag, MPI_Datatype datatype, MPI_Comm comm,
     return 0;
 } */
 
-@precision DOUBLE
-#ifdef  ISORT
-/* --------------------------------------------------------------------------- */
-void isort(int_t N, int_t *ARRAY1, int_t *ARRAY2)
-{
-/*
- * Purpose
- * =======
- * Use quick sort algorithm to sort ARRAY1 and ARRAY2 in the increasing
- * order of ARRAY1.
- *
- * Arguments
- * =========
- * N       (input) INTEGER
- *          On entry, specifies the size of the arrays.
- *
- * ARRAY1  (input/output) DOUBLE PRECISION ARRAY of LENGTH N
- *          On entry, contains the array to be sorted.
- *          On exit, contains the sorted array.
- *
- * ARRAY2  (input/output) DOUBLE PRECISION ARRAY of LENGTH N
- *          On entry, contains the array to be sorted.
- *          On exit, contains the sorted array.
- */
-  int_t IGAP, I, J;
-  int_t TEMP;
-  IGAP = N / 2;
-  while (IGAP > 0) {
-    for (I = IGAP; I < N; I++) {
-    J = I - IGAP;
-    while (J >= 0) {
-      if (ARRAY1[J] > ARRAY1[J + IGAP]) {
-        TEMP = ARRAY1[J];
-        ARRAY1[J] = ARRAY1[J + IGAP];
-        ARRAY1[J + IGAP] = TEMP;
-        TEMP = ARRAY2[J];
-        ARRAY2[J] = ARRAY2[J + IGAP];
-        ARRAY2[J + IGAP] = TEMP;
-        J = J - IGAP;
-      } else {
-        break;
-      }
-    }
-  }
-    IGAP = IGAP / 2;
-  }
-}
-
-
-void isort1(int_t N, int_t *ARRAY)
-{
-/*
- * Purpose
- * =======
- * Use quick sort algorithm to sort ARRAY1 and ARRAY2 in the increasing
- * order of ARRAY1.
- *
- * Arguments
- * =========
- * N       (input) INTEGER
- *          On entry, specifies the size of the arrays.
- *
- * ARRAY1  (input/output) DOUBLE PRECISION ARRAY of LENGTH N
- *          On entry, contains the array to be sorted.
- *          On exit, contains the sorted array.
- *
- * ARRAY2  (input/output) DOUBLE PRECISION ARRAY of LENGTH N
- *          On entry, contains the array to be sorted.
- *          On exit, contains the sorted array.
- */
-  int_t IGAP, I, J;
-  int_t TEMP;
-  IGAP = N / 2;
-  while (IGAP > 0) {
-  for (I = IGAP; I < N; I++) {
-    J = I - IGAP;
-    while (J >= 0) {
-      if (ARRAY[J] > ARRAY[J + IGAP]) {
-        TEMP = ARRAY[J];
-        ARRAY[J] = ARRAY[J + IGAP];
-        ARRAY[J + IGAP] = TEMP;
-        J = J - IGAP;
-      } else {
-        break;
-      }
-    }
-  }
-    IGAP = IGAP / 2;
-  }
-}
-#endif
-@precision !
 
 #undef SLU_MPI_TAG
