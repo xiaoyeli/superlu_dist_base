@@ -82,8 +82,12 @@
 ! Read Harwell-Boeing matrix, and adjust the pointers and indices
 ! to 0-based indexing, as required by C routines.
       if ( iam == 0 ) then 
-         open(file = "g20.rua", status = "old", unit = 5)
-         call hbcode1(m, n, nnz, values, rowind, colptr)
+@precision DOUBLE
+         open(file = "../EXAMPLE/g20.rua", status = "old", unit = 5)
+@precision DCOMPLEX
+         open(file = "../EXAMPLE/cg20.cua", status = "old", unit = 5)
+@precision !
+         call @(pre)hbcode1(m, n, nnz, values, rowind, colptr)
          close(unit = 5)
 !
          do i = 1, n+1
@@ -132,7 +136,7 @@
 
 ! Deallocate the storage allocated by SuperLU_DIST
       call f_PStatFree(stat)
-      call f_Destroy_SuperMat_Store_dist(A)
+      call f_Destroy_CompRowLoc_Mat_dist(A)
       call f_ScalePermstructFree(ScalePermstruct)
       call f_Destroy_LU(n, grid, LUstruct)
       call f_LUstructFree(LUstruct)

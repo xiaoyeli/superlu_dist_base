@@ -82,7 +82,6 @@ p@(pre)gsequ(SuperMatrix *A, double *r, double *c, double *rowcnd,
     int i, j, irow, jcol, m_loc;
     double rcmin, rcmax;
     double bignum, smlnum;
-    extern double dlamch_(char *);
     double tempmax, tempmin;
     double *loc_max;
     int *r_sizes, *displs;

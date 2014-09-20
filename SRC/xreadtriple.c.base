@@ -1,11 +1,9 @@
 @extract -b Typedef.inc
-
 /*! @file 
  * \brief 
- * Contributed by Francois-Henry Rouet.
  *
  */
-#include <ctype.h>
+#include <stdio.h>
 #include "superlu_@(pre)defs.h"
 
 #undef EXPAND_SYM
@@ -23,93 +21,31 @@
  */
 
 void
-@(pre)readMM(FILE *fp, int_t *m, int_t *n, int_t *nonz,
+@(pre)readtriple(FILE *fp, int_t *m, int_t *n, int_t *nonz,
 	    @(type) **nzval, int_t **rowind, int_t **colptr)
 {
     int_t    j, k, jsize, nnz, nz, new_nonz;
     @(type) *a, *val;
     int_t    *asub, *xa, *row, *col;
     int_t    zero_base = 0;
-    char *p, line[512], banner[64], mtx[64], crd[64], arith[64], sym[64];
-    int expand;
-
+    
     /* 	File format:
-     *    %%MatrixMarket matrix coordinate real general/symmetric/...
-     *    % ...
-     *    % (optional comments)
-     *    % ...
-     *    #rows    #non-zero
-     *    Triplet in the rest of lines: row    col    value
+     *    First line:  #rows    #non-zero
+     *    Triplet in the rest of lines:
+     *                 row    col    value
      */
 
-     /* 1/ read header */ 
-     fgets(line,512,fp);
-     for (p=line; *p!='\0'; *p=tolower(*p),p++);
-
-     if (sscanf(line, "%s %s %s %s %s", banner, mtx, crd, arith, sym) != 5) {
-       printf("Invalid header (first line does not contain 5 tokens)\n");
-       exit;
-     }
- 
-     if(strcmp(banner,"%%matrixmarket")) {
-       printf("Invalid header (first token is not \"%%%%MatrixMarket\")\n");
-       exit(-1);
-     }
-
-     if(strcmp(mtx,"matrix")) {
-       printf("Not a matrix; this driver cannot handle that.\n");
-       exit(-1);
-     }
-
-     if(strcmp(crd,"coordinate")) {
-       printf("Not in coordinate format; this driver cannot handle that.\n");
-       exit(-1);
-     }
-
-     if(strcmp(arith,"real")) {
-       if(!strcmp(arith,"complex")) {
-         printf("Complex matrix; use zreadtriple instead!\n");
-         exit(-1);
-       }
-       else if(!strcmp(arith, "pattern")) {
-         printf("Pattern matrix; values are needed!\n");
-         exit(-1);
-       }
-       else {
-         printf("Unknown arithmetic\n");
-         exit(-1);
-       }
-     }
-
-     if(strcmp(sym,"general")) {
-       printf("Symmetric matrix: will be expanded\n");
-       expand=1;
-     } else
-       expand=0;
-
-     /* 2/ Skip comments */
-     while(banner[0]=='%') {
-       fgets(line,512,fp);
-       sscanf(line,"%s",banner);
-     }
-
-     /* 3/ Read n and nnz */
 #ifdef _LONGINT
-    sscanf(line, "%ld%ld%ld",m, n, nonz);
+    fscanf(fp, "%ld%ld%ld", m, n, nonz);
 #else
-    sscanf(line, "%d%d%d",m, n, nonz);
+    fscanf(fp, "%d%d%d", m, n, nonz);
 #endif
 
-    if(*m!=*n) {
-      printf("Rectangular matrix!. Abort\n");
-      exit(-1);
-   }
-
-    if(expand)
-      new_nonz = 2 * *nonz - *n;
-    else
-      new_nonz = *nonz;
-
+#ifdef EXPAND_SYM
+    new_nonz = 2 * *nonz - *n;
+#else
+    new_nonz = *nonz;
+#endif
     *m = *n;
     printf("m %ld, n %ld, nonz %ld\n", (long long) *m, (long long) *n, (long long) *nonz);
     @(pre)allocateA_dist(*n, new_nonz, nzval, rowind, colptr); /* Allocate storage */
@@ -117,7 +53,7 @@ void
     asub = *rowind;
     xa   = *colptr;
 
-    if ( !(val = (@(type) *) SUPERLU_MALLOC(new_nonz * sizeof(double))) )
+    if ( !(val = (@(type) *) SUPERLU_MALLOC(new_nonz * sizeof(@(type)))) )
         ABORT("Malloc fails for val[]");
     if ( !(row = (int_t *) SUPERLU_MALLOC(new_nonz * sizeof(int_t))) )
         ABORT("Malloc fails for row[]");
@@ -126,7 +62,7 @@ void
 
     for (j = 0; j < *n; ++j) xa[j] = 0;
 
-    /* 4/ Read triplets of values */
+    /* Read into the triplet array from a file */
     for (nnz = 0, nz = 0; nnz < *nonz; ++nnz) {
 @precision DOUBLE
 #ifdef _LONGINT
@@ -167,23 +103,23 @@ void
 	    exit(-1);
 	} else {
 	    ++xa[col[nz]];
-            if(expand) {
-	        if ( row[nz] != col[nz] ) { /* Excluding diagonal */
-	          ++nz;
-	          row[nz] = col[nz-1];
-	          col[nz] = row[nz-1];
-	          val[nz] = val[nz-1];
-	          ++xa[col[nz]];
-	        }
-            }	
+#ifdef EXPAND_SYM
+	    if ( row[nz] != col[nz] ) { /* Excluding diagonal */
+	      ++nz;
+	      row[nz] = col[nz-1];
+	      col[nz] = row[nz-1];
+	      val[nz] = val[nz-1];
+	      ++xa[col[nz]];
+	    }
+#endif	
 	    ++nz;
 	}
     }
 
     *nonz = nz;
-    if(expand) {
-      printf("new_nonz after symmetric expansion:\t%d\n", *nonz);
-    }
+#ifdef EXPAND_SYM
+    printf("new_nonz after symmetric expansion:\t%d\n", *nonz);
+#endif
     
 
     /* Initialize the array of column pointers */
@@ -241,8 +177,9 @@ void @(pre)readrhs(int m, @(type) *b)
       /*fscanf(fp, "%d%lf\n", &j, &b[i]);*/
     /*        readpair_(j, &b[i]);*/
 @precision DCOMPLEX
-      fscanf(fp, "%lf%lf\n", &b[i].r, &b[i].i);
+      fscanf(fp, "%lf%lf\n", &(b[i].r), &(b[i].i));
 @precision !
+
     fclose(fp);
 }
 

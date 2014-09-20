@@ -81,8 +81,8 @@ p@(pre)laqgs(SuperMatrix *A, double *r, double *c,
     NRformat_loc *Astore;
     @(type) *Aval;
     int_t i, j, irow, jcol, m_loc;
-    double large, small, cj;
-    extern double dlamch_(char *);
+    double large, small;
+    /*extern double dlamch_(char *);*/
 @precision DCOMPLEX
     double temp;
 @precision !

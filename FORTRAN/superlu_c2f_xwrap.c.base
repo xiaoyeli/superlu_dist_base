@@ -214,6 +214,12 @@ void f_superlu_gridinit(int *Bcomm, int_t *nprow, int_t *npcol, fptr *grid)
    superlu_gridinit(f2c_comm(Bcomm), *nprow, *npcol, (gridinfo_t *) *grid);
 }
 
+void f_superlu_gridmap(int *Bcomm, int_t *nprow, int_t *npcol, int *usermap, int *ldumap,
+	 fptr *grid)
+{
+   superlu_gridmap(f2c_comm(Bcomm), *nprow, *npcol, usermap, *ldumap, (gridinfo_t *) *grid);
+}
+
 void f_superlu_gridexit(fptr *grid)
 {
    superlu_gridexit((gridinfo_t *) *grid);

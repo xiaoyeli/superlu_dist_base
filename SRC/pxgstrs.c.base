@@ -12,6 +12,63 @@
 
 #include "superlu_@(pre)defs.h"
 
+/*
+ * Sketch of the algorithm for L-solve:
+ * =======================
+ *
+ * Self-scheduling loop:
+ *
+ *   while ( not finished ) { .. use message counter to control
+ *
+ *      reveive a message;
+ * 	
+ * 	if ( message is Xk ) {
+ * 	    perform local block modifications into lsum[];
+ *                 lsum[i] -= L_i,k * X[k]
+ *          if all local updates done, Isend lsum[] to diagonal process;
+ *
+ *      } else if ( message is LSUM ) { .. this must be a diagonal process 
+ *          accumulate LSUM;
+ *          if ( all LSUM are received ) {
+ *              perform triangular solve for Xi;
+ *              Isend Xi down to the current process column;
+ *              perform local block modifications into lsum[];
+ *          }
+ *      }
+ *   }
+ *
+ * 
+ * Auxiliary data structures: lsum[] / ilsum (pointer to lsum array)
+ * =======================
+ *
+ * lsum[] array (local)
+ *   + lsum has "nrhs" columns, row-wise is partitioned by supernodes
+ *   + stored by row blocks, column wise storage within a row block
+ *   + prepend a header recording the global block number.
+ *
+ *         lsum[]                        ilsum[nsupers + 1]
+ *
+ *         -----
+ *         | | |  <- header of size 2     ---
+ *         --------- <--------------------| |
+ *         | | | | |			  ---
+ * 	   | | | | |	      |-----------| |		
+ *         | | | | | 	      |           ---
+ *	   ---------          |   |-------| |
+ *         | | |  <- header   |   |       ---
+ *         --------- <--------|   |  |----| |
+ *         | | | | |		  |  |    ---
+ * 	   | | | | |              |  |
+ *         | | | | |              |  |
+ *	   ---------              |  |
+ *         | | |  <- header       |  |
+ *         --------- <------------|  |
+ *         | | | | |                 |
+ * 	   | | | | |                 |
+ *         | | | | |                 |
+ *	   --------- <---------------|
+ */
+  
 /*#define ISEND_IRECV*/
 
 /*
@@ -385,7 +442,7 @@ p@(pre)ReDistribute_X_to_B(int_t n, @(type) *B, int_t m_loc, int_t ldb, int_t fs
  * nrhs   (input) int (global)
  *        Number of right-hand sides.
  * 
- * SOLVEstruct (output) SOLVEstruct_t* (global)
+ * SOLVEstruct (input) SOLVEstruct_t* (global)
  *        Contains the information for the communication during the
  *        solution phase.
  *

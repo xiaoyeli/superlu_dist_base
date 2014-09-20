@@ -56,7 +56,7 @@ void @(pre)lsum_fmod
  int_t *xsup,
  gridinfo_t *grid,
  LocalLU_t *Llu,
- MPI_Request send_req[],
+ MPI_Request send_req[], /* input/output */
  SuperLUStat_t *stat
 )
 {
@@ -242,7 +242,7 @@ void @(pre)lsum_bmod
  int_t  *xsup,
  gridinfo_t *grid,
  LocalLU_t *Llu,
- MPI_Request send_req[],
+ MPI_Request send_req[], /* input/output */
  SuperLUStat_t *stat
  )
 {

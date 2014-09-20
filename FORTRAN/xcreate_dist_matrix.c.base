@@ -65,7 +65,7 @@ int @(pre)create_dist_matrix(SuperMatrix *A, int_t m, int_t n, int_t nnz,
     iam = grid->iam;
 
 #if ( DEBUGlevel>=1 )
-    CHECK_MALLOC(iam, "Enter dcreate_dist_matrix()");
+    CHECK_MALLOC(iam, "Enter @(pre)create_dist_matrix()");
 #endif
  
     if ( !iam ) {
@@ -148,7 +148,7 @@ int @(pre)create_dist_matrix(SuperMatrix *A, int_t m, int_t n, int_t nnz,
     }
     nnz_loc = rowptr[m_loc];
 
-    nzval_loc = (@(type) *) doubleMalloc_dist(nnz_loc);
+    nzval_loc = (@(type) *) @(type)Malloc_dist(nnz_loc);
     colind = (int_t *) intMalloc_dist(nnz_loc);
 
     /* Transfer the matrix into the compressed row storage */

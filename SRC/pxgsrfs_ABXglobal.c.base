@@ -149,7 +149,7 @@ p@(pre)gsrfs_ABXglobal(int_t n, SuperMatrix *A, double anorm, LUstruct_t *LUstru
     /*-- Function prototypes --*/
     extern void p@(pre)gstrs1(int_t, LUstruct_t *, gridinfo_t *,
 			 @(type) *, int, SuperLUStat_t *, int *);
-    extern double dlamch_(char *);
+    /*extern double dlamch_(char *);*/
     
     /* Test the input parameters. */
     *info = 0;

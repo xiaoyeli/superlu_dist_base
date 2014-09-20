@@ -13,6 +13,11 @@ all: double dcomplex
 double:	\
 	$(TGTSRC)/superlu_ddefs.h \
 	$(TGTSRC)/pdgstrf.c \
+	$(TGTSRC)/pdgstrf2.c \
+	$(TGTSRC)/dscatter.c \
+	$(TGTSRC)/dlook_ahead_update.c \
+	$(TGTSRC)/dSchCompUdt-2Ddynamic.c \
+	$(TGTSRC)/dSchCompUdt-cuda.c \
 	$(TGTSRC)/pdgssvx_ABglobal.c \
 	$(TGTSRC)/pdgstrs_Bglobal.c \
 	$(TGTSRC)/pdgsrfs_ABXglobal.c \
@@ -30,12 +35,15 @@ double:	\
 	$(TGTSRC)/pdutil.c \
 	$(TGTSRC)/pdgsrfs.c \
 	$(TGTSRC)/pdgsmv.c \
-	$(TGTSRC)/dldperm.c \
+	$(TGTSRC)/dldperm_dist.c \
 	$(TGTSRC)/dutil.c \
 	$(TGTSRC)/dmyblas2.c \
 	$(TGTSRC)/dreadhb.c \
+	$(TGTSRC)/dreadrb.c \
 	$(TGTSRC)/dreadtriple.c \
+	$(TGTSRC)/dreadtriple_noheader.c \
 	$(TGTSRC)/dreadMM.c \
+	$(TGTSRC)/dmemory.c \
 	$(TGTEXM)/pddrive_ABglobal.c \
 	$(TGTEXM)/pddrive1_ABglobal.c \
 	$(TGTEXM)/pddrive2_ABglobal.c \
@@ -54,6 +62,16 @@ double:	\
 $(TGTSRC)/superlu_ddefs.h:	$(SRC)/superlu_xdefs.h.base
 	extract -b $? -o $@ precision=double
 $(TGTSRC)/pdgstrf.c:	$(SRC)/pxgstrf.c.base
+	extract -b $? -o $@ precision=double
+$(TGTSRC)/pdgstrf2.c:	$(SRC)/pxgstrf2.c.base
+	extract -b $? -o $@ precision=double
+$(TGTSRC)/dscatter.c:	$(SRC)/xscatter.c.base
+	extract -b $? -o $@ precision=double
+$(TGTSRC)/dlook_ahead_update.c:	$(SRC)/xlook_ahead_update.c.base
+	extract -b $? -o $@ precision=double
+$(TGTSRC)/dSchCompUdt-2Ddynamic.c:	$(SRC)/xSchCompUdt-2Ddynamic.c.base
+	extract -b $? -o $@ precision=double
+$(TGTSRC)/dSchCompUdt-cuda.c:	$(SRC)/xSchCompUdt-cuda.c.base
 	extract -b $? -o $@ precision=double
 $(TGTSRC)/pdgssvx_ABglobal.c:	$(SRC)/pxgssvx_ABglobal.c.base
 	extract -b $? -o $@ precision=double
@@ -89,7 +107,7 @@ $(TGTSRC)/pdgsrfs.c:	$(SRC)/pxgsrfs.c.base
 	extract -b $? -o $@ precision=double
 $(TGTSRC)/pdgsmv.c:	$(SRC)/pxgsmv.c.base
 	extract -b $? -o $@ precision=double
-$(TGTSRC)/dldperm.c:	$(SRC)/xldperm.c.base
+$(TGTSRC)/dldperm_dist.c: $(SRC)/xldperm_dist.c.base
 	extract -b $? -o $@ precision=double
 $(TGTSRC)/dutil.c:	$(SRC)/xutil.c.base
 	extract -b $? -o $@ precision=double
@@ -97,9 +115,15 @@ $(TGTSRC)/dmyblas2.c:	$(SRC)/xmyblas2.c.base
 	extract -b $? -o $@ precision=double
 $(TGTSRC)/dreadhb.c:	$(SRC)/xreadhb.c.base
 	extract -b $? -o $@ precision=double
+$(TGTSRC)/dreadrb.c:	$(SRC)/xreadrb.c.base
+	extract -b $? -o $@ precision=double
 $(TGTSRC)/dreadtriple.c:	$(SRC)/xreadtriple.c.base
 	extract -b $? -o $@ precision=double
+$(TGTSRC)/dreadtriple_noheader.c:	$(SRC)/xreadtriple_noheader.c.base
+	extract -b $? -o $@ precision=double
 $(TGTSRC)/dreadMM.c:	$(SRC)/xreadMM.c.base
+	extract -b $? -o $@ precision=double
+$(TGTSRC)/dmemory.c:	$(SRC)/xmemory.c.base
 	extract -b $? -o $@ precision=double
 $(TGTEXM)/pddrive_ABglobal.c:	$(EXM)/pxdrive_ABglobal.c.base
 	extract -b $? -o $@ precision=double
@@ -133,6 +157,11 @@ $(TGTF90)/dcreate_dist_matrix.c:	$(F90)/xcreate_dist_matrix.c.base
 dcomplex: \
 	$(TGTSRC)/superlu_zdefs.h \
 	$(TGTSRC)/pzgstrf.c \
+	$(TGTSRC)/pzgstrf2.c \
+	$(TGTSRC)/zscatter.c \
+	$(TGTSRC)/zlook_ahead_update.c \
+	$(TGTSRC)/zSchCompUdt-2Ddynamic.c \
+	$(TGTSRC)/zSchCompUdt-cuda.c \
 	$(TGTSRC)/pzgssvx_ABglobal.c \
 	$(TGTSRC)/pzgstrs_Bglobal.c \
 	$(TGTSRC)/pzgsrfs_ABXglobal.c \
@@ -150,12 +179,15 @@ dcomplex: \
 	$(TGTSRC)/pzutil.c \
 	$(TGTSRC)/pzgsrfs.c \
 	$(TGTSRC)/pzgsmv.c \
-	$(TGTSRC)/zldperm.c \
+	$(TGTSRC)/zldperm_dist.c \
 	$(TGTSRC)/zutil.c \
 	$(TGTSRC)/zmyblas2.c \
 	$(TGTSRC)/zreadhb.c \
+	$(TGTSRC)/zreadrb.c \
 	$(TGTSRC)/zreadtriple.c \
+	$(TGTSRC)/zreadtriple_noheader.c \
 	$(TGTSRC)/zreadMM.c \
+	$(TGTSRC)/zmemory.c \
 	$(TGTEXM)/pzdrive_ABglobal.c \
 	$(TGTEXM)/pzdrive1_ABglobal.c \
 	$(TGTEXM)/pzdrive2_ABglobal.c \
@@ -174,6 +206,16 @@ dcomplex: \
 $(TGTSRC)/superlu_zdefs.h:	$(SRC)/superlu_xdefs.h.base
 	extract -b $? -o $@ precision=dcomplex
 $(TGTSRC)/pzgstrf.c:	$(SRC)/pxgstrf.c.base
+	extract -b $? -o $@ precision=dcomplex
+$(TGTSRC)/pzgstrf2.c:	$(SRC)/pxgstrf2.c.base
+	extract -b $? -o $@ precision=dcomplex
+$(TGTSRC)/zscatter.c:	$(SRC)/xscatter.c.base
+	extract -b $? -o $@ precision=dcomplex
+$(TGTSRC)/zlook_ahead_update.c:	$(SRC)/xlook_ahead_update.c.base
+	extract -b $? -o $@ precision=dcomplex
+$(TGTSRC)/zSchCompUdt-2Ddynamic.c:	$(SRC)/xSchCompUdt-2Ddynamic.c.base
+	extract -b $? -o $@ precision=dcomplex
+$(TGTSRC)/zSchCompUdt-cuda.c:	$(SRC)/xSchCompUdt-cuda.c.base
 	extract -b $? -o $@ precision=dcomplex
 $(TGTSRC)/pzgssvx_ABglobal.c:	$(SRC)/pxgssvx_ABglobal.c.base
 	extract -b $? -o $@ precision=dcomplex
@@ -211,13 +253,19 @@ $(TGTSRC)/pzgsmv.c:	$(SRC)/pxgsmv.c.base
 	extract -b $? -o $@ precision=dcomplex
 $(TGTSRC)/zutil.c:	$(SRC)/xutil.c.base
 	extract -b $? -o $@ precision=dcomplex
-$(TGTSRC)/zldperm.c:	$(SRC)/xldperm.c.base
+$(TGTSRC)/zldperm_dist.c: $(SRC)/xldperm_dist.c.base
 	extract -b $? -o $@ precision=dcomplex
 $(TGTSRC)/zmyblas2.c:	$(SRC)/xmyblas2.c.base
 	extract -b $? -o $@ precision=dcomplex
 $(TGTSRC)/zreadhb.c:	$(SRC)/xreadhb.c.base
 	extract -b $? -o $@ precision=dcomplex
+$(TGTSRC)/zreadrb.c:	$(SRC)/xreadrb.c.base
+	extract -b $? -o $@ precision=dcomplex
 $(TGTSRC)/zreadtriple.c:	$(SRC)/xreadtriple.c.base
+	extract -b $? -o $@ precision=dcomplex
+$(TGTSRC)/zreadtriple_noheader.c:	$(SRC)/xreadtriple_noheader.c.base
+	extract -b $? -o $@ precision=dcomplex
+$(TGTSRC)/zmemory.c: $(SRC)/xmemory.c.base
 	extract -b $? -o $@ precision=dcomplex
 $(TGTSRC)/zreadMM.c:	$(SRC)/xreadMM.c.base
 	extract -b $? -o $@ precision=dcomplex
