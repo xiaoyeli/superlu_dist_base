@@ -1,7 +1,6 @@
 @extract -b Typedef.inc
-/************************************************************************/
 /*! @file 
- * \brief Performs panel LU
+ * \brief Performs panel LU factorization.
  *
  * <pre>
  * -- Distributed SuperLU routine (version 4.0) --

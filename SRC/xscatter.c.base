@@ -1,12 +1,11 @@
 @extract -b Typedef.inc
-/************************************************************************/
 /*! @file 
  * \brief Scatter the computed blocks into LU destination.
  *
  * <pre>
  * -- Distributed SuperLU routine (version 4.0) --
  * Lawrence Berkeley National Lab, Univ. of California Berkeley.
- * August 15, 2014
+ * October 1, 2014
  *
  */
 #include <math.h>
