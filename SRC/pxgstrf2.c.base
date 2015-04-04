@@ -61,7 +61,6 @@
  */
 
 #include <math.h>
-#include "omp.h" 
 #include "superlu_@(pre)defs.h"
 
 /* This pdgstrf2 is based on TRSM function */
@@ -334,8 +333,13 @@ void p@(pre)gstrs2_omp
     int_t *usub;
     @(type) *lusup, *uval;
 
+#ifdef _OPENMP
     int thread_id = omp_get_thread_num ();
     int num_thread = omp_get_num_threads ();
+#else
+    int thread_id = 0;
+    int num_thread = 1;
+#endif
 
     /* Quick return. */
     lk = LBi (k, grid);         /* Local block number */

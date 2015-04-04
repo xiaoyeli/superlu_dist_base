@@ -3,10 +3,10 @@
  * \brief C interface functions for the Fortran90 wrapper.
  *
  * <pre>
- * -- Distributed SuperLU routine (version 3.2) --
+ * -- Distributed SuperLU routine (version 4.1) --
  * Lawrence Berkeley National Lab, Univ. of California Berkeley.
  * October 2012
- *
+ * April 5, 2015
  */
 
 #include "superlu_@(pre)defs.h"
@@ -247,11 +247,15 @@ void f_PStatFree(fptr *stat)
 
 void f_LUstructInit(int_t *m, int_t *n, fptr *LUstruct)
 {
+   extern void LUstructInit(const int_t, LUstruct_t *);
+
    LUstructInit(*m, *n, (LUstruct_t *) *LUstruct);
 }
 
 void f_LUstructFree(fptr *LUstruct)
 {
+   extern void LUstructFree(LUstruct_t *);
+
    LUstructFree((LUstruct_t *) *LUstruct);
 }
 

@@ -78,12 +78,12 @@ while (j < nub && perm_u[2 * j] <= k0 + num_look_aheads)
     nbrow = lsub[1];
     if (myrow == krow) nbrow = lsub[1] - lsub[3]; /* skip diagonal block for those rows */
 // double ttx =SuperLU_timer_();
-    
+#ifdef _OPENMP
 #pragma omp parallel for \
                     private(lb,lptr,luptr,ib,tempv ) \
                     default(shared) schedule(dynamic)
+#endif
     for (lb = 0; lb < nlb; lb++) {
-        
         int temp_nbrow;
         int_t lptr = lptr0;
         int_t luptr = luptr0;
@@ -95,8 +95,11 @@ while (j < nub && perm_u[2 * j] <= k0 + num_look_aheads)
             luptr += temp_nbrow;
             
         }
-        
+#ifdef _OPENMP        
         int_t thread_id = omp_get_thread_num ();
+#else
+        int_t thread_id = 0;
+#endif
         @(type) * tempv = bigV + ldt*ldt*thread_id;
 
         int *indirect_thread = indirect + ldt * thread_id;

@@ -94,7 +94,6 @@
 
 #include <math.h>
 /*#include "mkl.h"*/
-#include "omp.h" 
 #include "superlu_@(pre)defs.h"
 
 #ifdef GPU_ACC
@@ -580,22 +579,24 @@ p@(pre)gstrf(superlu_options_t * options, int m, int n, double anorm,
     for (i = 0; i < nsupers; i++) factored[i] = factoredU[i] = -1;
     log_memory(2 * nsupers * iword, stat);
 
-    int num_threads;
+    int num_threads = 1;
+#ifdef _OPENMP
 #pragma omp parallel default(shared)
     {
         if (omp_get_thread_num () == 0) {
             num_threads = omp_get_num_threads ();
-#if 0
-            omp_loop_time = (double *) _mm_malloc (sizeof (double) * num_threads,64);
-#else
-            omp_loop_time = (double *) doubleMalloc_dist(num_threads);
-#endif
         }
     }
+#endif
 
-    if(!iam) printf(".. Starting with %d OpenMP threads \n", num_threads );
+#if 0
+    omp_loop_time = (double *) _mm_malloc (sizeof (double) * num_threads,64);
+#else
+    omp_loop_time = (double *) doubleMalloc_dist(num_threads);
+#endif
 
 #if ( PRNTlevel>=1 )
+    if(!iam) printf(".. Starting with %d OpenMP threads \n", num_threads );
     double tt1 = SuperLU_timer_ ();
 #endif
     nblocks = 0;
@@ -810,7 +811,10 @@ p@(pre)gstrf(superlu_options_t * options, int m, int n, double anorm,
     /* Note that in following expression 8 can be anything
        as long as its not too big */
     int bigu_size = 8 * sp_ienv_dist (3) * (max_row_size);
+
+#if ( PRNTlevel>=1 )
     if(!iam) printf("[%d] .. BIG U size %d \n", iam, bigu_size);
+#endif
 
 #ifdef GPU_ACC
 
@@ -820,14 +824,18 @@ p@(pre)gstrf(superlu_options_t * options, int m, int n, double anorm,
         ABORT("Malloc fails for @(pre)gemm buffer U ");
 
     int bigv_size = buffer_size;
+#if ( PRNTlevel>=1 )
     if (!iam) printf("[%d] .. BIG V size %d\n", iam, bigv_size);
+#endif
     @(type)* bigV;
     if ( checkCuda(cudaHostAlloc((void**)&bigV, bigv_size * sizeof(@(type)) ,cudaHostAllocDefault)) )
         ABORT("Malloc fails for @(pre)gemm buffer V");
  
     DisplayHeader();
 
+#if ( PRNTlevel>=1 )
     printf(" Starting with %d Cuda Streams \n",nstreams );
+#endif
 
     cublasHandle_t *handle;
     handle = (cublasHandle_t *) SUPERLU_MALLOC(sizeof(cublasHandle_t)*nstreams);
@@ -848,7 +856,7 @@ p@(pre)gstrf(superlu_options_t * options, int m, int n, double anorm,
     // for time being just making it 
     // cudaStat = cudaMalloc( (void**)&dA, ((max_row_size*sp_ienv_dist(3)))* sizeof(double));
 #endif
-    printf("Max supernode size is %d\n",sp_ienv_dist(3) );
+
     cudaStat = cudaMalloc( (void**)&dA, max_row_size*sp_ienv_dist(3)* sizeof(@(type)));
     if (cudaStat!= cudaSuccess) {
         fprintf(stderr, "!!!! Error in allocating A in the device %ld \n",m*k*sizeof(@(type)) );
@@ -880,7 +888,9 @@ p@(pre)gstrf(superlu_options_t * options, int m, int n, double anorm,
           //Maximum size of of bigU= sqrt(buffsize) ?
 
     int bigv_size = 8 * ldt * ldt * num_threads;
+#if ( PRNTlevel>=1 )
     if (!iam) printf("[%d] .. BIG V size %d\n", iam, bigv_size);
+#endif
     @(type) *bigV;
     if ( !(bigV = @(type)Malloc_dist(bigv_size)) )
         ABORT ("Malloc failed for @(pre)gemm buffer V");
@@ -891,11 +901,13 @@ p@(pre)gstrf(superlu_options_t * options, int m, int n, double anorm,
 
     // mlock(bigU,(bigu_size) * sizeof (double));   
 
+#if ( PRNTlevel>=1 )
     if(!iam) {
 	printf ("  Max row size is %d \n", max_row_size);
         printf ("  Using buffer_size of %d \n", buffer_size);
         printf ("  Threads per process %d \n", num_threads);
     }
+#endif
 
     if (!(tempv2d = @(type)Calloc_dist (2 * ((size_t) ldt) * ldt)))
         ABORT ("Calloc fails for tempv2d[].");
@@ -1211,7 +1223,9 @@ p@(pre)gstrf(superlu_options_t * options, int m, int n, double anorm,
                            U(k,j) = L(k,k) \ A(k,j).  */
                         /* double ttt2 = SuperLU_timer_(); */
                         double ttt2 = SuperLU_timer_();
+#ifdef _OPENMP
 #pragma omp parallel
+#endif
 			{
                             P@(PRE)GSTRS2 (kk0, kk, Glu_persist, grid, Llu,
                                       stat);
@@ -1364,7 +1378,9 @@ p@(pre)gstrf(superlu_options_t * options, int m, int n, double anorm,
                 /* Parallel triangular solve across process row *krow* --
                    U(k,j) = L(k,k) \ A(k,j).  */
                  double ttt2 = SuperLU_timer_(); 
+#ifdef _OPENMP
 #pragma omp parallel
+#endif
                 {
                     P@(PRE)GSTRS2 (k0, k, Glu_persist, grid, Llu, stat);
                 }
@@ -1619,6 +1635,7 @@ p@(pre)gstrf(superlu_options_t * options, int m, int n, double anorm,
     pdgstrfTimer= SuperLU_timer_()-pdgstrfTimer;
 
     /* updating total flops */
+#if ( PRNTlevel>=1 )
     if (!iam) {
         printf("Time in scattering %lf \n",scatter_timer );
         printf("Time in dgemm %lf \n", gemm_timer );
@@ -1627,6 +1644,7 @@ p@(pre)gstrf(superlu_options_t * options, int m, int n, double anorm,
         printf("Time (other GEMM and Scatter)          \t\t: %5.2lf seconds, \n", pdgstrfTimer-schur_flop_timer);
         printf("Total time spent in schur update when offload    \t\t: %5.2lf seconds,\n",CPUOffloadTimer );
     }
+#endif
     
 #if ( DEBUGlevel>=2 )
     for (i = 0; i < Pr * Pc; ++i) {

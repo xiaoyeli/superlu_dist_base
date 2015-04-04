@@ -69,8 +69,10 @@ if ( msg0 && msg2 ) {  /* L(:,k) and U(k,:) are not empty. */
         // #pragma omp barrier 
         while ( jjj < nub ) {
             jjj_st=jjj;
+#ifdef _OPENMP
 #pragma omp single
-            {   
+#endif
+            {
                 ldu = blk_ldu[jjj_st];
                 for (j = jjj_st; j < nub ; ++j) {
                     
@@ -118,7 +120,9 @@ if ( msg0 && msg2 ) {  /* L(:,k) and U(k,:) are not empty. */
             assert(jjj_st<nub);
             assert(jjj-1<nub);
             // TAU_STATIC_TIMER_START("GATHER_U");
-#pragma omp for schedule( SCHEDULE_STRATEGY ) 
+#ifdef _OPENMP
+#pragma omp for schedule( SCHEDULE_STRATEGY )
+#endif
             for (j = jjj_st; j < jjj; ++j) {
                 if (j==jjj_st) tempu = bigU;
                 else tempu = bigU + ldu*full_u_cols[j-1];
@@ -245,6 +249,7 @@ if ( msg0 && msg2 ) {  /* L(:,k) and U(k,:) are not empty. */
             /* scatter first blocks which cpu has computated*/
             tstart = SuperLU_timer_();
 
+#ifdef _OPENMP
 #pragma omp parallel  \
     private(j,iukp,rukp, tempu, tempv, cum_nrow, jb, nsupc,ljb,	\
 	    segsize,lead_zero,					\
@@ -252,6 +257,7 @@ if ( msg0 && msg2 ) {  /* L(:,k) and U(k,:) are not empty. */
 	    ijb,fnz,ucol,rel,ldv,lptrj,luptrj,			\
 	    nzval,     lb ,                     jj, i)		\
     firstprivate(luptr,lptr) default (shared)
+#endif
             {
                 int thread_id = omp_get_thread_num();
         
@@ -282,7 +288,9 @@ if ( msg0 && msg2 ) {  /* L(:,k) and U(k,:) are not empty. */
                         lptr = lptr0;
                         luptr = luptr0;
 
-#pragma omp for schedule( SCHEDULE_STRATEGY ) nowait 
+#ifdef _OPENMP
+#pragma omp for schedule( SCHEDULE_STRATEGY ) nowait
+#endif
                         for (lb = 0; lb < nlb; lb++ ) {
                             int cum_nrow = 0;
                             int temp_nbrow;
@@ -348,7 +356,9 @@ if ( msg0 && msg2 ) {  /* L(:,k) and U(k,:) are not empty. */
 
                     // TAU_STATIC_TIMER_STOP("SPECIAL_CPU_SCATTER");
                 } else {
-#pragma omp for schedule(SCHEDULE_STRATEGY) nowait 
+#ifdef _OPENMP
+#pragma omp for schedule(SCHEDULE_STRATEGY) nowait
+#endif
                     for (j = jjj_st; j < jjj_st+ncpu_blks; ++j) {
                         /* code */
                         #ifdef PI_DEBUG
@@ -427,7 +437,7 @@ if ( msg0 && msg2 ) {  /* L(:,k) and U(k,:) are not empty. */
 	    }         /* parallel region */
 
 	    scatter_timer += SuperLU_timer_() - tstart; 
-
+#ifdef _OPENMP
 #pragma omp parallel							\
     private(j,iukp,rukp, tempu, tempv, cum_nrow, jb, nsupc,ljb,		\
 	    segsize,lead_zero,						\
@@ -435,7 +445,8 @@ if ( msg0 && msg2 ) {  /* L(:,k) and U(k,:) are not empty. */
 	    ijb,fnz,ucol,rel,ldv,lptrj,luptrj,				\
 	    nzval,     lb ,                     jj, i)			\
     firstprivate(luptr,lptr) default (shared)
-            {   
+#endif
+            {
                 int thread_id = omp_get_thread_num();
         
                 int* indirect_thread = indirect + ldt*thread_id;

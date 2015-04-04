@@ -100,8 +100,9 @@ if ( msg0 && msg2 ) {  /* L(:,k) and U(k,:) are not empty. */
      }
 
      int LDRemain_LBuff = Remain_info[RemainBlk-1].FullRow;
-
+#ifdef _OPENMP
 #pragma omp parallel for 
+#endif
      for (int i = 0; i < RemainBlk; ++i) {
 	 int StRowDest  = 0;
 	 int temp_nbrow;
@@ -177,10 +178,12 @@ if ( msg0 && msg2 ) {  /* L(:,k) and U(k,:) are not empty. */
 	 }
             
 	 tempu = bigU;
-        
+
+#ifdef _OPENMP        
 #pragma omp parallel for private(j,iukp,rukp,tempu, jb, nsupc,ljb,segsize,\
 	lead_zero, jj, i) \
         default (shared) schedule(SCHEDULE_STRATEGY)
+#endif
         for (j = jj0; j < nub; ++j) {
 
             if(j==jj0) tempu = bigU;
@@ -226,14 +229,20 @@ if ( msg0 && msg2 ) {  /* L(:,k) and U(k,:) are not empty. */
 
         tt_start = SuperLU_timer_();
 
+#ifdef _OPENMP
 #pragma omp parallel for default (shared) \
     private (j,i,lb,rukp,iukp,jb,nsupc,ljb,lptr,ib,temp_nbrow,cum_nrow)	\
     schedule(dynamic)
+#endif
         for (int ij = 0; ij < lookAheadBlk*(nub-jj0); ++ij) {
             int j   = ij/lookAheadBlk + jj0; 
             int lb  = ij%lookAheadBlk;
-            
+
+#ifdef _OPENMP            
             int thread_id = omp_get_thread_num();
+#else
+            int thread_id = 0;
+#endif
             int* indirect_thread    = indirect + ldt*thread_id;
             int* indirect2_thread   = indirect2 + ldt*thread_id;
             @(type)* tempv1 = bigV + thread_id*ldt*ldt; 
@@ -310,14 +319,20 @@ if ( msg0 && msg2 ) {  /* L(:,k) and U(k,:) are not empty. */
 
     tt_start = SuperLU_timer_();
 
+#ifdef _OPENMP
 #pragma omp parallel for default (shared) \
     private (j,i,lb,rukp,iukp,jb,nsupc,ljb,lptr,ib,temp_nbrow,cum_nrow)	\
     schedule(dynamic)
+#endif
     for (int ij = 0; ij < RemainBlk*(jj_cpu-jj0); ++ij) {
 	int j   = ij / RemainBlk + jj0; 
 	int lb  = ij % RemainBlk;
-            
+
+#ifdef _OPENMP            
 	int thread_id = omp_get_thread_num();
+#else
+	int thread_id = 0;
+#endif
 	int* indirect_thread = indirect + ldt*thread_id;
 	int* indirect2_thread = indirect2 + ldt*thread_id;
 	@(type)* tempv1 = bigV + thread_id*ldt*ldt; 

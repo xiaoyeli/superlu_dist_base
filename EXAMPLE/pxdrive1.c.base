@@ -3,9 +3,10 @@
  * \brief Driver program for P@(PRE)GSSVX example
  *
  * <pre>
- * -- Distributed SuperLU routine (version 2.0) --
+ * -- Distributed SuperLU routine (version 4.1) --
  * Lawrence Berkeley National Lab, Univ. of California Berkeley.
  * March 15, 2003
+ * April 5, 2015
  * </pre>
  */
 
@@ -47,6 +48,11 @@ int main(int argc, char *argv[])
     int    iam, info, ldb, ldx, nrhs;
     char     **cpp, c;
     FILE *fp, *fopen();
+
+    /* prototypes */
+    extern void LUstructInit(const int_t, LUstruct_t *);
+    extern void LUstructFree(LUstruct_t *);
+    extern void Destroy_LU(int_t, gridinfo_t *, LUstruct_t *);
 
     nprow = 1;  /* Default process rows.      */
     npcol = 1;  /* Default process columns.   */

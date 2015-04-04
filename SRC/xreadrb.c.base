@@ -210,7 +210,7 @@ static int @(pre)ReadValues(FILE *fp, int n, @(type) *destination, int perline, 
  * </pre>
  */
 static void
-FormFullA(int_t n, int_t *nonz, @(type) **nzval, int **rowind, int **colptr)
+FormFullA(int_t n, int_t *nonz, @(type) **nzval, int_t **rowind, int_t **colptr)
 {
     register int_t i, j, k, col, new_nnz;
     int_t *t_rowind, *t_colptr, *al_rowind, *al_colptr, *a_rowind, *a_colptr;
@@ -305,7 +305,7 @@ FormFullA(int_t n, int_t *nonz, @(type) **nzval, int **rowind, int **colptr)
 
 void
 @(pre)readrb_dist(FILE *fp, int_t *nrow, int_t *ncol, int_t *nonz,
-        @(type) **nzval, int **rowind, int **colptr)
+        @(type) **nzval, int_t **rowind, int_t **colptr)
 {
     register int_t i, numer_lines = 0;
     int_t tmp, colnum, colsize, rownum, rowsize, valnum, valsize;

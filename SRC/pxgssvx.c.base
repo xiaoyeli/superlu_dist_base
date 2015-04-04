@@ -3,11 +3,12 @@
  * \brief Solves a system of linear equations A*X=B
  *
  * <pre>
- * -- Distributed SuperLU routine (version 4.0) --
+ * -- Distributed SuperLU routine (version 4.1) --
  * Lawrence Berkeley National Lab, Univ. of California Berkeley.
  * November 1, 2007
  * October 22, 2012
  * October  1, 2014
+ * April 5, 2015
  * </pre>
  */
 
@@ -529,6 +530,12 @@ p@(pre)gssvx(superlu_options_t *options, SuperMatrix *A,
 #if ( PRNTlevel>= 2 )
     double   dmin, dsum, dprod;
 #endif
+
+    /* prototypes */
+    extern int_t pxgstrs_init(int_t, int_t, int_t, int_t,
+	                      int_t [], int_t [], gridinfo_t *grid,
+	                      Glu_persist_t *, SOLVEstruct_t *);
+    extern void pxgstrs_finalize(pxgstrs_comm_t *);
 
     /* Structures needed for parallel symbolic factorization */
     int_t *sizes, *fstVtxSep, parSymbFact;
