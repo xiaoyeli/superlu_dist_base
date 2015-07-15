@@ -327,7 +327,7 @@ extern void  @(pre)readhb_dist (int, FILE *, int_t *, int_t *, int_t *,
 			   @(type) **, int_t **, int_t **);
 extern void  @(pre)readtriple(FILE *, int_t *, int_t *, int_t *,
 			 @(type) **, int_t **, int_t **);
-extern void  @(pre)readrb_dist(FILE *, int_t *, int_t *, int_t *,
+extern void  @(pre)readrb_dist(int, FILE *, int_t *, int_t *, int_t *,
 		     @(type) **, int_t **, int_t **);
 
 /* Distribute the data for numerical factorization */

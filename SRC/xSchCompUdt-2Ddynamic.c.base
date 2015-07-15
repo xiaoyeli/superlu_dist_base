@@ -75,7 +75,11 @@ if ( msg0 && msg2 ) {  /* L(:,k) and U(k,:) are not empty. */
      luptr = luptr0;
 
      /* leading dimension of L buffer */
-     int LDlookAhead_LBuff = lookAheadFullRow[lookAheadBlk-1];
+#if 0
+     int LDlookAhead_LBuff = lookAheadFullRow[lookAheadBlk-1]; /* may go negative.*/
+#else /* Piyush fix */
+     int LDlookAhead_LBuff = lookAheadBlk==0? 0 :lookAheadFullRow[lookAheadBlk-1];
+#endif
 
      /* #pragma omp parallel for  */
      for (int i = 0; i < lookAheadBlk; ++i) {
@@ -99,7 +103,7 @@ if ( msg0 && msg2 ) {  /* L(:,k) and U(k,:) are not empty. */
 	 }
      }
 
-     int LDRemain_LBuff = Remain_info[RemainBlk-1].FullRow;
+     int LDRemain_LBuff = RemainBlk==0 ? 0 : Remain_info[RemainBlk-1].FullRow;
 #ifdef _OPENMP
 #pragma omp parallel for 
 #endif
@@ -128,16 +132,25 @@ if ( msg0 && msg2 ) {  /* L(:,k) and U(k,:) are not empty. */
      tt_end = SuperLU_timer_();
 
      LookAheadRowSepTimer += tt_end-tt_start;
+#if 0
      LookAheadRowSepMOP  +=  2*knsupc*(lookAheadFullRow[lookAheadBlk-1]+Remain_info[RemainBlk-1].FullRow );
-     
+#else
+     int_t lnbrow, rnbrow;
+     lnbrow = lookAheadBlk==0 ? 0  : lookAheadFullRow[lookAheadBlk-1];
+     rnbrow = RemainBlk==0 ? 0 : Remain_info[RemainBlk-1].FullRow;
+     nbrow = lnbrow + rnbrow;
+     LookAheadRowSepMOP += 2*knsupc*(nbrow);
+#endif     
      ldu   =0;
      full  =1;
      
      /*updating lookahead rows */
      
      tt_start = SuperLU_timer_();
-     
+#if 0     
      nbrow = lookAheadFullRow[lookAheadBlk-1]+Remain_info[RemainBlk-1].FullRow;
+#endif
+
      if ( nbrow>0 ) {
 	 /*
 	  *   counting U blocks
@@ -217,8 +230,8 @@ if ( msg0 && msg2 ) {  /* L(:,k) and U(k,:) are not empty. */
     GatherTimer += tt_end-tt_start;
     GatherMOP += 2*ldu*ncols;
 
-    int Lnbrow   = lookAheadFullRow[lookAheadBlk-1];
-    int Rnbrow   = Remain_info[RemainBlk-1].FullRow;
+    int Lnbrow   = lookAheadBlk==0 ? 0 :lookAheadFullRow[lookAheadBlk-1];
+    int Rnbrow   = RemainBlk==0 ? 0 : Remain_info[RemainBlk-1].FullRow;
     int jj_cpu=nub;       /*limit between CPU and GPU */
     tempv = bigV;
 
@@ -312,8 +325,9 @@ if ( msg0 && msg2 ) {  /* L(:,k) and U(k,:) are not empty. */
     /***************************************************************
      *   Updating remaining rows and column on CPU
      ***************************************************************/
-    Rnbrow  = Remain_info[RemainBlk-1].FullRow;
-    ncols   = Ublock_info[jj_cpu-1].full_u_cols;
+    Rnbrow  = RemainBlk==0 ? 0 : Remain_info[RemainBlk-1].FullRow;
+    ncols   = jj_cpu==0 ? 0 : Ublock_info[jj_cpu-1].full_u_cols;
+
     schur_flop_counter  += 2 * (double)Rnbrow * (double)ldu * (double)ncols;
     stat->ops[FACT]     += 2 * (double)Rnbrow * (double)ldu * (double)ncols;
 

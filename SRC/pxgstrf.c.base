@@ -212,17 +212,6 @@ get_num_cuda_streams ()
         return 8;
 }
 
-int_t
-get_mnk_dgemm ()
-{
-    char *ttemp;
-    ttemp = getenv ("N_GEMM");
-    if (ttemp)
-        return atoi (ttemp);
-    else
-        return 10000;
-}
-
 /*int omp_get_num_threads (void);
   int omp_get_thread_num (void);*/
 
