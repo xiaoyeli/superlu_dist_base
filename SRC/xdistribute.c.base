@@ -292,7 +292,8 @@ float
 	xusub = Glu_freeable->xusub;
     
 	if ( !(ToRecv = SUPERLU_MALLOC(nsupers * sizeof(int))) )
-	    ABORT("Calloc fails for ToRecv[].");
+	    ABORT("Malloc fails for ToRecv[].");
+	for (i = 0; i < nsupers; ++i) ToRecv[i] = 0;
 
 	k = CEILING( nsupers, grid->npcol );/* Number of local column blocks */
 	if ( !(ToSendR = (int **) SUPERLU_MALLOC(k*sizeof(int*))) )
@@ -626,7 +627,7 @@ float
 			ABORT("Malloc fails for index[]");
 		    Lrowind_bc_ptr[ljb] = index;
 		    if (!(Lnzval_bc_ptr[ljb] = @(type)Malloc_dist(((size_t)len)*nsupc))) {
-			fprintf(stderr, "col block %d ", jb);
+			fprintf(stderr, "col block " IFMT " ", jb);
 			ABORT("Malloc fails for Lnzval_bc_ptr[*][]");
 		    }
 		    mybufmax[0] = SUPERLU_MAX( mybufmax[0], len1 );
@@ -703,7 +704,7 @@ float
 	Llu->ldalsum = ldaspa;
 	
 #if ( PRNTlevel>=1 )
-	if ( !iam ) printf(".. # L blocks %d\t# U blocks %d\n",
+	if ( !iam ) printf(".. # L blocks " IFMT "\t# U blocks " IFMT "\n",
 			   nLblocks, nUblocks);
 #endif
 

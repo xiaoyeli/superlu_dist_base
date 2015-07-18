@@ -616,7 +616,7 @@ dist_symbLU (int_t n, Pslu_freeable_t *Pslu_freeable,
       while (i < k + nnzToRecv[p]) {
 	gb = rcv_luind[i];
 	if (gb >= nsupers)
-	  printf ("Pe[%d] p %d gb %d nsupers %d i %d i-k %d\n",
+	  printf ("Pe[%d] p %d gb " IFMT " nsupers " IFMT " i " IFMT " i-k " IFMT "\n",
 		  iam, p, gb, nsupers, i, i-k);
 	i += 2;
 	if (sendL) gb_l = LBj( gb, grid );
@@ -1486,14 +1486,14 @@ float
 	    printf ("ERR7\n");
 	  jcol = asup_colind[i];
 	  if (jcol >= n)
-	    printf ("Pe[%d] ERR distsn jb %d gb %d j %d jcol %d\n",
+	    printf ("Pe[%d] ERR distsn jb " IFMT " gb " IFMT " j " IFMT " jcol %d\n",
 		    iam, jb, gb, j, jcol);
 	  gb = BlockNum( jcol );
 	  lb = LBj( gb, grid );
 	  if (gb >= nsupers || lb >= nsupers_j) printf ("ERR8\n");
 	  jcol = ilsum_j[lb] + jcol - FstBlockC( gb );
 	  if (jcol >= ldaspa_j)
-	    printf ("Pe[%d] ERR1 jb %d gb %d j %d jcol %d\n",
+	    printf ("Pe[%d] ERR1 jb " IFMT " gb " IFMT " j " IFMT " jcol %d\n",
 		    iam, jb, gb, j, jcol);
 	  dense_col[jcol] = asup_val[i];
 	}
@@ -1722,7 +1722,7 @@ float
 	Lrowind_bc_ptr[ljb_j] = index;
 	if (!(Lnzval_bc_ptr[ljb_j] = 
 	      @(type)Malloc_dist(len*nsupc))) {
-	  fprintf(stderr, "Malloc fails for Lnzval_bc_ptr[*][] col block %d ", jb);
+	  fprintf(stderr, "Malloc fails for Lnzval_bc_ptr[*][] col block " IFMT, jb);
 	  return (memDist + memNLU);
 	}
 	memNLU += len1*iword + len*nsupc*dword;
@@ -1939,7 +1939,7 @@ float
   Llu->ldalsum = ldaspa;
   LUstruct->Glu_persist = Glu_persist;	
 #if ( PRNTlevel>=1 )
-  if ( !iam ) printf(".. # L blocks %d\t# U blocks %d\n",
+  if ( !iam ) printf(".. # L blocks " IFMT "\t# U blocks " IFMT "\n",
 		     nLblocks, nUblocks);
 #endif
   

@@ -75,8 +75,8 @@ int main(int argc, char *argv[])
 	    switch (c) {
 	      case 'h':
 		  printf("Options:\n");
-		  printf("\t-r <int>: process rows    (default %d)\n", nprow);
-		  printf("\t-c <int>: process columns (default %d)\n", npcol);
+		  printf("\t-r <int>: process rows    (default %4d)\n", nprow);
+		  printf("\t-c <int>: process columns (default %4d)\n", npcol);
 		  exit(0);
 		  break;
 	      case 'r': nprow = atoi(*cpp);
@@ -102,7 +102,7 @@ int main(int argc, char *argv[])
     if ( iam >= nprow * npcol )	goto out;
     if ( !iam ) {
 	printf("Input matrix file: %s\n", *cpp);
-        printf("\tProcess grid\t%d X %d\n", grid.nprow, grid.npcol);
+        printf("\tProcess grid\t%d X %d\n", (int) grid.nprow, (int) grid.npcol);
     }
     
 #if ( DEBUGlevel>=1 )

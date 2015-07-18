@@ -266,6 +266,7 @@ extern void @(pre)ldperm_dist(int_t, int_t, int_t, int_t [], int_t [],
 extern int  static_schedule(superlu_options_t *, int, int, 
 		            LUstruct_t *, gridinfo_t *, SuperLUStat_t *,
 			    int_t *, int_t *, int *);
+extern void   Destroy_LU(int_t, gridinfo_t *, LUstruct_t *);
 
 /* #define GPU_PROF
 #define IPM_PROF */
@@ -329,6 +330,8 @@ extern void  @(pre)readtriple(FILE *, int_t *, int_t *, int_t *,
 			 @(type) **, int_t **, int_t **);
 extern void  @(pre)readrb_dist(int, FILE *, int_t *, int_t *, int_t *,
 		     @(type) **, int_t **, int_t **);
+extern void  @(pre)readMM(FILE *, int_t *, int_t *, int_t *,
+	                  @(type) **, int_t **, int_t **);
 
 /* Distribute the data for numerical factorization */
 extern float @(pre)dist_psymbtonum(fact_t, int_t, SuperMatrix *,

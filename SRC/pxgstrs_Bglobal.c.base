@@ -111,12 +111,12 @@ p@(pre)gstrs_Bglobal(int_t n, LUstruct_t *LUstruct, gridinfo_t *grid,
     int_t  *Urbs, *Urbs1; /* Number of row blocks in each block column of U. */
     Ucb_indptr_t **Ucb_indptr;/* Vertical linked list pointing to Uindex[] */
     int_t  **Ucb_valptr;      /* Vertical linked list pointing to Unzval[] */
-    int_t  iam, kcol, krow, mycol, myrow;
+    int_t  kcol, krow, mycol, myrow;
     int_t  i, ii, il, j, jj, k, lb, ljb, lk, lptr, luptr;
     int_t  nb, nlb, nub, nsupers;
     int_t  *xsup, *lsub, *usub;
     int_t  *ilsum;    /* Starting position of each supernode in lsum (LOCAL)*/
-    int_t  Pc, Pr;
+    int    Pc, Pr, iam;
     int    knsupc, nsupr;
     int    ldalsum;   /* Number of lsum entries locally owned. */
     int    maxrecvsz, p, pi;

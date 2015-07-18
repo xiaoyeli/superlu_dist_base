@@ -76,9 +76,9 @@ p@(pre)gstrf2_trsm
     int incx = 1, incy = 1;
 
     int nsupr;                  /* number of rows in the block (LDA) */
+    int nsupc;                /* number of columns in the block */
     int luptr;
     int_t i, myrow, krow, j, jfst, jlst, u_diag_cnt;
-    int_t nsupc;                /* number of columns in the block */
     int_t *xsup = Glu_persist->xsup;
     @(type) *lusup, temp;
     @(type) *ujrow, *ublk_ptr;   /* pointer to the U block */
@@ -324,9 +324,9 @@ void p@(pre)gstrs2_omp
 #endif
     int iam, pkk;
     int incx = 1;
-    int nsupr;                  /* number of rows in the block L(:,k) (LDA) */
+    int nsupr;                /* number of rows in the block L(:,k) (LDA) */
     int segsize;
-    int_t nsupc;                /* number of columns in the block */
+    int nsupc;                /* number of columns in the block */
     int_t luptr, iukp, rukp;
     int_t b, gb, j, klst, knsupc, lk, nb;
     int_t *xsup = Glu_persist->xsup;

@@ -158,10 +158,10 @@ void
 	if (row[nz] < 0 || row[nz] >= *m || col[nz] < 0 || col[nz] >= *n
 	    /*|| val[nz] == 0.*/) {
 @precision DOUBLE
-	    fprintf(stderr, "nz %d, (%d, %d) = %e out of bound, removed\n", 
+	    fprintf(stderr, "nz " IFMT ", (" IFMT ", " IFMT ") = %e out of bound, removed\n", 
 		    nz, row[nz], col[nz], val[nz]);
 @precision DCOMPLEX
-	    fprintf(stderr, "nz %d, (%d, %d) = {%e\t%e} out of bound, removed\n", 
+	    fprintf(stderr, "nz " IFMT ", (" IFMT ", " IFMT ") = {%e\t%e} out of bound, removed\n", 
 		    nz, row[nz], col[nz], val[nz].r, val[nz].i);
 @precision !
 	    exit(-1);
@@ -182,7 +182,7 @@ void
 
     *nonz = nz;
     if(expand) {
-      printf("new_nonz after symmetric expansion:\t%d\n", *nonz);
+      printf("new_nonz after symmetric expansion:\t" IFMT "\n", *nonz);
     }
     
 

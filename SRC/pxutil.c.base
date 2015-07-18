@@ -267,7 +267,7 @@ int p@(pre)CompRow_loc_to_CompCol_global
     SUPERLU_FREE(rowind_recv);
     if ( need_value) SUPERLU_FREE(a_recv);
 #if ( DEBUGlevel>=1 )
-    if ( !grid->iam ) printf("sizeof(NCformat) %d\n", sizeof(NCformat));
+    if ( !grid->iam ) printf("sizeof(NCformat) %lu\n", sizeof(NCformat));
     CHECK_MALLOC(grid->iam, "Exit p@(pre)CompRow_loc_to_CompCol_global");
 #endif
     return 0;

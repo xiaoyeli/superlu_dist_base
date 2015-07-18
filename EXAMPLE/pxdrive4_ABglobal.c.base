@@ -138,7 +138,7 @@ int main(int argc, char *argv[])
 	    @(pre)readhb_dist(iam, fp, &m, &n, &nnz, &a, &asub, &xa);
 	
 	    printf("\tDimension\t%dx%d\t # nonzeros %d\n", m, n, nnz);
-	    printf("\tProcess grid\t%d X %d\n", grid1.nprow, grid1.npcol);
+	    printf("\tProcess grid\t%d X %d\n", (int) grid1.nprow, (int) grid1.npcol);
 
 	    /* Broadcast matrix A to the other PEs. */
 	    MPI_Bcast( &m,   1,   mpi_int_t,  0, grid1.comm );
@@ -244,7 +244,7 @@ int main(int argc, char *argv[])
 	    @(pre)readhb_dist(iam, fp, &m, &n, &nnz, &a, &asub, &xa);
 	
 	    printf("\tDimension\t%dx%d\t # nonzeros %d\n", m, n, nnz);
-	    printf("\tProcess grid\t%d X %d\n", grid2.nprow, grid2.npcol);
+	    printf("\tProcess grid\t%d X %d\n", (int) grid2.nprow, (int) grid2.npcol);
 
 	    /* Broadcast matrix A to the other PEs. */
 	    MPI_Bcast( &m,   1,   mpi_int_t,  0, grid2.comm );

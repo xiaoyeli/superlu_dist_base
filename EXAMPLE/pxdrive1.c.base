@@ -98,7 +98,7 @@ int main(int argc, char *argv[])
     if ( iam >= nprow * npcol )	goto out;
     if ( !iam ) {
 	printf("Input matrix file: %s\n", *cpp);
-        printf("\tProcess grid\t%d X %d\n", grid.nprow, grid.npcol);
+        printf("\tProcess grid\t%d X %d\n", (int)grid.nprow, (int)grid.npcol);
     }
 
 #if ( VAMPIR>=1 )

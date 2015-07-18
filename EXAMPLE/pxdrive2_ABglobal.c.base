@@ -119,7 +119,7 @@ int main(int argc, char *argv[])
 	
 	printf("Input matrix file: %s\n", *cpp);
 	printf("\tDimension\t%dx%d\t # nonzeros %d\n", m, n, nnz);
-	printf("\tProcess grid\t%d X %d\n", grid.nprow, grid.npcol);
+	printf("\tProcess grid\t%d X %d\n", (int) grid.nprow, (int) grid.npcol);
 
 	/* Broadcast matrix A to the other PEs. */
 	MPI_Bcast( &m,   1,   mpi_int_t,  0, grid.comm );

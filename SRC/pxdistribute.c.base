@@ -601,8 +601,9 @@ p@(pre)distribute(fact_t fact, int_t n, SuperMatrix *A,
 	usub = Glu_freeable->usub;    /* compressed U subscripts */
 	xusub = Glu_freeable->xusub;
     
-	if ( !(ToRecv = intCalloc_dist(nsupers)) )
-	    ABORT("Calloc fails for ToRecv[].");
+	if ( !(ToRecv = (int *) SUPERLU_MALLOC(nsupers * sizeof(int))) )
+	    ABORT("Malloc fails for ToRecv[].");
+	for (i = 0; i < nsupers; ++i) ToRecv[i] = 0;
 
 	k = CEILING( nsupers, grid->npcol );/* Number of local column blocks */
 	if ( !(ToSendR = (int **) SUPERLU_MALLOC(k*sizeof(int*))) )
@@ -942,7 +943,7 @@ p@(pre)distribute(fact_t fact, int_t n, SuperMatrix *A,
 		    Lrowind_bc_ptr[ljb] = index;
 		    if (!(Lnzval_bc_ptr[ljb] = 
                          @(type)Malloc_dist(len*nsupc))) {
-			fprintf(stderr, "col block %d ", jb);
+			fprintf(stderr, "col block " IFMT " ", jb);
 			ABORT("Malloc fails for Lnzval_bc_ptr[*][]");
 		    }
 		    mybufmax[0] = SUPERLU_MAX( mybufmax[0], len1 );
@@ -1015,7 +1016,7 @@ p@(pre)distribute(fact_t fact, int_t n, SuperMatrix *A,
 	Llu->ldalsum = ldaspa;
 	
 #if ( PRNTlevel>=1 )
-	if ( !iam ) printf(".. # L blocks %d\t# U blocks %d\n",
+	if ( !iam ) printf(".. # L blocks " IFMT "\t# U blocks " IFMT "\n",
 			   nLblocks, nUblocks);
 #endif
 

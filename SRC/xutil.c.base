@@ -217,8 +217,8 @@ int file_@(pre)Print_CompRowLoc_Matrix_dist(FILE *fp, SuperMatrix *A)
     nnz_loc = Astore->nnz_loc; m_loc = Astore->m_loc;
     fprintf(fp, "nnz_loc %ld, m_loc %ld, fst_row %ld\n", (long int) nnz_loc,
             (long int) m_loc, (long int) Astore->fst_row);
-    file_PrintLong10(fp, "rowptr", m_loc+1, Astore->rowptr);
-    file_PrintLong10(fp, "colind", nnz_loc, Astore->colind);
+    file_PrintInt10(fp, "rowptr", m_loc+1, Astore->rowptr);
+    file_PrintInt10(fp, "colind", nnz_loc, Astore->colind);
     if ( (dp = (@(type) *) Astore->nzval) != NULL )
 @precision DOUBLE
         file_PrintDouble5(fp, "nzval", nnz_loc, dp);
@@ -406,7 +406,7 @@ void PrintDoublecomplex(char *name, int_t len, doublecomplex *x)
     
     printf("%10s:\tReal\tImag\n", name);
     for (i = 0; i < len; ++i)
-	printf("\t%d\t%.4f\t%.4f\n", i, x[i].r, x[i].i);
+	printf("\t" IFMT "\t%.4f\t%.4f\n", i, x[i].r, x[i].i);
 }
 
 int file_PrintDoublecomplex(FILE *fp, char *name, int_t len, doublecomplex *x)
@@ -415,7 +415,7 @@ int file_PrintDoublecomplex(FILE *fp, char *name, int_t len, doublecomplex *x)
     
     fprintf(fp, "%10s:\tReal\tImag\n", name);
     for (i = 0; i < len; ++i)
-	fprintf(fp, "\t%d\t%.4f\t%.4f\n", i, x[i].r, x[i].i);
+	fprintf(fp, "\t" IFMT "\t%.4f\t%.4f\n", i, x[i].r, x[i].i);
     return 0;
 }
 @precision !
@@ -448,7 +448,7 @@ void @(pre)PrintLblocks(int iam, int_t nsupers, gridinfo_t *grid,
 		   iam, gb, lb, nsupc, nb);
 	    for (c = 0, k = BC_HEADER, r = 0; c < nb; ++c) {
 		len = index[k+1];
-		printf("[%d] row-block %d: block # %d\tlength %d\n", 
+		printf("[%d] row-block %d: block # " IFMT "\tlength %d\n", 
 		       iam, c, index[k], len);
 		PrintInt10("lsub", len, &index[k+LB_DESCRIPTOR]);
 		for (j = 0; j < nsupc; ++j) {
@@ -463,10 +463,10 @@ void @(pre)PrintLblocks(int iam, int_t nsupers, gridinfo_t *grid,
 	    }
 	}
 	printf("(%d)", iam);
- 	PrintInt10("ToSendR[]", grid->npcol, Llu->ToSendR[lb]);
+ 	PrintInt32("ToSendR[]", grid->npcol, Llu->ToSendR[lb]);
 	PrintInt10("fsendx_plist[]", grid->nprow, Llu->fsendx_plist[lb]);
     }
-    printf("nfrecvx %4d\n", Llu->nfrecvx);
+    printf("nfrecvx " IFMT "\n", Llu->nfrecvx);
     k = CEILING( nsupers, grid->nprow );
     PrintInt10("fmod", k, Llu->fmod);
     
@@ -494,13 +494,13 @@ void @(pre)PrintUblocks(int iam, int_t nsupers, gridinfo_t *grid,
 	if ( index ) { /* Not an empty row */
 	    nzval = Llu->Unzval_br_ptr[lb];
 	    nb = index[0];
-	    printf("[%d] block row %d (local # %d), # column blocks %d\n",
+	    printf("[%d] block row " IFMT " (local # %d), # column blocks %d\n",
 		   iam, lb*grid->nprow+myrow, lb, nb);
 	    r  = 0;
 	    for (c = 0, k = BR_HEADER; c < nb; ++c) {
 		jb = index[k];
 		len = index[k+1];
-		printf("[%d] col-block %d: block # %d\tlength %d\n", 
+		printf("[%d] col-block %d: block # %d\tlength " IFMT "\n", 
 		       iam, c, jb, index[k+1]);
 		nsupc = SuperSize( jb );
 		PrintInt10("fstnz", nsupc, &index[k+UB_DESCRIPTOR]);
@@ -523,15 +523,15 @@ int
                  gridinfo_t *grid)
 {
   int_t procs = grid->nprow*grid->npcol;
-  fprintf(fp, "TotalIndSend %d\tTotalValSend %d\n", gsmv_comm->TotalIndSend,
+  fprintf(fp, "TotalIndSend " IFMT "\tTotalValSend " IFMT "\n", gsmv_comm->TotalIndSend,
 	  gsmv_comm->TotalValSend);
-  file_PrintLong10(fp, "extern_start", m_loc, gsmv_comm->extern_start);
-  file_PrintLong10(fp, "ind_tosend", gsmv_comm->TotalIndSend, gsmv_comm->ind_tosend);
-  file_PrintLong10(fp, "ind_torecv", gsmv_comm->TotalValSend, gsmv_comm->ind_torecv);
-  file_PrintLong10(fp, "ptr_ind_tosend", procs+1, gsmv_comm->ptr_ind_tosend);
-  file_PrintLong10(fp, "ptr_ind_torecv", procs+1, gsmv_comm->ptr_ind_torecv);
-  file_PrintInt10(fp, "SendCounts", procs, gsmv_comm->SendCounts);
-  file_PrintInt10(fp, "RecvCounts", procs, gsmv_comm->RecvCounts);
+  file_PrintInt10(fp, "extern_start", m_loc, gsmv_comm->extern_start);
+  file_PrintInt10(fp, "ind_tosend", gsmv_comm->TotalIndSend, gsmv_comm->ind_tosend);
+  file_PrintInt10(fp, "ind_torecv", gsmv_comm->TotalValSend, gsmv_comm->ind_torecv);
+  file_PrintInt10(fp, "ptr_ind_tosend", procs+1, gsmv_comm->ptr_ind_tosend);
+  file_PrintInt10(fp, "ptr_ind_torecv", procs+1, gsmv_comm->ptr_ind_torecv);
+  file_PrintInt32(fp, "SendCounts", procs, gsmv_comm->SendCounts);
+  file_PrintInt32(fp, "RecvCounts", procs, gsmv_comm->RecvCounts);
   return 0;
 }
 

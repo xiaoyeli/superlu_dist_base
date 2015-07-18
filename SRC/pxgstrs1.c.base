@@ -102,7 +102,7 @@ void p@(pre)gstrs1(int_t n, LUstruct_t *LUstruct, gridinfo_t *grid,
     int_t  *Urbs, *Urbs1; /* Number of row blocks in each block column of U. */
     Ucb_indptr_t **Ucb_indptr;/* Vertical linked list pointing to Uindex[] */
     int_t  **Ucb_valptr;      /* Vertical linked list pointing to Unzval[] */
-    int_t  iam, kcol, krow, mycol, myrow;
+    int    iam, kcol, krow, mycol, myrow;
     int_t  i, ii, il, j, k, lb, ljb, lk, lptr, luptr;
     int_t  nb, nlb, nub, nsupers;
     int_t  *xsup, *lsub, *usub;

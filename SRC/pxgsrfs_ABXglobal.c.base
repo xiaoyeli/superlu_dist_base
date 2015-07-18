@@ -189,7 +189,7 @@ p@(pre)gsrfs_ABXglobal(int_t n, SuperMatrix *A, double anorm, LUstruct_t *LUstru
 		   &diag_procs, &diag_len);
 #if ( PRNTlevel>=1 )
     if ( !iam ) {
-	printf(".. number of diag processes = %d\n", num_diag_procs);
+	printf(".. number of diag processes = " IFMT "\n", num_diag_procs);
 	PrintInt10("diag_procs", num_diag_procs, diag_procs);
 	PrintInt10("diag_len", num_diag_procs, diag_len);
     }
@@ -337,7 +337,7 @@ p@(pre)gsrfs_ABXglobal(int_t n, SuperMatrix *A, double anorm, LUstruct_t *LUstru
 		
 #if ( PRNTlevel>= 1 )
 	    if ( !iam )
-		printf("(%2d) .. Step %2d: berr[j] = %e\n", iam, count, berr[j]);
+		printf("(%2d) .. Step " IFMT ": berr[j] = %e\n", iam, count, berr[j]);
 #endif
 	    if ( berr[j] > eps && berr[j] * 2 <= lstres && count < ITMAX ) {
 		/* Compute new dx. */
