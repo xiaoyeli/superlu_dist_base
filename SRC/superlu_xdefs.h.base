@@ -360,36 +360,43 @@ extern int   file_PrintDoublecomplex(FILE *fp, char *, int_t, doublecomplex *);
 /* BLAS */
 
 #ifdef USE_VENDOR_BLAS
-extern int @(pre)gemm_(const char*, const char*, const int*, const int*, const int*,
-                  const @(type)*, const @(type)*, const int*, const @(type)*,
-                  const int*, const @(type)*, @(type)*, const int*, int, int);
-extern int @(pre)trsv_(char*, char*, char*, int*, @(type)*, int*,
+extern void @(pre)gemm_(char*, char*, int*, int*, int*,
+                  @(type)*, @(type)*, int*, @(type)*,
+                  int*, @(type)*, @(type)*, int*, int, int);
+extern void @(pre)trsv_(char*, char*, char*, int*, @(type)*, int*,
                   @(type)*, int*, int, int, int);
-extern int @(pre)trsm_(char*, char*, char*, char*, int*, int*, 
+extern void @(pre)trsm_(char*, char*, char*, char*, int*, int*, 
                   @(type)*, @(type)*, int*, @(type)*, 
                   int*, int, int, int, int);
-extern int @(pre)gemv_(char *, int *, int *, @(type) *, @(type) *a, int *, 
+extern void @(pre)gemv_(char *, int *, int *, @(type) *, @(type) *a, int *, 
                   @(type) *, int *, @(type) *, @(type) *, int *, int);
+@precision DOUBLE
+extern void @(pre)ger_(int*, int*, @(type)*, @(type)*, int*,
+                 @(type)*, int*, @(type)*, int*);
+@precision DCOMPLEX
+extern void @(pre)geru_(int*, int*, @(type)*, @(type)*, int*,
+                 @(type)*, int*, @(type)*, int*);
+@precision !
+
 #else
-extern int @(pre)gemm_(const char*, const char*, const int*, const int*, const int*,
-                  const @(type)*, const @(type)*, const int*, 
-                  const @(type)*, const int*, const @(type)*,
-                  @(type)*, const int*);
+extern int @(pre)gemm_(char*, char*, int*, int*, int*,
+                   @(type)*,  @(type)*,  int*,  @(type)*,
+                   int*,  @(type)*, @(type)*, const int*);
 extern int @(pre)trsv_(char*, char*, char*, int*, @(type)*, int*,
                   @(type)*, int*);
 extern int @(pre)trsm_(char*, char*, char*, char*, int*, int*, 
                   @(type)*, @(type)*, int*, @(type)*, int*);
 extern int @(pre)gemv_(char *, int *, int *, @(type) *, @(type) *a, int *, 
                   @(type) *, int *, @(type) *, @(type) *, int *);
-#endif
-
 @precision DOUBLE
-extern int @(pre)ger_(int*, int*, @(type)*, @(type)*, int*,
+extern void @(pre)ger_(int*, int*, @(type)*, @(type)*, int*,
                  @(type)*, int*, @(type)*, int*);
 @precision DCOMPLEX
 extern int @(pre)geru_(int*, int*, @(type)*, @(type)*, int*,
                  @(type)*, int*, @(type)*, int*);
 @precision !
+
+#endif
 
 
 #ifdef __cplusplus
