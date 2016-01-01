@@ -148,7 +148,7 @@ void p@(pre)gstrs1(int_t n, LUstruct_t *LUstruct, gridinfo_t *grid,
     if ( n < 0 ) *info = -1;
     else if ( nrhs < 0 ) *info = -8;
     if ( *info ) {
-	pxerbla("P@(PRE)GSTRS1", grid, -*info);
+	pxerr_dist("P@(PRE)GSTRS1", grid, -*info);
 	return;
     }
 	

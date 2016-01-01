@@ -531,7 +531,7 @@ p@(pre)gstrs(int_t n, LUstruct_t *LUstruct,
     if ( n < 0 ) *info = -1;
     else if ( nrhs < 0 ) *info = -9;
     if ( *info ) {
-	pxerbla("P@(PRE)GSTRS", grid, -*info);
+	pxerr_dist("P@(PRE)GSTRS", grid, -*info);
 	return;
     }
 	
