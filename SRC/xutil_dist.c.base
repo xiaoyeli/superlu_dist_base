@@ -150,7 +150,7 @@ void @(pre)Print_CompCol_Matrix_dist(SuperMatrix *A)
     }
     printf("\nrowind:\n");
     for (i = 0; i < Astore->nnz; ++i) 
-        printf("%lld  ", (long long) Astore->rowind[i]);
+        printf("%ld  ", (long long) Astore->rowind[i]);
     printf("\ncolptr:\n");
     for (i = 0; i <= A->ncol; ++i) 
         printf("%lld  ", (long long) Astore->colptr[i]);
@@ -167,8 +167,8 @@ void @(pre)Print_Dense_Matrix_dist(SuperMatrix *A)
     printf("Stype %d, Dtype %d, Mtype %d\n", A->Stype,A->Dtype,A->Mtype);
     Astore = (DNformat *) A->Store;
     dp = (@(type) *) Astore->nzval;
-    printf("nrow %ld, ncol %ld, lda %ld\n", 
-        (long int) A->nrow, (long int) A->ncol, (long int) Astore->lda);
+    printf("nrow %lld, ncol %lld, lda %lld\n", 
+        (long long) A->nrow, (long long) A->ncol, (long long) Astore->lda);
     printf("\nnzval: ");
 @precision DOUBLE
     for (i = 0; i < A->nrow; ++i) printf("%f  ", dp[i]);
