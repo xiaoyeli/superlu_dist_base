@@ -3,10 +3,15 @@ TST = ./TESTING
 EXM = ./EXAMPLE
 F90 = ./FORTRAN
 BLS = ./CBLAS
-TGTSRC = ../SuperLU_DIST-branch/SRC
-TGTTST = ../SuperLU_DIST-branch/TESTING
-TGTEXM = ../SuperLU_DIST-branch/EXAMPLE
-TGTF90 = ../SuperLU_DIST-branch/FORTRAN
+# TGTSRC = ../SuperLU_DIST-branch/SRC
+# TGTTST = ../SuperLU_DIST-branch/TESTING
+# TGTEXM = ../SuperLU_DIST-branch/EXAMPLE
+# TGTF90 = ../SuperLU_DIST-branch/FORTRAN
+#
+TGTSRC = ../superlu_dist.git/SRC
+TGTTST = ../superlu_dist.git/TESTING
+TGTEXM = ../superlu_dist.git/EXAMPLE
+TGTF90 = ../superlu_dist.git/FORTRAN
 
 all: double dcomplex
 
@@ -36,8 +41,9 @@ double:	\
 	$(TGTSRC)/pdgsrfs.c \
 	$(TGTSRC)/pdgsmv.c \
 	$(TGTSRC)/dldperm_dist.c \
-	$(TGTSRC)/dutil.c \
+	$(TGTSRC)/dutil_dist.c \
 	$(TGTSRC)/dmyblas2_dist.c \
+	$(TGTSRC)/pdGetDiagU.c \
 	$(TGTSRC)/dreadhb.c \
 	$(TGTSRC)/dreadrb.c \
 	$(TGTSRC)/dreadtriple.c \
@@ -109,7 +115,9 @@ $(TGTSRC)/pdgsmv.c:	$(SRC)/pxgsmv.c.base
 	extract -b $? -o $@ precision=double
 $(TGTSRC)/dldperm_dist.c: $(SRC)/xldperm_dist.c.base
 	extract -b $? -o $@ precision=double
-$(TGTSRC)/dutil.c:	$(SRC)/xutil.c.base
+$(TGTSRC)/dutil_dist.c:	$(SRC)/xutil_dist.c.base
+	extract -b $? -o $@ precision=double
+$(TGTSRC)/pdGetDiagU.c:	$(SRC)/pxGetDiagU.c.base
 	extract -b $? -o $@ precision=double
 $(TGTSRC)/dmyblas2_dist.c:	$(SRC)/xmyblas2_dist.c.base
 	extract -b $? -o $@ precision=double
@@ -180,7 +188,8 @@ dcomplex: \
 	$(TGTSRC)/pzgsrfs.c \
 	$(TGTSRC)/pzgsmv.c \
 	$(TGTSRC)/zldperm_dist.c \
-	$(TGTSRC)/zutil.c \
+	$(TGTSRC)/zutil_dist.c \
+	$(TGTSRC)/pzGetDiagU.c \
 	$(TGTSRC)/zmyblas2_dist.c \
 	$(TGTSRC)/zreadhb.c \
 	$(TGTSRC)/zreadrb.c \
@@ -251,7 +260,7 @@ $(TGTSRC)/pzgsrfs.c:	$(SRC)/pxgsrfs.c.base
 	extract -b $? -o $@ precision=dcomplex
 $(TGTSRC)/pzgsmv.c:	$(SRC)/pxgsmv.c.base
 	extract -b $? -o $@ precision=dcomplex
-$(TGTSRC)/zutil.c:	$(SRC)/xutil.c.base
+$(TGTSRC)/zutil_dist.c:	$(SRC)/xutil_dist.c.base
 	extract -b $? -o $@ precision=dcomplex
 $(TGTSRC)/zldperm_dist.c: $(SRC)/xldperm_dist.c.base
 	extract -b $? -o $@ precision=dcomplex
@@ -266,6 +275,8 @@ $(TGTSRC)/zreadtriple.c:	$(SRC)/xreadtriple.c.base
 $(TGTSRC)/zreadtriple_noheader.c:	$(SRC)/xreadtriple_noheader.c.base
 	extract -b $? -o $@ precision=dcomplex
 $(TGTSRC)/zmemory_dist.c: $(SRC)/xmemory_dist.c.base
+	extract -b $? -o $@ precision=dcomplex
+$(TGTSRC)/pzGetDiagU.c: $(SRC)/pxGetDiagU.c.base
 	extract -b $? -o $@ precision=dcomplex
 $(TGTSRC)/zreadMM.c:	$(SRC)/xreadMM.c.base
 	extract -b $? -o $@ precision=dcomplex

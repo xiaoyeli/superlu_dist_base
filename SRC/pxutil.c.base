@@ -1,3 +1,13 @@
+/*! \file
+Copyright (c) 2003, The Regents of the University of California, through
+Lawrence Berkeley National Laboratory (subject to receipt of any required 
+approvals from U.S. Dept. of Energy) 
+
+All rights reserved. 
+
+The source code is distributed under BSD license, see the file License.txt
+at the top-level directory.
+*/
 @extract -b Typedef.inc
 /*! @file 
  * \brief Several matrix utilities
@@ -389,7 +399,7 @@ int p@(pre)Permute_Dense_Matrix
 
 /*! \brief Initialize the data structure for the solution phase.
  */
-int @(pre)SolveInit(superlu_options_t *options, SuperMatrix *A, 
+int @(pre)SolveInit(superlu_dist_options_t *options, SuperMatrix *A, 
 	       int_t perm_r[], int_t perm_c[], int_t nrhs,
 	       LUstruct_t *LUstruct, gridinfo_t *grid,
 	       SOLVEstruct_t *SOLVEstruct)
@@ -481,7 +491,7 @@ int @(pre)SolveInit(superlu_options_t *options, SuperMatrix *A,
 
 /*! \brief Release the resources used for the solution phase.
  */
-void @(pre)SolveFinalize(superlu_options_t *options, SOLVEstruct_t *SOLVEstruct)
+void @(pre)SolveFinalize(superlu_dist_options_t *options, SOLVEstruct_t *SOLVEstruct)
 {
     int_t *it;
     extern void pxgstrs_finalize(pxgstrs_comm_t *);

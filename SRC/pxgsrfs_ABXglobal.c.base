@@ -1,3 +1,13 @@
+/*! \file
+Copyright (c) 2003, The Regents of the University of California, through
+Lawrence Berkeley National Laboratory (subject to receipt of any required 
+approvals from U.S. Dept. of Energy) 
+
+All rights reserved. 
+
+The source code is distributed under BSD license, see the file License.txt
+at the top-level directory.
+*/
 @extract -b Typedef.inc
 /*! @file 
  * \brief Improves the computed solution and provies error bounds
@@ -241,7 +251,11 @@ p@(pre)gsrfs_ABXglobal(int_t n, SuperMatrix *A, double anorm, LUstruct_t *LUstru
         }
 	/* Check correctness of matrix-vector multiply. */
 	p@(pre)gsmv_AXglobal(N_update, update, val, bindx, dwork, ax);
+@precision DOUBLE
 	PrintDouble5("Mult A*x", N_update, ax);
+@precision DCOMPLEX
+	PrintDoublecomplex("Mult A*x", N_update, ax);
+@precision !
 	SUPERLU_FREE(dwork);
     }
 #endif

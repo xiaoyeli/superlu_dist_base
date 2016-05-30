@@ -1,3 +1,13 @@
+/*! \file
+Copyright (c) 2003, The Regents of the University of California, through
+Lawrence Berkeley National Laboratory (subject to receipt of any required 
+approvals from U.S. Dept. of Energy) 
+
+All rights reserved. 
+
+The source code is distributed under BSD license, see the file License.txt
+at the top-level directory.
+*/
 @extract -b Typedef.inc
 /*! @file 
  * \brief Performs LU factorization in parallel
@@ -102,7 +112,7 @@
 /*
  * Internal prototypes
  */
-static void p@(pre)gstrf2(superlu_options_t *, int_t, double, Glu_persist_t *,
+static void p@(pre)gstrf2(superlu_dist_options_t *, int_t, double, Glu_persist_t *,
 		     gridinfo_t *, LocalLU_t *, SuperLUStat_t *, int *);
 #ifdef _CRAY
 static void p@(pre)gstrs2(int_t, int_t, Glu_persist_t *, gridinfo_t *,
@@ -125,7 +135,7 @@ static void p@(pre)gstrs2(int_t, int_t, Glu_persist_t *, gridinfo_t *,
  * Arguments
  * =========
  * 
- * options (input) superlu_options_t*
+ * options (input) superlu_dist_options_t*
  *         The structure defines the input parameters to control
  *         how the LU decomposition will be performed.
  *         The following field should be defined:
@@ -182,7 +192,7 @@ static void p@(pre)gstrs2(int_t, int_t, Glu_persist_t *, gridinfo_t *,
 int_t p@(pre)gstrf
 /************************************************************************/
 (
- superlu_options_t *options, int m, int n, double anorm,
+ superlu_dist_options_t *options, int m, int n, double anorm,
  LUstruct_t *LUstruct, gridinfo_t *grid, SuperLUStat_t *stat, int *info
  )
 {
@@ -1157,7 +1167,7 @@ int_t p@(pre)gstrf
 static void p@(pre)gstrf2
 /************************************************************************/
 (
- superlu_options_t *options,
+ superlu_dist_options_t *options,
  int_t k, double thresh, Glu_persist_t *Glu_persist, gridinfo_t *grid,
  LocalLU_t *Llu, SuperLUStat_t *stat, int* info
  )

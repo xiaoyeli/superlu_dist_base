@@ -1,3 +1,13 @@
+/*! \file
+Copyright (c) 2003, The Regents of the University of California, through
+Lawrence Berkeley National Laboratory (subject to receipt of any required 
+approvals from U.S. Dept. of Energy) 
+
+All rights reserved. 
+
+The source code is distributed under BSD license, see the file License.txt
+at the top-level directory.
+*/
 @extract -b Typedef.inc
 /*! @file
  * \brief Memory utilities
@@ -60,7 +70,7 @@ void @(pre)user_free_dist(int_t bytes, int_t which_end)
  * </pre>
  */
 int_t @(pre)QuerySpace_dist(int_t n, LUstruct_t *LUstruct, gridinfo_t *grid,
-		       SuperLUStat_t *stat, mem_usage_t *mem_usage)
+		       SuperLUStat_t *stat, superlu_dist_mem_usage_t *mem_usage)
 {
     register int_t dword, gb, iword, k, nb, nsupers;
     int_t *index, *xsup;
@@ -118,7 +128,7 @@ int_t @(pre)QuerySpace_dist(int_t n, LUstruct_t *LUstruct, gridinfo_t *grid,
     mem_usage->total += (float)(2 * k * iword);
 #else
     /*mem_usage->total += stat->current_buffer;*/
-    printf(".. @(pre)Query_Space: peak_buffer %.f * 1.0e-6 (MB)\n", stat->peak_buffer);
+    printf(".. @(pre)Query_Space: peak_buffer %.f (MB)\n", stat->peak_buffer * 1.0e-6);
     mem_usage->total += stat->peak_buffer;
 #endif
 
