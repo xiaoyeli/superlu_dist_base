@@ -61,6 +61,7 @@ double:	\
 	$(TGTEXM)/pddrive3.c \
 	$(TGTEXM)/pddrive4.c \
 	$(TGTEXM)/dcreate_matrix.c \
+	$(TGTEXM)/dcreate_matrix_perturbed.c \
 	$(TGTF90)/f_pddrive.f90 \
 	$(TGTF90)/superlu_c2f_dwrap.c \
 	$(TGTF90)/dcreate_dist_matrix.c \
@@ -155,6 +156,8 @@ $(TGTEXM)/pddrive4.c:	$(EXM)/pxdrive4.c.base
 	extract -b $? -o $@ precision=double
 $(TGTEXM)/dcreate_matrix.c:	$(EXM)/xcreate_matrix.c.base
 	extract -b $? -o $@ precision=double
+$(TGTEXM)/dcreate_matrix_perturbed.c:	$(EXM)/xcreate_matrix_perturbed.c.base
+	extract -b $? -o $@ precision=double
 $(TGTF90)/f_pddrive.f90:	$(F90)/f_pxdrive.f90.base
 	extract -b $? -o $@ precision=double
 $(TGTF90)/superlu_c2f_dwrap.c:	$(F90)/superlu_c2f_xwrap.c.base
@@ -208,6 +211,7 @@ dcomplex: \
 	$(TGTEXM)/pzdrive3.c \
 	$(TGTEXM)/pzdrive4.c \
 	$(TGTEXM)/zcreate_matrix.c \
+	$(TGTEXM)/zcreate_matrix_perturbed.c \
 	$(TGTF90)/f_pzdrive.f90 \
 	$(TGTF90)/superlu_c2f_zwrap.c \
 	$(TGTF90)/zcreate_dist_matrix.c \
@@ -301,6 +305,8 @@ $(TGTEXM)/pzdrive3.c:	$(EXM)/pxdrive3.c.base
 $(TGTEXM)/pzdrive4.c:	$(EXM)/pxdrive4.c.base
 	extract -b $? -o $@ precision=dcomplex
 $(TGTEXM)/zcreate_matrix.c: $(EXM)/xcreate_matrix.c.base
+	extract -b $? -o $@ precision=dcomplex
+$(TGTEXM)/zcreate_matrix_perturbed.c: $(EXM)/xcreate_matrix_perturbed.c.base
 	extract -b $? -o $@ precision=dcomplex
 $(TGTF90)/f_pzdrive.f90: $(F90)/f_pxdrive.f90.base
 	extract -b $? -o $@ precision=dcomplex
