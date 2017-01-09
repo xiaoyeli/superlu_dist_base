@@ -276,7 +276,11 @@ p@(pre)gstrf2_trsm
                 &l, &nsupc,
                 &alpha, ublk_ptr, &ld_ujrow, &lusup[nsupc], &nsupr);
 #endif
-
+@precision DOUBLE
+	stat->ops[FACT] += (flops_t) nsupc * (nsupc+1) * l;
+@precision DCOMPLEX
+	stat->ops[FACT] += 4.0 * ((flops_t) nsupc * (nsupc+1) * l);
+@precision !
     } else {  /* non-diagonal process */
         /* ================================================ *
          * Receive the diagonal block of U                  *
@@ -313,9 +317,14 @@ p@(pre)gstrf2_trsm
                     &nsupr, &nsupc,
                     &alpha, ublk_ptr, &ld_ujrow, lusup, &nsupr);
 #endif
+@precision DOUBLE
+	    stat->ops[FACT] += (flops_t) nsupc * (nsupc+1) * nsupr;
+@precision DCOMPLEX
+	    stat->ops[FACT] += 4.0 * ((flops_t) nsupc * (nsupc+1) * nsupr);
+@precision !
         }
 
-    }                           /* end if pkk ... */
+    } /* end if pkk ... */
 
     /* printf("exiting p@(pre)gstrf2 %d \n", grid->iam);  */
 
@@ -405,13 +414,15 @@ void p@(pre)gstrs2_omp
                             &uval[rukp], &incx);
 #endif
                 }
-
-                if (thread_id == 0)
-                    stat->ops[FACT] += segsize * (segsize + 1); // master thread updated the stats
                 rukp += segsize;
-            }
-        }
-    }                           /* for b ... */
+@precision DOUBLE
+		stat->ops[FACT] += (flops_t) segsize * (segsize + 1);
+@precision DCOMPLEX
+		stat->ops[FACT] += 4.0 * (flops_t) segsize * (segsize + 1);
+@precision !
+            } /* end if segsize > 0 */
+        } /* end for j ... */
+    } /* end for b ... */
 
 } /* P@(PRE)GSTRS2_omp */
 
