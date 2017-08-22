@@ -102,7 +102,7 @@ if ( msg0 && msg2 ) { /* L(:,k) and U(k,:) are not empty. */
 #endif
 
      /* Loop through the look-ahead blocks to copy Lval into the buffer */
-#ifdef __OPENMP
+#ifdef _OPENMP
      /* #pragma omp parallel for -- why not?? Sherry */
 #endif
      for (int i = 0; i < lookAheadBlk; ++i) {
