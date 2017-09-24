@@ -1,5 +1,6 @@
 SRC = ./SRC
-TST = ./TESTING
+# TST = ./TESTING
+TST = ./TEST
 EXM = ./EXAMPLE
 F90 = ./FORTRAN
 BLS = ./CBLAS
@@ -9,7 +10,8 @@ BLS = ./CBLAS
 # TGTF90 = ../SuperLU_DIST-branch/FORTRAN
 #
 TGTSRC = ../superlu_dist.git/SRC
-TGTTST = ../superlu_dist.git/TESTING
+# TGTTST = ../superlu_dist.git/TESTING
+TGTTST = ../superlu_dist.git/TEST
 TGTEXM = ../superlu_dist.git/EXAMPLE
 TGTF90 = ../superlu_dist.git/FORTRAN
 
@@ -65,6 +67,8 @@ double:	\
 	$(TGTF90)/f_pddrive.f90 \
 	$(TGTF90)/superlu_c2f_dwrap.c \
 	$(TGTF90)/dcreate_dist_matrix.c \
+	$(TGTTST)/pdtest.c \
+	$(TGTTST)/pdcompute_resid.c \
 
 $(TGTSRC)/superlu_ddefs.h:	$(SRC)/superlu_xdefs.h.base
 	extract -b $? -o $@ precision=double
@@ -164,6 +168,10 @@ $(TGTF90)/superlu_c2f_dwrap.c:	$(F90)/superlu_c2f_xwrap.c.base
 	extract -b $? -o $@ precision=double
 $(TGTF90)/dcreate_dist_matrix.c:	$(F90)/xcreate_dist_matrix.c.base
 	extract -b $? -o $@ precision=double
+$(TGTTST)/pdtest.c:	$(TST)/pxtest.c.base
+	extract -b $? -o $@ precision=double
+$(TGTTST)/pdcompute_resid.c:	$(TST)/pxcompute_resid.c.base
+	extract -b $? -o $@ precision=double
 
 dcomplex: \
 	$(TGTSRC)/superlu_zdefs.h \
@@ -215,6 +223,8 @@ dcomplex: \
 	$(TGTF90)/f_pzdrive.f90 \
 	$(TGTF90)/superlu_c2f_zwrap.c \
 	$(TGTF90)/zcreate_dist_matrix.c \
+	$(TGTTST)/pztest.c \
+	$(TGTTST)/pzcompute_resid.c \
 
 $(TGTSRC)/superlu_zdefs.h:	$(SRC)/superlu_xdefs.h.base
 	extract -b $? -o $@ precision=dcomplex
@@ -313,4 +323,8 @@ $(TGTF90)/f_pzdrive.f90: $(F90)/f_pxdrive.f90.base
 $(TGTF90)/superlu_c2f_zwrap.c: $(F90)/superlu_c2f_xwrap.c.base
 	extract -b $? -o $@ precision=dcomplex
 $(TGTF90)/zcreate_dist_matrix.c: $(F90)/xcreate_dist_matrix.c.base
+	extract -b $? -o $@ precision=dcomplex
+$(TGTTST)/pztest.c:	$(TST)/pxtest.c.base
+	extract -b $? -o $@ precision=dcomplex
+$(TGTTST)/pzcompute_resid.c:	$(TST)/pxcompute_resid.c.base
 	extract -b $? -o $@ precision=dcomplex
