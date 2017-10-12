@@ -111,7 +111,7 @@ int main(int argc, char *argv[])
     gridinfo_t grid;
     @(type)   *nzval_save;
     int_t    *colind_save, *rowptr_save;
-    double   *berr, *R, *C;
+    @(mod_type)   *berr, *R, *C;
     @(type)   *b, *bsave, *xtrue, *solx;
     int    i, j, m, n, izero = 0;
     int    nprow, npcol;
@@ -119,7 +119,8 @@ int main(int argc, char *argv[])
     char     **cpp, c;
     FILE *fp, *fopen();
     char matrix_type[8], equed[1];
-    int  relax, maxsuper=0, fill_ratio=0, min_gemm_gpu_offload=0;
+    int  relax, maxsuper=sp_ienv_dist(3), fill_ratio=sp_ienv_dist(6),
+         min_gemm_gpu_offload=0;
     int    equil, ifact, nfact, iequil, iequed, prefact, notfactored;
     int    nt, nrun=0, nfail=0, nerrs=0, imat, fimat=0, nimat=1;
     fact_t fact;
@@ -175,7 +176,7 @@ int main(int argc, char *argv[])
 	fflush(stdout);
     }
 
-    if ( !(berr = @(type)Malloc_dist(nrhs)) )
+    if ( !(berr = @(mod_type)Malloc_dist(nrhs)) )
 	ABORT("Malloc fails for berr[].");
 	
     /* Loop through all the input options. */

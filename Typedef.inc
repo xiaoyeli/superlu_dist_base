@@ -14,6 +14,8 @@
 	@define TYPE @FLOAT@
 	@define pre @s@
 	@define PRE @S@
+	@define mod_pre	 @s@
+	@define MOD_PRE	 @S@
 	@define SC_PRE @S@
 	@define Dtype_PRE @SLU_S@
 	@define scan_fmt @%f@
@@ -26,6 +28,8 @@
 	@define TYPE @DOUBLE@
 	@define pre @d@
 	@define PRE @D@
+	@define mod_pre	 @d@
+	@define MOD_PRE	 @D@
 	@define SC_PRE @S@
 	@define Dtype_PRE @SLU_D@
 	@define scan_fmt @%lf@
@@ -41,6 +45,8 @@
 	@define TYPE @COMPLEX@
 	@define pre @c@
 	@define PRE @C@
+	@define mod_pre	 @s@
+	@define MOD_PRE	 @S@
 	@define SC_PRE @C@
 	@define Dtype_PRE @SLU_C@
 	@define scan_fmt @%f%f@
@@ -55,6 +61,8 @@
 	@define TYPE @DOUBLE COMPLEX@
 	@define pre @z@
 	@define PRE @Z@
+	@define mod_pre	 @d@
+	@define MOD_PRE	 @D@
 	@define SC_PRE @C@
 	@define Dtype_PRE @SLU_Z@
 	@define scan_fmt @%lf%lf@

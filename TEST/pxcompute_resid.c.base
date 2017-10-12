@@ -87,7 +87,7 @@ int p@(pre)compute_resid(int m, int n, int nrhs, SuperMatrix *A,
     @(mod_type) eps;
     char transc[1];
     @(type) *ax, *R;
-    pdgsmv_comm_t gsmv_comm; 
+    p@(pre)gsmv_comm_t gsmv_comm; 
     int_t m_loc = ((NRformat_loc*) A->Store)->m_loc;
 
     /* Function prototypes */
@@ -106,7 +106,7 @@ int p@(pre)compute_resid(int m, int n, int nrhs, SuperMatrix *A,
     }
 
     /* Exit with RESID = 1/EPS if ANORM = 0. */
-    eps = @(pre)mach_dist("Epsilon");
+    eps = @(mod_pre)mach_dist("Epsilon");
     anorm = p@(pre)langs("1", A, grid);
     if (anorm <= 0.) {
 	*resid = 1. / eps;
@@ -132,17 +132,21 @@ int p@(pre)compute_resid(int m, int n, int nrhs, SuperMatrix *A,
 	p@(pre)gsmv(0, A, grid, &gsmv_comm, X_col, ax);
 	    
 	/* Compute residual, stored in R[]. */
+@precision SINGLE DOUBLE
 	for (i = 0; i < m_loc; ++i) R[i] = B_col[i] - ax[i];
+@precision SCOMPLEX DCOMPLEX
+	for (i = 0; i < m_loc; ++i) @(pre)_sub(&R[i], &B_col[i], &ax[i]);
+@precision !
 
 @precision SINGLE DOUBLE
 	rnorm = @(pre)asum_(&m_loc, R, &inc);
 	xnorm = @(pre)asum_(&m_loc, X_col, &inc);
 @precision SCOMPLEX
 	rnorm = scasum_(&m_loc, R, &inc);
-	xnorm = scasum_(&m_loc, X_loc, &inc);
+	xnorm = scasum_(&m_loc, X_col, &inc);
 @precision DCOMPLEX
 	rnorm = dzasum_(&m_loc, R, &inc);
-	xnorm = dzasum_(&m_loc, X_loc, &inc);
+	xnorm = dzasum_(&m_loc, X_col, &inc);
 @precision !
 
 	/* */
