@@ -303,6 +303,7 @@ extern void p@(pre)gsmv(int_t, SuperMatrix *, gridinfo_t *, p@(pre)gsmv_comm_t *
 		   @(type) x[], @(type) ax[]);
 extern void p@(pre)gsmv_finalize(p@(pre)gsmv_comm_t *);
 
+
 /* Memory-related */
 extern @(type)  *@(type)Malloc_dist(int_t);
 extern @(type)  *@(type)Calloc_dist(int_t);
@@ -316,6 +317,13 @@ extern int_t @(pre)QuerySpace_dist(int_t, LUstruct_t *, gridinfo_t *,
 			      SuperLUStat_t *, superlu_dist_mem_usage_t *);
 
 /* Auxiliary routines */
+
+extern void @(pre)Clone_CompRowLoc_Matrix_dist(SuperMatrix *, SuperMatrix *);
+extern void @(pre)Copy_CompRowLoc_Matrix_dist(SuperMatrix *, SuperMatrix *);
+extern void @(pre)Zero_CompRowLoc_Matrix_dist(SuperMatrix *);
+extern void @(pre)ScaleAddId_CompRowLoc_Matrix_dist(SuperMatrix *, @(type));
+extern void @(pre)ScaleAdd_CompRowLoc_Matrix_dist(SuperMatrix *, SuperMatrix *, @(type));
+
 extern void    @(pre)fill_dist (@(type) *, int_t, @(type));
 extern void    @(pre)inf_norm_error_dist (int_t, int_t, @(type)*, int_t,
                                      @(type)*, int_t, gridinfo_t*);
