@@ -353,6 +353,7 @@ extern void  @(pre)PrintUblocks(int, int_t, gridinfo_t *, Glu_persist_t *,
 extern void  @(pre)Print_CompCol_Matrix_dist(SuperMatrix *);
 extern void  @(pre)Print_Dense_Matrix_dist(SuperMatrix *);
 extern int   @(pre)Print_CompRowLoc_Matrix_dist(SuperMatrix *);
+extern int   file_@(pre)Print_CompRowLoc_Matrix_dist(FILE *fp, SuperMatrix *A);
 @precision DOUBLE
 extern int   file_PrintDouble5(FILE *, char *, int_t, double *);
 @precision DCOMPLEX
