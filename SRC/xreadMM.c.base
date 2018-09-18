@@ -151,13 +151,13 @@ void
     for (nnz = 0, nz = 0; nnz < *nonz; ++nnz) {
 @precision DOUBLE
 #ifdef _LONGINT
-	j = fscanf(fp, "%lld%lld%lf\n", &row[nz], &col[nz], &val[nz]);
+	j = fscanf(fp, IFMT IFMT "%lf\n", &row[nz], &col[nz], &val[nz]);
 #else
 	j = fscanf(fp, "%d%d%lf\n", &row[nz], &col[nz], &val[nz]);
 #endif
 @precision DCOMPLEX
 #ifdef _LONGINT
-	j = fscanf(fp, "%lld%lld%lf%lf\n", &row[nz], &col[nz], &val[nz].r, &val[nz].i);
+	j = fscanf(fp, IFMT IFMT "%lf%lf\n", &row[nz], &col[nz], &val[nz].r, &val[nz].i);
 #else
 	j = fscanf(fp, "%d%d%lf%lf\n", &row[nz], &col[nz], &val[nz].r, &val[nz].i);
 #endif

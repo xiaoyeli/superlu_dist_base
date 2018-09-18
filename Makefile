@@ -9,11 +9,11 @@ BLS = ./CBLAS
 # TGTEXM = ../SuperLU_DIST-branch/EXAMPLE
 # TGTF90 = ../SuperLU_DIST-branch/FORTRAN
 #
-TGTSRC = ../superlu_dist.git/SRC
+TGTSRC = ../../superlu_dist.git/SRC
 # TGTTST = ../superlu_dist.git/TESTING
-TGTTST = ../superlu_dist.git/TEST
-TGTEXM = ../superlu_dist.git/EXAMPLE
-TGTF90 = ../superlu_dist.git/FORTRAN
+TGTTST = ../../superlu_dist.git/TEST
+TGTEXM = ../../superlu_dist.git/EXAMPLE
+TGTF90 = ../../superlu_dist.git/FORTRAN
 
 all: double dcomplex
 
