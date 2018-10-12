@@ -4,11 +4,7 @@ TST = ./TEST
 EXM = ./EXAMPLE
 F90 = ./FORTRAN
 BLS = ./CBLAS
-# TGTSRC = ../SuperLU_DIST-branch/SRC
-# TGTTST = ../SuperLU_DIST-branch/TESTING
-# TGTEXM = ../SuperLU_DIST-branch/EXAMPLE
-# TGTF90 = ../SuperLU_DIST-branch/FORTRAN
-#
+
 TGTSRC 	= ../superlu_dist.git/SRC
 # TGTTST = ../superlu_dist.git/TESTING
 TGTTST 	= ../superlu_dist.git/TEST
