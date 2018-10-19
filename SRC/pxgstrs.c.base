@@ -168,7 +168,7 @@ p@(pre)ReDistribute_B_to_X(@(type) *B, int_t m_loc, int nrhs, int_t ldb,
     pxgstrs_comm_t *gstrs_comm = SOLVEstruct->gstrs_comm;
 	MPI_Request req_i, req_d, *req_send, *req_recv;
 	MPI_Status status, *status_send, *status_recv;
-	int Nreq_recv, Nreq_send, pp;
+	int Nreq_recv, Nreq_send, pp, pps, ppr;
 	double t;
 #if ( DEBUGlevel>=1 )
     CHECK_MALLOC(grid->iam, "Enter p@(pre)ReDistribute_B_to_X()");
@@ -275,7 +275,7 @@ p@(pre)ReDistribute_B_to_X(@(type) *B, int_t m_loc, int nrhs, int_t ldb,
 		// t = SuperLU_timer_() - t;
 		// printf(".. copy to send buffer time\t%8.4f\n", t);	
 
-/*		
+#if 0	
 	#if 1
 		/* Communicate the (permuted) row indices. */
 		MPI_Alltoallv(send_ibuf, SendCnt, sdispls, mpi_int_t,
@@ -295,8 +295,7 @@ p@(pre)ReDistribute_B_to_X(@(type) *B, int_t m_loc, int nrhs, int_t ldb,
 		MPI_Wait(&req_i,&status);
 		MPI_Wait(&req_d,&status);
  	#endif	 
-*/
-
+#endif
 	MPI_Barrier( grid->comm );
 
 
@@ -436,7 +435,7 @@ p@(pre)ReDistribute_X_to_B(int_t n, @(type) *B, int_t m_loc, int_t ldb, int_t fs
     int_t  num_diag_procs, *diag_procs;
 	MPI_Request req_i, req_d, *req_send, *req_recv;
 	MPI_Status status, *status_send, *status_recv;
-	int Nreq_recv, Nreq_send, pp;
+	int Nreq_recv, Nreq_send, pp,pps,ppr;
 	
 #if ( DEBUGlevel>=1 )
     CHECK_MALLOC(grid->iam, "Enter p@(pre)ReDistribute_X_to_B()");
@@ -545,7 +544,7 @@ p@(pre)ReDistribute_X_to_B(int_t n, @(type) *B, int_t m_loc, int_t ldb, int_t fs
 		/* ------------------------------------------------------------
 			COMMUNICATE THE (PERMUTED) ROW INDICES AND NUMERICAL VALUES.
 		   ------------------------------------------------------------*/
-/*	
+#if 0	
 	#if 1
 		MPI_Alltoallv(send_ibuf, SendCnt, sdispls, mpi_int_t,
 			  recv_ibuf, RecvCnt, rdispls, mpi_int_t, grid->comm);
@@ -561,7 +560,7 @@ p@(pre)ReDistribute_X_to_B(int_t n, @(type) *B, int_t m_loc, int_t ldb, int_t fs
  		MPI_Wait(&req_i,&status);
 		MPI_Wait(&req_d,&status);		 
 	#endif	
-*/
+#endif
 
 	MPI_Barrier( grid->comm );
 	Nreq_send=0;
