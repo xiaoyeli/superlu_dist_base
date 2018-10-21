@@ -1273,14 +1273,13 @@ if(procs==1){
 #endif
 
 
-
 #ifdef _OPENMP
 #pragma omp parallel default (shared) 
 #endif
 	{	
 		{
 		
-if(Llu->inv == 1){		
+            if (Llu->inv == 1) { /* Diagonal is inverted. */
 
 #ifdef _OPENMP
 #pragma	omp	for firstprivate(nrhs,beta,alpha,x,rtemp,ldalsum) private (ii,k,knsupc,lk,luptr,lsub,nsupr,lusup,t1,t2,Linv,i,lib,rtemp_loc,nleaf_send_tmp) nowait	
@@ -1383,98 +1382,94 @@ if(Llu->inv == 1){
 						// BcTree_forwardMessageSimple(LBtree_ptr[lk],&x[ii - XK_H],'@(pre)');
 					}
 				}		
-				}
-		}else{
+			}
+	} else { /* Diagonal is not inverted. */
 #ifdef _OPENMP
 #pragma	omp	for firstprivate (nrhs,beta,alpha,x,rtemp,ldalsum) private (ii,k,knsupc,lk,luptr,lsub,nsupr,lusup,t1,t2,Linv,i,lib,rtemp_loc,nleaf_send_tmp) nowait	
 #endif
-			for (jj=0;jj<nleaf;jj++){
-				k=leafsups[jj];
-				{
+	    for (jj=0;jj<nleaf;jj++) {
+		k=leafsups[jj];
+		{
 
 #if ( PROFlevel>=1 )
-					TIC(t1);
+		    TIC(t1);
 #endif	 
-					rtemp_loc = &rtemp[sizertemp* thread_id];
+		    rtemp_loc = &rtemp[sizertemp* thread_id];
 
+		    knsupc = SuperSize( k );
+		    lk = LBi( k, grid );
 
-					knsupc = SuperSize( k );
-					lk = LBi( k, grid );
+		    ii = X_BLK( lk );
+		    lk = LBj( k, grid ); /* Local block number, column-wise. */
+		    lsub = Lrowind_bc_ptr[lk];
+		    lusup = Lnzval_bc_ptr[lk];
 
-					ii = X_BLK( lk );
-					lk = LBj( k, grid ); /* Local block number, column-wise. */
-					lsub = Lrowind_bc_ptr[lk];
-					lusup = Lnzval_bc_ptr[lk];
-
-					nsupr = lsub[1];
-
+		    nsupr = lsub[1];
 
 #ifdef _CRAY
-					@(SC_PRE)TRSM(ftcs1, ftcs1, ftcs2, ftcs3, &knsupc, &nrhs, &alpha,
-							lusup, &nsupr, &x[ii], &knsupc);
+   		    @(SC_PRE)TRSM(ftcs1, ftcs1, ftcs2, ftcs3, &knsupc, &nrhs, &alpha,
+				lusup, &nsupr, &x[ii], &knsupc);
 #elif defined (USE_VENDOR_BLAS)
-					@(pre)trsm_("L", "L", "N", "U", &knsupc, &nrhs, &alpha, 
-							lusup, &nsupr, &x[ii], &knsupc, 1, 1, 1, 1);	
+		    @(pre)trsm_("L", "L", "N", "U", &knsupc, &nrhs, &alpha, 
+				lusup, &nsupr, &x[ii], &knsupc, 1, 1, 1, 1);	
 #else
-					@(pre)trsm_("L", "L", "N", "U", &knsupc, &nrhs, &alpha, 
-							lusup, &nsupr, &x[ii], &knsupc);
+ 		    @(pre)trsm_("L", "L", "N", "U", &knsupc, &nrhs, &alpha, 
+					lusup, &nsupr, &x[ii], &knsupc);
 #endif
 				
-					
-		@precision DOUBLE
-					// for (i=0 ; i<knsupc*nrhs ; i++){
-					// printf("x_l: %f\n",x[ii+i]);
-					// fflush(stdout);
-					// }
-		@precision DCOMPLEX
-					// for (i=0 ; i<knsupc*nrhs ; i++){
-					// printf("x_l: %f %f\n",x[ii+i].r,x[ii+i].i);
-					// fflush(stdout);
-					// }
-		@precision !						
+@precision DOUBLE
+		// for (i=0 ; i<knsupc*nrhs ; i++){
+		// printf("x_l: %f\n",x[ii+i]);
+		// fflush(stdout);
+		// }
+@precision DCOMPLEX
+		// for (i=0 ; i<knsupc*nrhs ; i++){
+		// printf("x_l: %f %f\n",x[ii+i].r,x[ii+i].i);
+		// fflush(stdout);
+		// }
+@precision !						
 
 
 #if ( PROFlevel>=1 )
-					TOC(t2, t1);
-					stat_loc[thread_id]->utime[SOL_TRSM] += t2;
+		    TOC(t2, t1);
+		    stat_loc[thread_id]->utime[SOL_TRSM] += t2;
 
 #endif	
 
-		@precision DOUBLE
-					stat_loc[thread_id]->ops[SOLVE] += knsupc * (knsupc - 1) * nrhs;
-		@precision DCOMPLEX
-					stat_loc[thread_id]->ops[SOLVE] += 4 * knsupc * (knsupc - 1) * nrhs
-					+ 10 * knsupc * nrhs; /* complex division */
-		@precision !
+@precision DOUBLE
+		    stat_loc[thread_id]->ops[SOLVE] += knsupc * (knsupc - 1) * nrhs;
+@precision DCOMPLEX
+		    stat_loc[thread_id]->ops[SOLVE] += 4 * knsupc * (knsupc - 1) * nrhs
+				+ 10 * knsupc * nrhs; /* complex division */
+@precision !
 			
-					
-					// --nleaf;
+		    // --nleaf;
 #if ( DEBUGlevel>=2 )
-					printf("(%2d) Solve X[%2d]\n", iam, k);
+		    printf("(%2d) Solve X[%2d]\n", iam, k);
 #endif
 
-					/*
-					 * Send Xk to process column Pc[k].
-					 */
+		    /*
+		     * Send Xk to process column Pc[k].
+		     */
 
-					if(LBtree_ptr[lk]!=NULL){ 
-						lib = LBi( k, grid ); /* Local block number, row-wise. */
-						ii = X_BLK( lib );	
+		    if (LBtree_ptr[lk]!=NULL) { 
+			lib = LBi( k, grid ); /* Local block number, row-wise. */
+			ii = X_BLK( lib );	
 
 #ifdef _OPENMP
 #pragma omp atomic capture
 #endif
-						nleaf_send_tmp = ++nleaf_send;
-						leaf_send[(nleaf_send_tmp-1)*aln_i] = lk;
-					}
-				}		
-				}		
-			}						
-		}	
+			nleaf_send_tmp = ++nleaf_send;
+			leaf_send[(nleaf_send_tmp-1)*aln_i] = lk;
+		    }
+		    } /* end a block */		
+		} /* end for jj ... */
+	    } /* end else ... diagonal is not invedted */
+	  }	
 	}
 
+	jj=0;
 
-		jj=0;
 #ifdef _OPENMP
 #pragma omp parallel default (shared)
 #endif
