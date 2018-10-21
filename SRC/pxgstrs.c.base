@@ -1020,7 +1020,7 @@ p@(pre)gstrs(int_t n, LUstruct_t *LUstruct,
 	PStatInit(stat_loc[i]);
     }
 
-#if ( DEBUGlevel>=1 )   
+#if ( DEBUGlevel>=2 )   
     /* Dump the L factor using matlab triple-let format. */
     @(pre)DumpLblocks(iam, nsupers, grid, Glu_persist, Llu);
 #endif
@@ -1032,7 +1032,7 @@ p@(pre)gstrs(int_t n, LUstruct_t *LUstruct,
     p@(pre)ReDistribute_B_to_X(B, m_loc, nrhs, ldb, fst_row, ilsum, x, 
 			  ScalePermstruct, Glu_persist, grid, SOLVEstruct);
 
-#if ( PRNTlevel>=1 )
+#if ( PRNTlevel>=2 )
     t = SuperLU_timer_() - t;
     if ( !iam) printf(".. B to X redistribute time\t%8.4f\n", t);
     fflush(stdout);
@@ -1132,7 +1132,7 @@ if(procs==1){
 	fflush(stdout);
 #endif
 
-#if ( PRNTlevel>=1 )
+#if ( PRNTlevel>=2 )
 	t = SuperLU_timer_() - t;
 	if ( !iam) printf(".. Setup L-solve time\t%8.4f\n", t);
 	fflush(stdout);
@@ -1686,7 +1686,7 @@ if(Llu->inv == 1){
 			}
 		}
 
-#if ( PRNTlevel>=1 )
+#if ( PRNTlevel>=2 )
 		t = SuperLU_timer_() - t;
 		stat->utime[SOL_TOT] += t;
 		if ( !iam ) {
@@ -1919,7 +1919,7 @@ if(Llu->inv == 1){
 #endif
 
 
-#if ( PRNTlevel>=1 )
+#if ( PRNTlevel>=2 )
 	t = SuperLU_timer_() - t;
 	if ( !iam) printf(".. Setup U-solve time\t%8.4f\n", t);
 	fflush(stdout);
@@ -2329,7 +2329,7 @@ for (i=0;i<nroot_send;i++){
 			}
 		} /* while not finished ... */
 	}
-#if ( PRNTlevel>=1 )
+#if ( PRNTlevel>=2 )
 		t = SuperLU_timer_() - t;
 		stat->utime[SOL_TOT] += t;
 		if ( !iam ) printf(".. U-solve time\t%8.4f\n", t);
@@ -2341,8 +2341,6 @@ for (i=0;i<nroot_send;i++){
 		}			
 		t = SuperLU_timer_();			
 #endif
-
-
 
 
 #if ( DEBUGlevel>=2 )

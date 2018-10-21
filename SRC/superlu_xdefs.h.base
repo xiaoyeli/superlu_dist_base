@@ -358,6 +358,7 @@ extern void @(pre)Copy_CompRowLoc_Matrix_dist(SuperMatrix *, SuperMatrix *);
 extern void @(pre)Zero_CompRowLoc_Matrix_dist(SuperMatrix *);
 extern void @(pre)ScaleAddId_CompRowLoc_Matrix_dist(SuperMatrix *, @(type));
 extern void @(pre)ScaleAdd_CompRowLoc_Matrix_dist(SuperMatrix *, SuperMatrix *, @(type));
+extern void @(pre)ZeroLblocks(int, int, gridinfo_t *, LUstruct_t *);
 extern void    @(pre)fill_dist (@(type) *, int_t, @(type));
 extern void    @(pre)inf_norm_error_dist (int_t, int_t, @(type)*, int_t,
                                      @(type)*, int_t, gridinfo_t*);
