@@ -1111,17 +1111,15 @@ p@(pre)gstrs(int_t n, LUstruct_t *LUstruct,
 	
     sizertemp=ldalsum * nrhs;
     sizertemp = ((sizertemp + (aln_d - 1)) / aln_d) * aln_d;
-#ifdef _OPENMP
-    if ( !(rtemp = (@(type)*)SUPERLU_MALLOC(sizertemp*num_thread * sizeof(@(type)))) )
+    if ( !(rtemp = (@(type)*)SUPERLU_MALLOC((sizertemp*num_thread + 1) * sizeof(@(type)))) )
 	ABORT("Malloc fails for rtemp[].");		
+#ifdef _OPENMP
 #pragma omp parallel default(shared) private(ii)
     {
 	for ( ii=0; ii<sizertemp; ii++ )
 		rtemp[thread_id*sizertemp+ii]=zero;			
     }
 #else	
-    if ( !(rtemp = (@(type)*)SUPERLU_MALLOC(sizertemp*num_thread * sizeof(@(type)))) )
-	ABORT("Malloc fails for rtemp[].");
     for ( ii=0; ii<sizertemp*num_thread; ii++ )
 	rtemp[ii]=zero;			
 #endif	
