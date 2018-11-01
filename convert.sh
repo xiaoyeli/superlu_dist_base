@@ -1,3 +1,7 @@
+dos2unix SRC/*
+dos2unix EXAMPLE/*
+dos2unix TEST/*
+
 ./extract -b SRC/pxgstrs_lsum.c.base -o ../output/SRC/pdgstrs_lsum.c precision=DOUBLE
 ./extract -b SRC/pxdistribute.c.base -o ../output/SRC/pddistribute.c precision=DOUBLE
 ./extract -b SRC/xdistribute.c.base -o ../output/SRC/ddistribute.c precision=DOUBLE
