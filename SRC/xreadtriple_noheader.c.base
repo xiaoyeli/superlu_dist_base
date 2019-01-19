@@ -1,16 +1,16 @@
 /*! \file
 Copyright (c) 2003, The Regents of the University of California, through
-Lawrence Berkeley National Laboratory (subject to receipt of any required 
-approvals from U.S. Dept. of Energy) 
+Lawrence Berkeley National Laboratory (subject to receipt of any required
+approvals from U.S. Dept. of Energy)
 
-All rights reserved. 
+All rights reserved.
 
 The source code is distributed under BSD license, see the file License.txt
 at the top-level directory.
 */
 @extract -b Typedef.inc
-/*! @file 
- * \brief 
+/*! @file
+ * \brief
  *
  */
 #include <stdio.h>
@@ -82,7 +82,7 @@ void
 #endif
 @precision !
     }
-    
+
     if ( minn == 0 ) { /* zero-based indexing */
 	zero_base = 1;
 	++(*n);
@@ -141,7 +141,7 @@ void
 
 	if (row[nz] < 0 || row[nz] >= *m || col[nz] < 0 || col[nz] >= *n
 	    /*|| val[nz] == 0.*/) {
-	    fprintf(stderr, "nz %d, (%d, %d) = %e out of bound, removed\n", 
+	    fprintf(stderr, "nz %d, (%d, %d) = %e out of bound, removed\n",
 		    nz, row[nz], col[nz], val[nz]);
 	    exit(-1);
 	} else {
@@ -154,7 +154,7 @@ void
 	      val[nz] = val[nz-1];
 	      ++xa[col[nz]];
 	    }
-#endif	
+#endif
 	    ++nz;
 	}
     }
@@ -163,7 +163,7 @@ void
 #ifdef EXPAND_SYM
     printf("new_nonz after symmetric expansion:\t%d\n", *nonz);
 #endif
-    
+
 
     /* Initialize the array of column pointers */
     k = 0;
@@ -174,7 +174,7 @@ void
 	jsize = xa[j];
 	xa[j] = k;
     }
-    
+
     /* Copy the triplets into the column oriented storage */
     for (nz = 0; nz < *nonz; ++nz) {
 	j = col[nz];

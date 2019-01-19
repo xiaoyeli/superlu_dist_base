@@ -1,6 +1,10 @@
-dos2unix SRC/*
-dos2unix EXAMPLE/*
-dos2unix TEST/*
+dos2unix -q SRC/*
+dos2unix -q EXAMPLE/*
+dos2unix -q TEST/*
+
+sed -i 's/[[:blank:]]*$//' SRC/*.*
+sed -i 's/[[:blank:]]*$//' EXAMPLE/*.*
+sed -i 's/[[:blank:]]*$//' TEST/*.*
 
 ./extract -b SRC/pxgstrs_lsum.c.base -o ../output/SRC/pdgstrs_lsum.c precision=DOUBLE
 ./extract -b SRC/pxdistribute.c.base -o ../output/SRC/pddistribute.c precision=DOUBLE
