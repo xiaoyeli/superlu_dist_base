@@ -1,15 +1,15 @@
 /*! \file
 Copyright (c) 2003, The Regents of the University of California, through
-Lawrence Berkeley National Laboratory (subject to receipt of any required 
-approvals from U.S. Dept. of Energy) 
+Lawrence Berkeley National Laboratory (subject to receipt of any required
+approvals from U.S. Dept. of Energy)
 
-All rights reserved. 
+All rights reserved.
 
 The source code is distributed under BSD license, see the file License.txt
 at the top-level directory.
 */
 @extract -b Typedef.inc
-/*! @file 
+/*! @file
  * \brief  Distributed SuperLU data types and function prototypes
  *
  * <pre>
@@ -41,7 +41,7 @@ typedef struct {
     int_t indpos; /* Starting position in Uindex[]. */
 } Ucb_indptr_t;
 
-/* 
+/*
  * On each processor, the blocks in L are stored in compressed block
  * column format, the blocks in U are stored in compressed block row format.
  */
@@ -52,7 +52,7 @@ typedef struct {
     @(type) **Linv_bc_ptr;  /* size ceil(NSUPERS/Pc)                 */
     int_t   **Lindval_loc_bc_ptr; /* size ceil(NSUPERS/Pc)  pointers to locations in Lrowind_bc_ptr and Lnzval_bc_ptr */
     int_t   *Unnz; /* number of nonzeros per block column in U*/
-	int_t   **Lrowind_bc_2_lsum; /* size ceil(NSUPERS/Pc)  map indices of Lrowind_bc_ptr to indices of lsum  */  
+	int_t   **Lrowind_bc_2_lsum; /* size ceil(NSUPERS/Pc)  map indices of Lrowind_bc_ptr to indices of lsum  */
     @(type)  **Uinv_bc_ptr;  /* size ceil(NSUPERS/Pc)     	*/
     int_t   **Ufstnz_br_ptr;  /* size ceil(NSUPERS/Pr)                 */
     @(type)  **Unzval_br_ptr;  /* size ceil(NSUPERS/Pr)                 */
@@ -75,7 +75,7 @@ typedef struct {
     int_t   bufmax[NBUFFERS]; /* Maximum buffer size across all MPI ranks:
 			       *  0 : maximum size of Lsub_buf[]
 			       *  1 : maximum size of Lval_buf[]
-			       *  2 : maximum size of Usub_buf[] 
+			       *  2 : maximum size of Usub_buf[]
 			       *  3 : maximum size of Uval_buf[]
 			       *  4 : maximum size of tempv[LDA]
 			       */
@@ -106,7 +106,7 @@ typedef struct {
     int_t   SolveMsgVol;      /* Volume of messages sent in the solve phase */
 
 
-    /*********************/	
+    /*********************/
     /* The following variables are used in the hybrid solver */
 
     /*-- Counts to be used in U^{-T} triangular solve. -- */
@@ -131,7 +131,7 @@ typedef struct {
     int_t n;
     int_t nleaf;
     int_t nfrecvmod;
-    int_t inv; /* whether the diagonal block is inverted*/	
+    int_t inv; /* whether the diagonal block is inverted*/
 } LocalLU_t;
 
 
@@ -169,7 +169,7 @@ typedef struct {
     int_t *row_to_proc;
     int_t *inv_perm_c;
     int_t num_diag_procs, *diag_procs, *diag_len;
-    p@(pre)gsmv_comm_t *gsmv_comm; /* communication metadata for SpMV, 
+    p@(pre)gsmv_comm_t *gsmv_comm; /* communication metadata for SpMV,
          	       		      required by IterRefine.          */
     pxgstrs_comm_t *gstrs_comm;  /* communication metadata for SpTRSV. */
     int_t *A_colind_gsmv; /* After p@(pre)gsmv_init(), the global column
@@ -209,7 +209,7 @@ extern void
 @(pre)Create_Dense_Matrix_dist(SuperMatrix *, int_t, int_t, @(type) *, int_t,
 			  Stype_t, Dtype_t, Mtype_t);
 extern void
-@(pre)Create_SuperNode_Matrix_dist(SuperMatrix *, int_t, int_t, int_t, @(type) *, 
+@(pre)Create_SuperNode_Matrix_dist(SuperMatrix *, int_t, int_t, int_t, @(type) *,
 			      int_t *, int_t *, int_t *, int_t *, int_t *,
 			      Stype_t, Dtype_t, Mtype_t);
 extern void
@@ -220,16 +220,16 @@ extern void    @(pre)allocateA_dist (int_t, int_t, @(type) **, int_t **, int_t *
 extern void    @(pre)GenXtrue_dist (int_t, int_t, @(type) *, int_t);
 extern void    @(pre)FillRHS_dist (char *, int_t, @(type) *, int_t,
                               SuperMatrix *, @(type) *, int_t);
-extern int     @(pre)create_matrix(SuperMatrix *, int, @(type) **, int *, 
+extern int     @(pre)create_matrix(SuperMatrix *, int, @(type) **, int *,
 			      @(type) **, int *, FILE *, gridinfo_t *);
-extern int     @(pre)create_matrix_rb(SuperMatrix *, int, @(type) **, int *, 
+extern int     @(pre)create_matrix_rb(SuperMatrix *, int, @(type) **, int *,
 			      @(type) **, int *, FILE *, gridinfo_t *);
-extern int     @(pre)create_matrix_dat(SuperMatrix *, int, @(type) **, int *, 
+extern int     @(pre)create_matrix_dat(SuperMatrix *, int, @(type) **, int *,
 			      @(type) **, int *, FILE *, gridinfo_t *);
-extern int 	   @(pre)create_matrix_postfix(SuperMatrix *, int, @(type) **, int *, 
-				  @(type) **, int *, FILE *, char *, gridinfo_t *);				  
-				  
-	
+extern int 	   @(pre)create_matrix_postfix(SuperMatrix *, int, @(type) **, int *,
+				  @(type) **, int *, FILE *, char *, gridinfo_t *);
+
+
 /* Driver related */
 extern void    @(pre)gsequ_dist (SuperMatrix *, double *, double *, double *,
 			    double *, double *, int_t *);
@@ -252,16 +252,16 @@ extern int     sp_@(pre)gemv_dist (char *, @(type), SuperMatrix *, @(type) *,
 extern int     sp_@(pre)gemm_dist (char *, int, @(type), SuperMatrix *,
                         @(type) *, int, @(type), @(type) *, int);
 
-extern float @(pre)distribute(fact_t, int_t, SuperMatrix *, Glu_freeable_t *, 
+extern float @(pre)distribute(fact_t, int_t, SuperMatrix *, Glu_freeable_t *,
 			 LUstruct_t *, gridinfo_t *);
-extern void  p@(pre)gssvx_ABglobal(superlu_dist_options_t *, SuperMatrix *, 
+extern void  p@(pre)gssvx_ABglobal(superlu_dist_options_t *, SuperMatrix *,
 			      ScalePermstruct_t *, @(type) *,
 			      int, int, gridinfo_t *, LUstruct_t *, double *,
 			      SuperLUStat_t *, int *);
-extern float p@(pre)distribute(fact_t, int_t, SuperMatrix *, 
-			 ScalePermstruct_t *, Glu_freeable_t *, 
+extern float p@(pre)distribute(fact_t, int_t, SuperMatrix *,
+			 ScalePermstruct_t *, Glu_freeable_t *,
 			 LUstruct_t *, gridinfo_t *);
-extern void  p@(pre)gssvx(superlu_dist_options_t *, SuperMatrix *, 
+extern void  p@(pre)gssvx(superlu_dist_options_t *, SuperMatrix *,
 		     ScalePermstruct_t *, @(type) *,
 		     int, int, gridinfo_t *, LUstruct_t *,
 		     SOLVEstruct_t *, double *, SuperLUStat_t *, int *);
@@ -275,7 +275,7 @@ extern int_t pxgstrs_init(int_t, int_t, int_t, int_t,
 extern void pxgstrs_finalize(pxgstrs_comm_t *);
 extern int  @(pre)ldperm_dist(int_t, int_t, int_t, int_t [], int_t [],
 		    @(type) [], int_t *, double [], double []);
-extern int  static_schedule(superlu_dist_options_t *, int, int, 
+extern int  static_schedule(superlu_dist_options_t *, int, int,
 		            LUstruct_t *, gridinfo_t *, SuperLUStat_t *,
 			    int_t *, int_t *, int *);
 extern void LUstructInit(const int_t, LUstruct_t *);
@@ -295,7 +295,7 @@ extern void p@(pre)gstrs(int_t, LUstruct_t *, ScalePermstruct_t *, gridinfo_t *,
 		    SuperLUStat_t *, int *);
 extern void @(pre)lsum_fmod(@(type) *, @(type) *, @(type) *, @(type) *,
 		       int, int, int_t , int_t *, int_t, int_t, int_t,
-		       int_t *, gridinfo_t *, LocalLU_t *, 
+		       int_t *, gridinfo_t *, LocalLU_t *,
 		       MPI_Request [], SuperLUStat_t *);
 extern void @(pre)lsum_bmod(@(type) *, @(type) *, @(type) *,
                        int, int_t, int_t *, int_t *, Ucb_indptr_t **,
@@ -304,21 +304,21 @@ extern void @(pre)lsum_bmod(@(type) *, @(type) *, @(type) *,
 
 extern void @(pre)lsum_fmod_inv(@(type) *, @(type) *, @(type) *, @(type) *,
 		       int, int_t , int_t *,
-		       int_t *, gridinfo_t *, LocalLU_t *, 
+		       int_t *, gridinfo_t *, LocalLU_t *,
 		       SuperLUStat_t **, int_t *, int_t *, int_t, int_t, int_t, int_t, int, int);
 extern void @(pre)lsum_fmod_inv_master(@(type) *, @(type) *, @(type) *, @(type) *,
-		       int, int, int_t , int_t *, int_t, 
-		       int_t *, gridinfo_t *, LocalLU_t *, 
+		       int, int, int_t , int_t *, int_t,
+		       int_t *, gridinfo_t *, LocalLU_t *,
 		       SuperLUStat_t **, int_t, int_t, int_t, int_t, int, int);
 extern void @(pre)lsum_bmod_inv(@(type) *, @(type) *, @(type) *, @(type) *,
-                       int, int_t, int_t *, int_t *, int_t *, Ucb_indptr_t **,
+                       int, int_t, int_t *, int_t *, Ucb_indptr_t **,
                        int_t **, int_t *, gridinfo_t *, LocalLU_t *,
-		       MPI_Request [], SuperLUStat_t **, int_t *, int_t *, int_t, int_t, int, int);
+		       SuperLUStat_t **, int_t *, int_t *, int_t, int_t, int, int);
 extern void @(pre)lsum_bmod_inv_master(@(type) *, @(type) *, @(type) *, @(type) *,
-                       int, int_t, int_t *, int_t *, int_t *, Ucb_indptr_t **,
+                       int, int_t, int_t *, int_t *, Ucb_indptr_t **,
                        int_t **, int_t *, gridinfo_t *, LocalLU_t *,
-		       MPI_Request [], SuperLUStat_t **, int_t, int_t, int, int);			   
-			   
+		       SuperLUStat_t **, int_t, int_t, int, int);
+
 extern void p@(pre)gsrfs(int_t, SuperMatrix *, double, LUstruct_t *,
 		    ScalePermstruct_t *, gridinfo_t *,
 		    @(type) [], int_t, @(type) [], int_t, int,
@@ -364,22 +364,22 @@ extern void    @(pre)inf_norm_error_dist (int_t, int_t, @(type)*, int_t,
                                      @(type)*, int_t, gridinfo_t*);
 extern void    p@(pre)inf_norm_error(int, int_t, int_t, @(type) [], int_t,
 				@(type) [], int_t , gridinfo_t *);
-extern void  @(pre)readhb_dist (int, FILE *, int_t *, int_t *, int_t *, 
+extern void  @(pre)readhb_dist (int, FILE *, int_t *, int_t *, int_t *,
 			   @(type) **, int_t **, int_t **);
 extern void  @(pre)readtriple_dist(FILE *, int_t *, int_t *, int_t *,
 			 @(type) **, int_t **, int_t **);
 extern void  @(pre)readtriple_noheader(FILE *, int_t *, int_t *, int_t *,
-			 @(type) **, int_t **, int_t **);			 
+			 @(type) **, int_t **, int_t **);
 extern void  @(pre)readrb_dist(int, FILE *, int_t *, int_t *, int_t *,
 		     @(type) **, int_t **, int_t **);
 extern void  @(pre)readMM_dist(FILE *, int_t *, int_t *, int_t *,
 	                  @(type) **, int_t **, int_t **);
 extern int  @(pre)read_binary(FILE *, int_t *, int_t *, int_t *,
-	                  @(type) **, int_t **, int_t **);	
-					  
+	                  @(type) **, int_t **, int_t **);
+
 /* Distribute the data for numerical factorization */
 extern float @(pre)dist_psymbtonum(fact_t, int_t, SuperMatrix *,
-                                ScalePermstruct_t *, Pslu_freeable_t *, 
+                                ScalePermstruct_t *, Pslu_freeable_t *,
                                 LUstruct_t *, gridinfo_t *);
 extern void p@(pre)GetDiagU(int_t, LUstruct_t *, gridinfo_t *, @(type) *);
 
@@ -392,7 +392,7 @@ extern void  @(pre)PrintUblocks(int, int_t, gridinfo_t *, Glu_persist_t *,
 extern void  @(pre)Print_CompCol_Matrix_dist(SuperMatrix *);
 extern void  @(pre)Print_Dense_Matrix_dist(SuperMatrix *);
 extern int   @(pre)Print_CompRowLoc_Matrix_dist(SuperMatrix *);
-extern int   file_@(pre)Print_CompRowLoc_Matrix_dist(FILE *fp, SuperMatrix *A);																			   
+extern int   file_@(pre)Print_CompRowLoc_Matrix_dist(FILE *fp, SuperMatrix *A);
 @precision DOUBLE
 extern int   file_PrintDouble5(FILE *, char *, int_t, double *);
 @precision DCOMPLEX
@@ -409,12 +409,12 @@ extern void @(pre)gemm_(const char*, const char*, const int*, const int*, const 
                   const int*, const @(type)*, @(type)*, const int*, int, int);
 extern void @(pre)trsv_(char*, char*, char*, int*, @(type)*, int*,
                   @(type)*, int*, int, int, int);
-extern void @(pre)trsm_(char*, char*, char*, char*, int*, int*, 
-                  @(type)*, @(type)*, int*, @(type)*, 
+extern void @(pre)trsm_(char*, char*, char*, char*, int*, int*,
+                  @(type)*, @(type)*, int*, @(type)*,
                   int*, int, int, int, int);
-extern void @(pre)gemv_(char *, int *, int *, @(type) *, @(type) *a, int *, 
+extern void @(pre)gemv_(char *, int *, int *, @(type) *, @(type) *a, int *,
                   @(type) *, int *, @(type) *, @(type) *, int *, int);
-extern void @(pre)trtri_(char*, char*, int*, @(type)*, int*,int*);				 
+extern void @(pre)trtri_(char*, char*, int*, @(type)*, int*,int*);
 
 @precision DOUBLE
 extern void @(pre)ger_(int*, int*, @(type)*, @(type)*, int*,
@@ -430,9 +430,9 @@ extern int @(pre)gemm_(const char*, const char*, const int*, const int*, const i
                    const int*,  const @(type)*, @(type)*, const int*);
 extern int @(pre)trsv_(char*, char*, char*, int*, @(type)*, int*,
                   @(type)*, int*);
-extern int @(pre)trsm_(char*, char*, char*, char*, int*, int*, 
+extern int @(pre)trsm_(char*, char*, char*, char*, int*, int*,
                   @(type)*, @(type)*, int*, @(type)*, int*);
-extern int @(pre)gemv_(char *, int *, int *, @(type) *, @(type) *a, int *, 
+extern int @(pre)gemv_(char *, int *, int *, @(type) *, @(type) *a, int *,
                   @(type) *, int *, @(type) *, @(type) *, int *);
 @precision DOUBLE
 extern void @(pre)ger_(int*, int*, @(type)*, @(type)*, int*,

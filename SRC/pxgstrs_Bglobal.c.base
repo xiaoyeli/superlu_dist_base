@@ -1,15 +1,15 @@
 /*! \file
 Copyright (c) 2003, The Regents of the University of California, through
-Lawrence Berkeley National Laboratory (subject to receipt of any required 
-approvals from U.S. Dept. of Energy) 
+Lawrence Berkeley National Laboratory (subject to receipt of any required
+approvals from U.S. Dept. of Energy)
 
-All rights reserved. 
+All rights reserved.
 
 The source code is distributed under BSD license, see the file License.txt
 at the top-level directory.
 */
 @extract -b Typedef.inc
-/*! @file 
+/*! @file
  * \brief Solves a system of distributed linear equations A*X = B with a general N-by-N matrix A using the LU factorization
  *
  * <pre>
@@ -34,7 +34,7 @@ at the top-level directory.
 #ifdef _CRAY
 fortran void @(SC_PRE)TRSM(_fcd, _fcd, _fcd, _fcd, int*, int*, @(type)*,
 		   @(type)*, int*, @(type)*, int*);
-fortran void @(SC_PRE)GEMM(_fcd, _fcd, int*, int*, int*, @(type)*, @(type)*, 
+fortran void @(SC_PRE)GEMM(_fcd, _fcd, int*, int*, int*, @(type)*, @(type)*,
 		   int*, @(type)*, int*, @(type)*, @(type)*, int*);
 _fcd ftcs1;
 _fcd ftcs2;
@@ -53,7 +53,7 @@ static void gather_diag_to_all(int_t, int_t, @(type) [], Glu_persist_t *,
  * p@(pre)gstrs_Bglobal solves a system of distributed linear equations
  * A*X = B with a general N-by-N matrix A using the LU factorization
  * computed by p@(pre)gstrf.
- * 
+ *
  * Arguments
  * =========
  *
@@ -80,7 +80,7 @@ static void gather_diag_to_all(int_t, int_t, @(type) [], Glu_persist_t *,
  *        On exit, the solution matrix of the possibly equilibrated
  *        and row permuted system if info = 0;
  *
- *        NOTE: Currently, the N-by-NRHS  matrix B must reside on all 
+ *        NOTE: Currently, the N-by-NRHS  matrix B must reside on all
  *              processes when calling this routine.
  *
  * ldb    (input) int (global)
@@ -96,12 +96,12 @@ static void gather_diag_to_all(int_t, int_t, @(type) [], Glu_persist_t *,
  * info   (output) int*
  * 	   = 0: successful exit
  *	   < 0: if info = -i, the i-th argument had an illegal value
- * </pre>    
+ * </pre>
  */
 
 void
-p@(pre)gstrs_Bglobal(int_t n, LUstruct_t *LUstruct, gridinfo_t *grid, 
-                @(type) *B, int_t ldb, int nrhs, 
+p@(pre)gstrs_Bglobal(int_t n, LUstruct_t *LUstruct, gridinfo_t *grid,
+                @(type) *B, int_t ldb, int nrhs,
                 SuperLUStat_t *stat, int *info)
 {
     Glu_persist_t *Glu_persist = LUstruct->Glu_persist;
@@ -159,7 +159,7 @@ p@(pre)gstrs_Bglobal(int_t n, LUstruct_t *LUstruct, gridinfo_t *grid,
 #endif
 
     int_t *mod_bit = Llu->mod_bit; /* flag contribution from each row block */
- 
+
     t = SuperLU_timer_();
 
     /* Test input parameters. */
@@ -170,7 +170,7 @@ p@(pre)gstrs_Bglobal(int_t n, LUstruct_t *LUstruct, gridinfo_t *grid,
 	pxerr_dist("P@(PRE)GSTRS_BGLOBAL", grid, -*info);
 	return;
     }
-	
+
     /*
      * Initialization.
      */
@@ -220,10 +220,10 @@ p@(pre)gstrs_Bglobal(int_t n, LUstruct_t *LUstruct, gridinfo_t *grid,
     /* Allocate working storage. */
     knsupc = sp_ienv_dist(3);
     maxrecvsz = knsupc * nrhs + SUPERLU_MAX( XK_H, LSUM_H );
-    if ( !(lsum = @(type)Calloc_dist(((size_t)ldalsum) * nrhs 
+    if ( !(lsum = @(type)Calloc_dist(((size_t)ldalsum) * nrhs
         + nlb * LSUM_H)) )
 	ABORT("Calloc fails for lsum[].");
-    if ( !(x = @(type)Malloc_dist(((size_t)ldalsum) * nrhs 
+    if ( !(x = @(type)Malloc_dist(((size_t)ldalsum) * nrhs
         + nlb * XK_H)) )
 	ABORT("Malloc fails for x[].");
     if ( !(recvbuf = @(type)Malloc_dist(maxrecvsz)) )
@@ -231,7 +231,7 @@ p@(pre)gstrs_Bglobal(int_t n, LUstruct_t *LUstruct, gridinfo_t *grid,
     if ( !(rtemp = @(type)Calloc_dist(maxrecvsz)) )
 	ABORT("Malloc fails for rtemp[].");
 
-    
+
     /*---------------------------------------------------
      * Forward solve Ly = b.
      *---------------------------------------------------*/
@@ -286,7 +286,7 @@ p@(pre)gstrs_Bglobal(int_t n, LUstruct_t *LUstruct, gridinfo_t *grid,
 		    mod_bit[lk] = 1;  /* contribution from off-diagonal */
 	    }
 	}
-	
+
 	/* Every process receives the count, but it is only useful on the
 	   diagonal processes.  */
 	MPI_Allreduce( mod_bit, frecv, nlb, mpi_int_t, MPI_SUM, scp->comm );
@@ -351,10 +351,10 @@ p@(pre)gstrs_Bglobal(int_t n, LUstruct_t *LUstruct, gridinfo_t *grid,
 		@(SC_PRE)TRSM(ftcs1, ftcs1, ftcs2, ftcs3, &knsupc, &nrhs, &alpha,
 		      lusup, &nsupr, &x[ii], &knsupc);
 #elif defined (USE_VENDOR_BLAS)
-		@(pre)trsm_("L", "L", "N", "U", &knsupc, &nrhs, &alpha, 
+		@(pre)trsm_("L", "L", "N", "U", &knsupc, &nrhs, &alpha,
 		       lusup, &nsupr, &x[ii], &knsupc, 1, 1, 1, 1);
 #else
-		@(pre)trsm_("L", "L", "N", "U", &knsupc, &nrhs, &alpha, 
+		@(pre)trsm_("L", "L", "N", "U", &knsupc, &nrhs, &alpha,
 		       lusup, &nsupr, &x[ii], &knsupc);
 #endif
 @precision DOUBLE
@@ -367,7 +367,7 @@ p@(pre)gstrs_Bglobal(int_t n, LUstruct_t *LUstruct, gridinfo_t *grid,
 #if ( DEBUGlevel>=2 )
 		printf("(%2d) Solve X[%2d]\n", iam, k);
 #endif
-		
+
 		/*
 		 * Send Xk to process column Pc[k].
 		 */
@@ -385,7 +385,7 @@ p@(pre)gstrs_Bglobal(int_t n, LUstruct_t *LUstruct, gridinfo_t *grid,
 #else
 
 			MPI_Send( &x[ii - XK_H], knsupc * nrhs + XK_H,
-				  @(MPI_TYPE), 
+				  @(MPI_TYPE),
                                   pi, Xk, grid->comm );
 #endif
 #endif
@@ -401,9 +401,9 @@ p@(pre)gstrs_Bglobal(int_t n, LUstruct_t *LUstruct, gridinfo_t *grid,
 		nb = lsub[0] - 1;
 		lptr = BC_HEADER + LB_DESCRIPTOR + knsupc;
 		luptr = knsupc; /* Skip diagonal block L(k,k). */
-		
+
 		@(pre)lsum_fmod(lsum, x, &x[ii], rtemp, nrhs, knsupc, k,
-			   fmod, nb, lptr, luptr, xsup, grid, Llu, 
+			   fmod, nb, lptr, luptr, xsup, grid, Llu,
 			   send_req,stat);
 	    }
 	} /* if diagonal process ... */
@@ -451,7 +451,7 @@ p@(pre)gstrs_Bglobal(int_t n, LUstruct_t *LUstruct, gridinfo_t *grid,
 #if ( DEBUGlevel>=2 )
 	printf("(%2d) Recv'd block %d, tag %2d\n", iam, k, status.MPI_TAG);
 #endif
-	
+
 	switch ( status.MPI_TAG ) {
 	  case Xk:
 	      --nfrecvx;
@@ -468,7 +468,7 @@ p@(pre)gstrs_Bglobal(int_t n, LUstruct_t *LUstruct, gridinfo_t *grid,
 		   * Perform local block modifications: lsum[i] -= L_i,k * X[k]
 		   */
 		  @(pre)lsum_fmod(lsum, x, &recvbuf[XK_H], rtemp, nrhs, knsupc, k,
-			     fmod, nb, lptr, luptr, xsup, grid, Llu, 
+			     fmod, nb, lptr, luptr, xsup, grid, Llu,
 			     send_req, stat);
 	      } /* if lsub */
 
@@ -500,10 +500,10 @@ p@(pre)gstrs_Bglobal(int_t n, LUstruct_t *LUstruct, gridinfo_t *grid,
 		  @(SC_PRE)TRSM(ftcs1, ftcs1, ftcs2, ftcs3, &knsupc, &nrhs, &alpha,
 			lusup, &nsupr, &x[ii], &knsupc);
 #elif defined (USE_VENDOR_BLAS)
-		  @(pre)trsm_("L", "L", "N", "U", &knsupc, &nrhs, &alpha, 
+		  @(pre)trsm_("L", "L", "N", "U", &knsupc, &nrhs, &alpha,
 			 lusup, &nsupr, &x[ii], &knsupc, 1, 1, 1, 1);
 #else
-		  @(pre)trsm_("L", "L", "N", "U", &knsupc, &nrhs, &alpha, 
+		  @(pre)trsm_("L", "L", "N", "U", &knsupc, &nrhs, &alpha,
 			 lusup, &nsupr, &x[ii], &knsupc);
 #endif
 @precision DOUBLE
@@ -516,7 +516,7 @@ p@(pre)gstrs_Bglobal(int_t n, LUstruct_t *LUstruct, gridinfo_t *grid,
 #if ( DEBUGlevel>=2 )
 		  printf("(%2d) Solve X[%2d]\n", iam, k);
 #endif
-		
+
 		  /*
 		   * Send Xk to process column Pc[k].
 		   */
@@ -526,7 +526,7 @@ p@(pre)gstrs_Bglobal(int_t n, LUstruct_t *LUstruct, gridinfo_t *grid,
 			  pi = PNUM( p, kcol, grid );
 #ifdef ISEND_IRECV
 			  MPI_Isend( &x[ii - XK_H], knsupc * nrhs + XK_H,
-				     @(MPI_TYPE), pi, Xk, grid->comm, 
+				     @(MPI_TYPE), pi, Xk, grid->comm,
 				     &send_req[Llu->SolveMsgSent++]);
 #else
 #ifdef BSEND
@@ -557,7 +557,7 @@ p@(pre)gstrs_Bglobal(int_t n, LUstruct_t *LUstruct, gridinfo_t *grid,
 
 	      break;
 
-#if ( DEBUGlevel>=2 )	      
+#if ( DEBUGlevel>=2 )
 	    default:
 	      printf("(%2d) Recv'd wrong message tag %4d\n", iam, status.MPI_TAG);
 	      break;
@@ -707,7 +707,7 @@ p@(pre)gstrs_Bglobal(int_t n, LUstruct_t *LUstruct, gridinfo_t *grid,
     if ( !(Ucb_valptr = SUPERLU_MALLOC(nub * sizeof(int_t *))) )
         ABORT("Malloc fails for Ucb_valptr[]");
 
-    /* Count number of row blocks in a block column. 
+    /* Count number of row blocks in a block column.
        One pass of the skeleton graph of U. */
     for (lk = 0; lk < nlb; ++lk) {
 	usub = Ufstnz_br_ptr[lk];
@@ -765,7 +765,7 @@ p@(pre)gstrs_Bglobal(int_t n, LUstruct_t *LUstruct, gridinfo_t *grid,
 		    for (i = 0; i < Urbs[lb]; ++i)
 			printf("(%2d) .. row blk %2d:\
                                lbnum %d, indpos %d, valpos %d\n",
-			       iam, i, 
+			       iam, i,
 			       Ucb_indptr[lb][i].lbnum,
 			       Ucb_indptr[lb][i].indpos,
 			       Ucb_valptr[lb][i]);
@@ -818,10 +818,10 @@ p@(pre)gstrs_Bglobal(int_t n, LUstruct_t *LUstruct, gridinfo_t *grid,
 		@(SC_PRE)TRSM(ftcs1, ftcs3, ftcs2, ftcs2, &knsupc, &nrhs, &alpha,
 		      lusup, &nsupr, &x[ii], &knsupc);
 #elif defined (USE_VENDOR_BLAS)
-		@(pre)trsm_("L", "U", "N", "N", &knsupc, &nrhs, &alpha, 
+		@(pre)trsm_("L", "U", "N", "N", &knsupc, &nrhs, &alpha,
 		       lusup, &nsupr, &x[ii], &knsupc, 1, 1, 1, 1);
 #else
-		@(pre)trsm_("L", "U", "N", "N", &knsupc, &nrhs, &alpha, 
+		@(pre)trsm_("L", "U", "N", "N", &knsupc, &nrhs, &alpha,
 		       lusup, &nsupr, &x[ii], &knsupc);
 #endif
 @precision DOUBLE
@@ -862,7 +862,7 @@ p@(pre)gstrs_Bglobal(int_t n, LUstruct_t *LUstruct, gridinfo_t *grid,
 		/*
 		 * Perform local block modifications: lsum[i] -= U_i,k * X[k]
 		 */
-		if ( Urbs[lk] ) 
+		if ( Urbs[lk] )
 		    @(pre)lsum_bmod(lsum, x, &x[ii], nrhs, k, bmod, Urbs,
 			       Ucb_indptr, Ucb_valptr, xsup, grid, Llu,
 			       send_req, stat);
@@ -879,7 +879,7 @@ p@(pre)gstrs_Bglobal(int_t n, LUstruct_t *LUstruct, gridinfo_t *grid,
 	/* Receive a message. */
 	MPI_Recv( recvbuf, maxrecvsz, @(MPI_TYPE), MPI_ANY_SOURCE,
 		 MPI_ANY_TAG, grid->comm, &status );
-	
+
 @precision DOUBLE
 	k = *recvbuf;
 @precision DCOMPLEX
@@ -899,7 +899,7 @@ p@(pre)gstrs_Bglobal(int_t n, LUstruct_t *LUstruct, gridinfo_t *grid,
 		 *         lsum[i] -= U_i,k * X[k]
 		 */
 		@(pre)lsum_bmod(lsum, x, &recvbuf[XK_H], nrhs, k, bmod, Urbs,
-			   Ucb_indptr, Ucb_valptr, xsup, grid, Llu, 
+			   Ucb_indptr, Ucb_valptr, xsup, grid, Llu,
 			   send_req, stat);
 
 	        break;
@@ -930,10 +930,10 @@ p@(pre)gstrs_Bglobal(int_t n, LUstruct_t *LUstruct, gridinfo_t *grid,
 		    @(SC_PRE)TRSM(ftcs1, ftcs3, ftcs2, ftcs2, &knsupc, &nrhs, &alpha,
 			  lusup, &nsupr, &x[ii], &knsupc);
 #elif defined (USE_VENDOR_BLAS)
-		    @(pre)trsm_("L", "U", "N", "N", &knsupc, &nrhs, &alpha, 
+		    @(pre)trsm_("L", "U", "N", "N", &knsupc, &nrhs, &alpha,
 			   lusup, &nsupr, &x[ii], &knsupc, 1, 1, 1, 1);
 #else
-		    @(pre)trsm_("L", "U", "N", "N", &knsupc, &nrhs, &alpha, 
+		    @(pre)trsm_("L", "U", "N", "N", &knsupc, &nrhs, &alpha,
 			   lusup, &nsupr, &x[ii], &knsupc);
 #endif
 @precision DOUBLE
@@ -972,7 +972,7 @@ p@(pre)gstrs_Bglobal(int_t n, LUstruct_t *LUstruct, gridinfo_t *grid,
 			}
 		    }
 		    /*
-		     * Perform local block modifications: 
+		     * Perform local block modifications:
 		     *         lsum[i] -= U_i,k * X[k]
 		     */
 		    if ( Urbs[lk] )
@@ -980,14 +980,14 @@ p@(pre)gstrs_Bglobal(int_t n, LUstruct_t *LUstruct, gridinfo_t *grid,
 				   Ucb_indptr, Ucb_valptr, xsup, grid, Llu,
 				   send_req, stat);
 		} /* if becomes solvable */
-		
+
 		break;
 
 #if ( DEBUGlevel>=2 )
 	      default:
 		printf("(%2d) Recv'd wrong message tag %4d\n", iam, status.MPI_TAG);
 		break;
-#endif		
+#endif
 
 	} /* switch */
 
@@ -1065,7 +1065,7 @@ gather_diag_to_all(int_t n, int_t nrhs, @(type) x[],
     int_t *ilsum, *xsup;
     int iam, knsupc, pkk;
     @(type) *x_col, *y_col;
-    
+
     iam = grid->iam;
     nsupers = Glu_persist->supno[n-1] + 1;
     xsup = Glu_persist->xsup;

@@ -1,15 +1,15 @@
 /*! \file
 Copyright (c) 2003, The Regents of the University of California, through
-Lawrence Berkeley National Laboratory (subject to receipt of any required 
-approvals from U.S. Dept. of Energy) 
+Lawrence Berkeley National Laboratory (subject to receipt of any required
+approvals from U.S. Dept. of Energy)
 
-All rights reserved. 
+All rights reserved.
 
 The source code is distributed under BSD license, see the file License.txt
 at the top-level directory.
 */
 @extract -b Typedef.inc
-/*! @file 
+/*! @file
  * \brief Performs LU factorization in parallel
  *
  * <pre>
@@ -51,7 +51,7 @@ at the top-level directory.
  *       singularity. ( p@(pre)gstrf2(0), one column at a time )
  *     * Compute block row of U
  *     * Update trailing matrix
- * 
+ *
  * Loop over the remaining blocks of columns.
  *   mycol = MYCOL( iam, grid );
  *   myrow = MYROW( iam, grid );
@@ -64,14 +64,14 @@ at the top-level directory.
  *     * Factor diagonal and subdiagonal blocks and test for exact
  *       singularity.
  *       if ( mycol == kcol ) {
- *           p@(pre)gstrf2(k), one column at a time 
+ *           p@(pre)gstrf2(k), one column at a time
  *       }
  *
  *     * Parallel triangular solve
  *       if ( iam == Pkk ) multicast L_k,k to this process row;
  *       if ( myrow == krow && mycol != kcol ) {
  *          Recv L_k,k from process Pkk;
- *          for (j = k+1; j < N; ++j) 
+ *          for (j = k+1; j < N; ++j)
  *              if ( PCOL( j, grid ) == mycol && A_k,j != 0 )
  *                 U_k,j = L_k,k \ A_k,j;
  *       }
@@ -88,7 +88,7 @@ at the top-level directory.
  *          Recv L_k+1:N,k from process Pik;
  *       }
  *       for (j = k+1; k < N; ++k) {
- *          for (i = k+1; i < N; ++i) 
+ *          for (i = k+1; i < N; ++i)
  *              if ( myrow == PROW( i, grid ) && mycol == PCOL( j, grid )
  *                   && L_i,k != 0 && U_k,j != 0 )
  *                 A_i,j = A_i,j - L_i,k * U_k,j;
@@ -125,7 +125,7 @@ static void p@(pre)gstrs2(int_t, int_t, Glu_persist_t *, gridinfo_t *,
 /************************************************************************/
 
 /*! \brief
- * 
+ *
  * <pre>
  * Purpose
  * =======
@@ -134,7 +134,7 @@ static void p@(pre)gstrs2(int_t, int_t, Glu_persist_t *, gridinfo_t *,
  *
  * Arguments
  * =========
- * 
+ *
  * options (input) superlu_dist_options_t*
  *         The structure defines the input parameters to control
  *         how the LU decomposition will be performed.
@@ -223,7 +223,7 @@ int_t p@(pre)gstrf
     int   msgcnt[4]; /* Count the size of the message xfer'd in each buffer:
 		      *     0 : transferred in Lsub_buf[]
 		      *     1 : transferred in Lval_buf[]
-		      *     2 : transferred in Usub_buf[] 
+		      *     2 : transferred in Usub_buf[]
 		      *     3 : transferred in Uval_buf[]
 		      */
     int_t  msg0, msg2;
@@ -246,7 +246,7 @@ int_t p@(pre)gstrf
     int    full, ldt, ldu, lead_zero, ncols;
     MPI_Request recv_req[4], *send_req;
     MPI_Status status;
-#if ( DEBUGlevel>=2 ) 
+#if ( DEBUGlevel>=2 )
     int_t num_copy=0, num_update=0;
 #endif
 #if ( PRNTlevel==3 )
@@ -298,10 +298,10 @@ int_t p@(pre)gstrf
 	if ( !(Llu->Lval_buf_2[0] = @(type)Malloc_dist(2 * ((size_t)i))) )
 	    ABORT("Malloc fails for Lval_buf[].");
 	Llu->Lval_buf_2[1] = Llu->Lval_buf_2[0] + i;
-	if ( Llu->bufmax[2] != 0 ) 
+	if ( Llu->bufmax[2] != 0 )
 	    if ( !(Llu->Usub_buf = intMalloc_dist(Llu->bufmax[2])) )
 		ABORT("Malloc fails for Usub_buf[].");
-	if ( Llu->bufmax[3] != 0 ) 
+	if ( Llu->bufmax[3] != 0 )
 	    if ( !(Llu->Uval_buf = @(type)Malloc_dist(Llu->bufmax[3])) )
 		ABORT("Malloc fails for Uval_buf[].");
 	if ( !(send_req =
@@ -315,7 +315,7 @@ int_t p@(pre)gstrf
     if ( !iam ) {
 	printf(".. thresh = s_eps %e * anorm %e = %e\n", s_eps, anorm, thresh);
 	printf(".. Buffer size: Lsub %d\tLval %d\tUsub %d\tUval %d\tLDA %d\n",
-	       Llu->bufmax[0], Llu->bufmax[1], 
+	       Llu->bufmax[0], Llu->bufmax[1],
 	       Llu->bufmax[2], Llu->bufmax[3], Llu->bufmax[4]);
     }
 #endif
@@ -377,7 +377,7 @@ int_t p@(pre)gstrf
 
 	scp = &grid->rscp; /* The scope of process row. */
 
-	/* Process column *kcol* multicasts numeric values of L(:,k) 
+	/* Process column *kcol* multicasts numeric values of L(:,k)
 	   to process rows. */
 	lsub = Lrowind_bc_ptr[0];
 	lusup = Lnzval_bc_ptr[0];
@@ -387,7 +387,7 @@ int_t p@(pre)gstrf
 	} else {
 	    msgcnt[0] = msgcnt[1] = 0;
 	}
-	
+
 	for (pj = 0; pj < Pc; ++pj) {
 	    if ( ToSendR[0][pj] != EMPTY ) {
 #if ( PROFlevel>=1 )
@@ -464,15 +464,15 @@ int_t p@(pre)gstrf
 		VT_begin(2);
 #endif
 @precision !
-		/*probe_recv(iam, kcol, (4*k)%NTAGS, mpi_int_t, scp->comm, 
+		/*probe_recv(iam, kcol, (4*k)%NTAGS, mpi_int_t, scp->comm,
 		  Llu->bufmax[0]);*/
-		/*MPI_Recv( Lsub_buf, Llu->bufmax[0], mpi_int_t, kcol, 
+		/*MPI_Recv( Lsub_buf, Llu->bufmax[0], mpi_int_t, kcol,
 			 (4*k)%NTAGS, scp->comm, &status );*/
 		MPI_Wait( &recv_req[0], &status );
 		MPI_Get_count( &status, mpi_int_t, &msgcnt[0] );
-		/*probe_recv(iam, kcol, (4*k+1)%NTAGS, @(MPI_TYPE), scp->comm, 
+		/*probe_recv(iam, kcol, (4*k+1)%NTAGS, @(MPI_TYPE), scp->comm,
 		  Llu->bufmax[1]);*/
-		/*MPI_Recv( Lval_buf, Llu->bufmax[1], @(MPI_TYPE), kcol, 
+		/*MPI_Recv( Lval_buf, Llu->bufmax[1], @(MPI_TYPE), kcol,
 			 (4*k+1)%NTAGS, scp->comm, &status );*/
 		MPI_Wait( &recv_req[1], &status );
 		MPI_Get_count( &status, @(MPI_TYPE), &msgcnt[1] );
@@ -563,14 +563,14 @@ int_t p@(pre)gstrf
 		VT_begin(4);
 #endif
 @precision !
-		/*probe_recv(iam, krow, (4*k+2)%NTAGS, mpi_int_t, scp->comm, 
+		/*probe_recv(iam, krow, (4*k+2)%NTAGS, mpi_int_t, scp->comm,
 		  Llu->bufmax[2]);*/
 		MPI_Recv( Usub_buf, Llu->bufmax[2], mpi_int_t, krow,
 			 (4*k+2)%NTAGS, scp->comm, &status );
 		MPI_Get_count( &status, mpi_int_t, &msgcnt[2] );
-		/*probe_recv(iam, krow, (4*k+3)%NTAGS, @(MPI_TYPE), scp->comm, 
+		/*probe_recv(iam, krow, (4*k+3)%NTAGS, @(MPI_TYPE), scp->comm,
 		  Llu->bufmax[3]);*/
-		MPI_Recv( Uval_buf, Llu->bufmax[3], @(MPI_TYPE), krow, 
+		MPI_Recv( Uval_buf, Llu->bufmax[3], @(MPI_TYPE), krow,
 			 (4*k+3)%NTAGS, scp->comm, &status );
 		MPI_Get_count( &status, @(MPI_TYPE), &msgcnt[3] );
 @precision DOUBLE
@@ -593,11 +593,11 @@ int_t p@(pre)gstrf
 #endif
 	    } else msgcnt[2] = 0;
 	} /* if myrow == Pr(k) */
-	  
-	/* 
+
+	/*
 	 * Parallel rank-k update; pair up blocks L(i,k) and U(k,j).
 	 *  for (j = k+1; k < N; ++k) {
-	 *     for (i = k+1; i < N; ++i) 
+	 *     for (i = k+1; i < N; ++i)
 	 *         if ( myrow == PROW( i, grid ) && mycol == PCOL( j, grid )
 	 *              && L(i,k) != 0 && U(k,j) != 0 )
 	 *             A(i,j) = A(i,j) - L(i,k) * U(k,j);
@@ -627,7 +627,7 @@ int_t p@(pre)gstrf
 	    iukp = BR_HEADER; /* Skip header; Pointer to index[] of U(k,:) */
 	    rukp = 0;         /* Pointer to nzval[] of U(k,:) */
 	    klst = FstBlockC( k+1 );
-	    
+
 	    /* ---------------------------------------------------
 	       Update the first block column A(:,k+1).
 	       --------------------------------------------------- */
@@ -686,22 +686,22 @@ int_t p@(pre)gstrf
 		    rukp -= usub[iukp - 1]; /* Return to start of U(k,j). */
 		} /* if full ... */
 
-		for (lb = 0; lb < nlb; ++lb) { 
+		for (lb = 0; lb < nlb; ++lb) {
 		    ib = lsub[lptr]; /* Row block L(i,k). */
 		    nbrow = lsub[lptr+1];  /* Number of full rows. */
 		    lptr += LB_DESCRIPTOR; /* Skip descriptor. */
 		    tempv = tempv2d;
 #ifdef _CRAY
-		    @(SC_PRE)GEMM(ftcs, ftcs, &nbrow, &ncols, &ldu, &alpha, 
-			  &lusup[luptr+(knsupc-ldu)*nsupr], &nsupr, 
+		    @(SC_PRE)GEMM(ftcs, ftcs, &nbrow, &ncols, &ldu, &alpha,
+			  &lusup[luptr+(knsupc-ldu)*nsupr], &nsupr,
 			  tempu, &ldu, &beta, tempv, &ldt);
 #elif defined (USE_VENDOR_BLAS)
-		    @(pre)gemm_("N", "N", &nbrow, &ncols, &ldu, &alpha, 
-			   &lusup[luptr+(knsupc-ldu)*nsupr], &nsupr, 
+		    @(pre)gemm_("N", "N", &nbrow, &ncols, &ldu, &alpha,
+			   &lusup[luptr+(knsupc-ldu)*nsupr], &nsupr,
 			   tempu, &ldu, &beta, tempv, &ldt, 1, 1);
 #else
-		    @(pre)gemm_("N", "N", &nbrow, &ncols, &ldu, &alpha, 
-			   &lusup[luptr+(knsupc-ldu)*nsupr], &nsupr, 
+		    @(pre)gemm_("N", "N", &nbrow, &ncols, &ldu, &alpha,
+			   &lusup[luptr+(knsupc-ldu)*nsupr], &nsupr,
 			   tempu, &ldu, &beta, tempv, &ldt);
 #endif
 @precision DOUBLE
@@ -748,7 +748,7 @@ int_t p@(pre)gstrf
 			lptrj = BC_HEADER;
 			luptrj = 0;
 			ijb = index[lptrj];
-			while ( ijb != ib ) { /* Search for dest block -- 
+			while ( ijb != ib ) { /* Search for dest block --
 						 blocks are not ordered! */
 			    luptrj += index[lptrj+1];
 			    lptrj += LB_DESCRIPTOR + index[lptrj+1];
@@ -812,7 +812,7 @@ int_t p@(pre)gstrf
 #endif
 @precision !
 
-	    /* Process column *kcol+1* multicasts numeric values of L(:,k+1) 
+	    /* Process column *kcol+1* multicasts numeric values of L(:,k+1)
 	       to process rows. */
 	    lk = LBj( k+1, grid ); /* Local block number. */
 	    lsub1 = Lrowind_bc_ptr[lk];
@@ -861,7 +861,7 @@ int_t p@(pre)gstrf
 		scp = &grid->rscp; /* The scope of process row. */
 		MPI_Irecv(Lsub_buf_2[(k+1)%2], Llu->bufmax[0], mpi_int_t, kcol,
 			  (4*(k+1))%NTAGS, scp->comm, &recv_req[0]);
-		MPI_Irecv(Lval_buf_2[(k+1)%2], Llu->bufmax[1], @(MPI_TYPE), kcol, 
+		MPI_Irecv(Lval_buf_2[(k+1)%2], Llu->bufmax[1], @(MPI_TYPE), kcol,
 			  (4*(k+1)+1)%NTAGS, scp->comm, &recv_req[1]);
 #if ( DEBUGlevel>=2 )
 		printf("(%d) Post Irecv L(:,%4d)\n", iam, k+1);
@@ -874,7 +874,7 @@ int_t p@(pre)gstrf
 	    /* ---------------------------------------------------
 	       Update all other blocks using block row U(k,:)
 	       --------------------------------------------------- */
-	    for (j = 0; j < nub; ++j) { 
+	    for (j = 0; j < nub; ++j) {
 		lptr = lptr0;
 		luptr = luptr0;
 		jb = usub[iukp];  /* Global block number of block U(k,j). */
@@ -928,22 +928,22 @@ int_t p@(pre)gstrf
 		    rukp -= usub[iukp - 1]; /* Return to start of U(k,j). */
 		} /* if full ... */
 
-		for (lb = 0; lb < nlb; ++lb) { 
+		for (lb = 0; lb < nlb; ++lb) {
 		    ib = lsub[lptr];       /* Row block L(i,k). */
 		    nbrow = lsub[lptr+1];  /* Number of full rows. */
 		    lptr += LB_DESCRIPTOR; /* Skip descriptor. */
 		    tempv = tempv2d;
 #ifdef _CRAY
-		    @(SC_PRE)GEMM(ftcs, ftcs, &nbrow, &ncols, &ldu, &alpha, 
-			  &lusup[luptr+(knsupc-ldu)*nsupr], &nsupr, 
+		    @(SC_PRE)GEMM(ftcs, ftcs, &nbrow, &ncols, &ldu, &alpha,
+			  &lusup[luptr+(knsupc-ldu)*nsupr], &nsupr,
 			  tempu, &ldu, &beta, tempv, &ldt);
 #elif defined (USE_VENDOR_BLAS)
-		    @(pre)gemm_("N", "N", &nbrow, &ncols, &ldu, &alpha, 
-			   &lusup[luptr+(knsupc-ldu)*nsupr], &nsupr, 
+		    @(pre)gemm_("N", "N", &nbrow, &ncols, &ldu, &alpha,
+			   &lusup[luptr+(knsupc-ldu)*nsupr], &nsupr,
 			   tempu, &ldu, &beta, tempv, &ldt, 1, 1);
 #else
-		    @(pre)gemm_("N", "N", &nbrow, &ncols, &ldu, &alpha, 
-			   &lusup[luptr+(knsupc-ldu)*nsupr], &nsupr, 
+		    @(pre)gemm_("N", "N", &nbrow, &ncols, &ldu, &alpha,
+			   &lusup[luptr+(knsupc-ldu)*nsupr], &nsupr,
 			   tempu, &ldu, &beta, tempv, &ldt);
 #endif
 @precision DOUBLE
@@ -963,7 +963,7 @@ int_t p@(pre)gstrf
 			    iuip[lib] += UB_DESCRIPTOR + SuperSize( ijb );
 			    ijb = index[iuip[lib]];
 			}
-			/* Skip descriptor.  Now point to fstnz index of 
+			/* Skip descriptor.  Now point to fstnz index of
 			   block U(i,j). */
 			iuip[lib] += UB_DESCRIPTOR;
 
@@ -991,7 +991,7 @@ int_t p@(pre)gstrf
 			lptrj = BC_HEADER;
 			luptrj = 0;
 			ijb = index[lptrj];
-			while ( ijb != ib ) { /* Search for dest block -- 
+			while ( ijb != ib ) { /* Search for dest block --
 						 blocks are not ordered! */
 			    luptrj += index[lptrj+1];
 			    lptrj += LB_DESCRIPTOR + index[lptrj+1];
@@ -1018,7 +1018,7 @@ int_t p@(pre)gstrf
 @precision DOUBLE
 				    nzval[indirect[rel]] -= tempv[i];
 @precision DCOMPLEX
-				    z_sub(&nzval[indirect[rel]], 
+				    z_sub(&nzval[indirect[rel]],
 					  &nzval[indirect[rel]],
 					  &tempv[i]);
 @precision !
@@ -1036,7 +1036,7 @@ int_t p@(pre)gstrf
 	    } /* for j ... */
 	} /* if  k L(:,k) and U(k,:) are not empty */
 
-    } 
+    }
     /* ------------------------------------------
        END MAIN LOOP: for k = ...
        ------------------------------------------ */
@@ -1073,7 +1073,7 @@ int_t p@(pre)gstrf
     stat->utime[COMM] += t2;
     {
 	float msg_vol_max, msg_vol_sum, msg_cnt_max, msg_cnt_sum;
-	
+
 	MPI_Reduce( &msg_cnt, &msg_cnt_sum,
 		   1, MPI_FLOAT, MPI_SUM, 0, grid->comm );
 	MPI_Reduce( &msg_cnt, &msg_cnt_max,
@@ -1132,7 +1132,7 @@ int_t p@(pre)gstrf
  *   Factor diagonal and subdiagonal blocks and test for exact singularity.
  *   Only the process column that owns block column *k* participates
  *   in the work.
- * 
+ *
  * Arguments
  * =========
  *
@@ -1296,7 +1296,7 @@ if ( k == 3329 && j == 2 ) {
 	    }
 	}
 @precision !
-	    
+
 	/* Rank-1 update of the trailing submatrix. */
 	if ( --c ) {
 @precision DOUBLE
@@ -1312,10 +1312,10 @@ if ( k == 3329 && j == 2 ) {
 		stat->ops[FACT] += 2 * l * c;
 	    } else {
 #ifdef _CRAY
-		SGER(&nsupr, &c, &alpha, &lusup[luptr], &incx, 
+		SGER(&nsupr, &c, &alpha, &lusup[luptr], &incx,
 		     &ujrow[1], &incy, &lusup[luptr+nsupr], &nsupr);
 #else
-		dger_(&nsupr, &c, &alpha, &lusup[luptr], &incx, 
+		dger_(&nsupr, &c, &alpha, &lusup[luptr], &incx,
 		      &ujrow[1], &incy, &lusup[luptr+nsupr], &nsupr);
 #endif
 		stat->ops[FACT] += 2 * nsupr * c;
@@ -1333,17 +1333,17 @@ if ( k == 3329 && j == 2 ) {
 		stat->ops[FACT] += 8 * l * c;
 	    } else {
 #ifdef _CRAY
-		CGERU(&nsupr, &c, &alpha, &lusup[luptr], &incx, 
+		CGERU(&nsupr, &c, &alpha, &lusup[luptr], &incx,
 		      &ujrow[1], &incy, &lusup[luptr+nsupr], &nsupr);
 #else
-		zgeru_(&nsupr, &c, &alpha, &lusup[luptr], &incx, 
+		zgeru_(&nsupr, &c, &alpha, &lusup[luptr], &incx,
 		      &ujrow[1], &incy, &lusup[luptr+nsupr], &nsupr);
 #endif
 		stat->ops[FACT] += 8 * nsupr * c;
 	    }
 @precision !
 	}
-	
+
 	/* Move to the next column. */
 	if ( iam == pkk ) luptr += nsupr + 1;
 	else luptr += nsupr;
@@ -1367,14 +1367,14 @@ static void p@(pre)gstrs2
  LocalLU_t *Llu, SuperLUStat_t *stat
  )
 #endif
-/* 
+/*
  * Purpose
  * =======
  *   Perform parallel triangular solves
- *           U(k,:) := A(k,:) \ L(k,k). 
+ *           U(k,:) := A(k,:) \ L(k,k).
  *   Only the process row that owns block row *k* participates
  *   in the work.
- * 
+ *
  * Arguments
  * =========
  *
@@ -1394,7 +1394,7 @@ static void p@(pre)gstrs2
  *        Local data structures to store distributed L and U matrices.
  *
  * stat   (output) SuperLUStat_t*
- *        Record the statistics about the factorization; 
+ *        Record the statistics about the factorization;
  *        See SuperLUStat_t structure defined in util.h.
  *
  */
@@ -1441,17 +1441,17 @@ static void p@(pre)gstrs2
 
 	/* Loop through all the segments in the block. */
 	for (j = 0; j < nsupc; ++j) {
-	    segsize = klst - usub[iukp++]; 
+	    segsize = klst - usub[iukp++];
 	    if ( segsize ) { /* Nonzero segment. */
 		luptr = (knsupc - segsize) * (nsupr + 1);
 #ifdef _CRAY
-		@(SC_PRE)TRSV(ftcs1, ftcs2, ftcs3, &segsize, &lusup[luptr], &nsupr, 
+		@(SC_PRE)TRSV(ftcs1, ftcs2, ftcs3, &segsize, &lusup[luptr], &nsupr,
 		      &uval[rukp], &incx);
 #elif defined (USE_VENDOR_BLAS)
-		@(pre)trsv_("L", "N", "U", &segsize, &lusup[luptr], &nsupr, 
+		@(pre)trsv_("L", "N", "U", &segsize, &lusup[luptr], &nsupr,
 		       &uval[rukp], &incx, 1, 1, 1);
 #else
-		@(pre)trsv_("L", "N", "U", &segsize, &lusup[luptr], &nsupr, 
+		@(pre)trsv_("L", "N", "U", &segsize, &lusup[luptr], &nsupr,
 		       &uval[rukp], &incx);
 #endif
 @precision DOUBLE
@@ -1472,7 +1472,7 @@ probe_recv(int iam, int source, int tag, MPI_Datatype datatype, MPI_Comm comm,
 	   int buf_size)
 {
     MPI_Status status;
-    int count; 
+    int count;
 
     MPI_Probe( source, tag, comm, &status );
     MPI_Get_count( &status, datatype, &count );
