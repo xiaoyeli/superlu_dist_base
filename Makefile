@@ -48,6 +48,14 @@ double:	\
 	$(TGTSRC)/dreadtriple_noheader.c \
 	$(TGTSRC)/dreadMM.c \
 	$(TGTSRC)/dmemory_dist.c \
+	$(TGTSRC)/dgather.c \
+	$(TGTSRC)/pd3dcomm.c \
+	$(TGTSRC)/dtrfAux.c \
+	$(TGTSRC)/dcommunication_aux.c \
+	$(TGTSRC)/dtrfCommWrapper.c \
+	$(TGTSRC)/dtreeFactorization.c \
+	$(TGTSRC)/pdgstrf3d.c \
+	$(TGTSRC)/pdgssvx3d.c \
 	$(TGTEXM)/pddrive_ABglobal.c \
 	$(TGTEXM)/pddrive1_ABglobal.c \
 	$(TGTEXM)/pddrive2_ABglobal.c \
@@ -58,13 +66,15 @@ double:	\
 	$(TGTEXM)/pddrive2.c \
 	$(TGTEXM)/pddrive3.c \
 	$(TGTEXM)/pddrive4.c \
+	$(TGTEXM)/pddrive3d.c \
 	$(TGTEXM)/dcreate_matrix.c \
 	$(TGTEXM)/dcreate_matrix_perturbed.c \
 	$(TGTF90)/f_pddrive.f90 \
 	$(TGTF90)/superlu_c2f_dwrap.c \
 	$(TGTF90)/dcreate_dist_matrix.c \
 	$(TGTTST)/pdtest.c \
-	$(TGTTST)/pdcompute_resid.c \
+	$(TGTTST)/pdcompute_resid.c
+
 
 $(TGTSRC)/superlu_ddefs.h:	$(SRC)/superlu_xdefs.h.base
 	extract -b $? -o $@ precision=double
@@ -134,6 +144,22 @@ $(TGTSRC)/dreadMM.c:	$(SRC)/xreadMM.c.base
 	extract -b $? -o $@ precision=double
 $(TGTSRC)/dmemory_dist.c:	$(SRC)/xmemory_dist.c.base
 	extract -b $? -o $@ precision=double
+$(TGTSRC)/dgather.c:	$(SRC)/xgather.c.base
+	extract -b $? -o $@ precision=double
+$(TGTSRC)/pd3dcomm.c:	$(SRC)/px3dcomm.c.base
+	extract -b $? -o $@ precision=double
+$(TGTSRC)/dtrfAux.c:	$(SRC)/xtrfAux.c.base
+	extract -b $? -o $@ precision=double
+$(TGTSRC)/dcommunication_aux.c:	$(SRC)/xcommunication_aux.c.base
+	extract -b $? -o $@ precision=double
+$(TGTSRC)/dtrfCommWrapper.c:	$(SRC)/xtrfCommWrapper.c.base
+	extract -b $? -o $@ precision=double
+$(TGTSRC)/dtreeFactorization.c:	$(SRC)/xtreeFactorization.c.base
+	extract -b $? -o $@ precision=double
+$(TGTSRC)/pdgstrf3d.c:	$(SRC)/pxgstrf3d.c.base
+	extract -b $? -o $@ precision=double
+$(TGTSRC)/pdgssvx3d.c:	$(SRC)/pxgssvx3d.c.base
+	extract -b $? -o $@ precision=double
 $(TGTEXM)/pddrive_ABglobal.c:	$(EXM)/pxdrive_ABglobal.c.base
 	extract -b $? -o $@ precision=double
 $(TGTEXM)/pddrive1_ABglobal.c:	$(EXM)/pxdrive1_ABglobal.c.base
@@ -153,6 +179,8 @@ $(TGTEXM)/pddrive2.c:	$(EXM)/pxdrive2.c.base
 $(TGTEXM)/pddrive3.c:	$(EXM)/pxdrive3.c.base
 	extract -b $? -o $@ precision=double
 $(TGTEXM)/pddrive4.c:	$(EXM)/pxdrive4.c.base
+	extract -b $? -o $@ precision=double
+$(TGTEXM)/pddrive3d.c:	$(EXM)/pxdrive3d.c.base
 	extract -b $? -o $@ precision=double
 $(TGTEXM)/dcreate_matrix.c:	$(EXM)/xcreate_matrix.c.base
 	extract -b $? -o $@ precision=double
@@ -204,6 +232,14 @@ dcomplex: \
 	$(TGTSRC)/zreadtriple_noheader.c \
 	$(TGTSRC)/zreadMM.c \
 	$(TGTSRC)/zmemory_dist.c \
+	$(TGTSRC)/zgather.c \
+	$(TGTSRC)/pz3dcomm.c \
+	$(TGTSRC)/ztrfAux.c \
+	$(TGTSRC)/zcommunication_aux.c \
+	$(TGTSRC)/ztrfCommWrapper.c \
+	$(TGTSRC)/ztreeFactorization.c \
+	$(TGTSRC)/pzgstrf3d.c \
+	$(TGTSRC)/pzgssvx3d.c \
 	$(TGTEXM)/pzdrive_ABglobal.c \
 	$(TGTEXM)/pzdrive1_ABglobal.c \
 	$(TGTEXM)/pzdrive2_ABglobal.c \
@@ -214,13 +250,14 @@ dcomplex: \
 	$(TGTEXM)/pzdrive2.c \
 	$(TGTEXM)/pzdrive3.c \
 	$(TGTEXM)/pzdrive4.c \
+	$(TGTEXM)/pzdrive3d.c \
 	$(TGTEXM)/zcreate_matrix.c \
 	$(TGTEXM)/zcreate_matrix_perturbed.c \
 	$(TGTF90)/f_pzdrive.f90 \
 	$(TGTF90)/superlu_c2f_zwrap.c \
 	$(TGTF90)/zcreate_dist_matrix.c \
 	$(TGTTST)/pztest.c \
-	$(TGTTST)/pzcompute_resid.c \
+	$(TGTTST)/pzcompute_resid.c
 
 $(TGTSRC)/superlu_zdefs.h:	$(SRC)/superlu_xdefs.h.base
 	extract -b $? -o $@ precision=dcomplex
@@ -284,11 +321,27 @@ $(TGTSRC)/zreadtriple.c:	$(SRC)/xreadtriple.c.base
 	extract -b $? -o $@ precision=dcomplex
 $(TGTSRC)/zreadtriple_noheader.c:	$(SRC)/xreadtriple_noheader.c.base
 	extract -b $? -o $@ precision=dcomplex
-$(TGTSRC)/zmemory_dist.c: $(SRC)/xmemory_dist.c.base
-	extract -b $? -o $@ precision=dcomplex
 $(TGTSRC)/pzGetDiagU.c: $(SRC)/pxGetDiagU.c.base
 	extract -b $? -o $@ precision=dcomplex
 $(TGTSRC)/zreadMM.c:	$(SRC)/xreadMM.c.base
+	extract -b $? -o $@ precision=dcomplex
+$(TGTSRC)/zmemory_dist.c: $(SRC)/xmemory_dist.c.base
+	extract -b $? -o $@ precision=dcomplex
+$(TGTSRC)/zgather.c: $(SRC)/xgather.c.base
+	extract -b $? -o $@ precision=dcomplex
+$(TGTSRC)/pz3dcomm.c: $(SRC)/px3dcomm.c.base
+	extract -b $? -o $@ precision=dcomplex
+$(TGTSRC)/ztrfAux.c: $(SRC)/xtrfAux.c.base
+	extract -b $? -o $@ precision=dcomplex
+$(TGTSRC)/zcommunication_aux.c: $(SRC)/xcommunication_aux.c.base
+	extract -b $? -o $@ precision=dcomplex
+$(TGTSRC)/ztrfCommWrapper.c: $(SRC)/xtrfCommWrapper.c.base
+	extract -b $? -o $@ precision=dcomplex
+$(TGTSRC)/ztreeFactorization.c: $(SRC)/xtreeFactorization.c.base
+	extract -b $? -o $@ precision=dcomplex
+$(TGTSRC)/pzgstrf3d.c: $(SRC)/pxgstrf3d.c.base
+	extract -b $? -o $@ precision=dcomplex
+$(TGTSRC)/pzgssvx3d.c: $(SRC)/pxgssvx3d.c.base
 	extract -b $? -o $@ precision=dcomplex
 $(TGTEXM)/pzdrive_ABglobal.c:	$(EXM)/pxdrive_ABglobal.c.base
 	extract -b $? -o $@ precision=dcomplex
@@ -309,6 +362,8 @@ $(TGTEXM)/pzdrive2.c:	$(EXM)/pxdrive2.c.base
 $(TGTEXM)/pzdrive3.c:	$(EXM)/pxdrive3.c.base
 	extract -b $? -o $@ precision=dcomplex
 $(TGTEXM)/pzdrive4.c:	$(EXM)/pxdrive4.c.base
+	extract -b $? -o $@ precision=dcomplex
+$(TGTEXM)/pzdrive3d.c:	$(EXM)/pxdrive3d.c.base
 	extract -b $? -o $@ precision=dcomplex
 $(TGTEXM)/zcreate_matrix.c: $(EXM)/xcreate_matrix.c.base
 	extract -b $? -o $@ precision=dcomplex
