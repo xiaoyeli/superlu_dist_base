@@ -111,7 +111,7 @@ static void
     // TAU_STATIC_TIMER_STOP("SCATTER_LB");
 } /* @(pre)scatter_l_1 */
 
-static void
+void
 @(pre)scatter_l (
            int ib,    /* row block number of source block L(i,k) */
            int ljb,   /* local column block number of dest. block L(i,j) */
@@ -197,7 +197,7 @@ static void
 } /* @(pre)scatter_l */
 
 
-static void
+void
 @(pre)scatter_u (int ib,
            int jb,
            int nsupc,

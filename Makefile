@@ -18,6 +18,7 @@ double:	\
 	$(TGTSRC)/pdgstrf.c \
 	$(TGTSRC)/pdgstrf2.c \
 	$(TGTSRC)/dscatter.c \
+	$(TGTSRC)/dscatter3d.c \
 	$(TGTSRC)/dlook_ahead_update.c \
 	$(TGTSRC)/dSchCompUdt-2Ddynamic.c \
 	$(TGTSRC)/dSchCompUdt-cuda.c \
@@ -83,6 +84,8 @@ $(TGTSRC)/pdgstrf.c:	$(SRC)/pxgstrf.c.base
 $(TGTSRC)/pdgstrf2.c:	$(SRC)/pxgstrf2.c.base
 	extract -b $? -o $@ precision=double
 $(TGTSRC)/dscatter.c:	$(SRC)/xscatter.c.base
+	extract -b $? -o $@ precision=double
+$(TGTSRC)/dscatter3d.c:	$(SRC)/xscatter3d.c.base
 	extract -b $? -o $@ precision=double
 $(TGTSRC)/dlook_ahead_update.c:	$(SRC)/xlook_ahead_update.c.base
 	extract -b $? -o $@ precision=double
@@ -202,6 +205,7 @@ dcomplex: \
 	$(TGTSRC)/pzgstrf.c \
 	$(TGTSRC)/pzgstrf2.c \
 	$(TGTSRC)/zscatter.c \
+	$(TGTSRC)/zscatter3d.c \
 	$(TGTSRC)/zlook_ahead_update.c \
 	$(TGTSRC)/zSchCompUdt-2Ddynamic.c \
 	$(TGTSRC)/zSchCompUdt-cuda.c \
@@ -266,6 +270,8 @@ $(TGTSRC)/pzgstrf.c:	$(SRC)/pxgstrf.c.base
 $(TGTSRC)/pzgstrf2.c:	$(SRC)/pxgstrf2.c.base
 	extract -b $? -o $@ precision=dcomplex
 $(TGTSRC)/zscatter.c:	$(SRC)/xscatter.c.base
+	extract -b $? -o $@ precision=dcomplex
+$(TGTSRC)/zscatter3d.c:	$(SRC)/xscatter3d.c.base
 	extract -b $? -o $@ precision=dcomplex
 $(TGTSRC)/zlook_ahead_update.c:	$(SRC)/xlook_ahead_update.c.base
 	extract -b $? -o $@ precision=dcomplex
