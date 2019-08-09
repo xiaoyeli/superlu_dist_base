@@ -138,7 +138,7 @@ void
     doublecomplex alpha = {1.0, 0.0}, beta = {0.0, 0.0};
 @precision !    
 
-    /* calling DGEMM */
+    /* calling @(PRE)GEMM */
     // printf(" m %d n %d k %d ldu %d ldl %d st_col %d \n",temp_nbrow,ncols,ldu,ldl,st_col );
 #if 1
     @(pre)gemm_("N", "N", &temp_nbrow, &ncols, &ldu, &alpha,
@@ -247,14 +247,14 @@ void
     doublecomplex alpha = {1.0, 0.0}, beta = {0.0, 0.0};
 @precision !    
 
-    /* calling DGEMM */
+    /* calling @(PRE)GEMM */
 #if 1
     // printf(" m %d n %d k %d ldl %d st_col %d \n",temp_nbrow,ncols,ldu,ldl,st_col );
     @(pre)gemm_("N", "N", &temp_nbrow, &ncols, &ldu, &alpha,
            &L_mat[(knsupc - ldu)*ldl + cum_nrow], &ldl,
            &U_mat[st_col * ldu], &ldu, &beta, tempv1, &temp_nbrow);
 #else
-    cblas_dgemm(CblasColMajor, CblasNoTrans, CblasNoTrans,
+    cblas_@(pre)gemm(CblasColMajor, CblasNoTrans, CblasNoTrans,
                 temp_nbrow, ncols, ldu, alpha,
                 &L_mat[(knsupc - ldu)*ldl + cum_nrow], ldl,
                 &U_mat[st_col * ldu], ldu,

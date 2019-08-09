@@ -214,7 +214,7 @@ int_t @(pre)zRecvLPanel(int_t k, int_t sender, @(type) alpha, @(type) beta,
     int_t** Lrowind_bc_ptr = Llu->Lrowind_bc_ptr;
     @(type)** Lnzval_bc_ptr = Llu->Lnzval_bc_ptr;
     gridinfo_t* grid = &(grid3d->grid2d);
-    
+    int inc = 1;    
     int_t iam = grid->iam;
     int_t mycol = MYCOL (iam, grid);
     
@@ -238,6 +238,10 @@ int_t @(pre)zRecvLPanel(int_t k, int_t sender, @(type) alpha, @(type) beta,
 			     grid3d->zscp.comm, &status);
 		    
 		    /*reduce the updates*/
+#if 1
+		    @(pre)scal_(&len2, &alpha, lnzval, &inc);
+		    @(pre)axpy_(&len2, &beta, Lval_buf, &inc, lnzval, &inc);
+#else
 @precision DOUBLE
 		    cblas_@(pre)scal (len2, alpha, lnzval, 1);
 		    cblas_@(pre)axpy (len2, beta, Lval_buf, 1, lnzval, 1);
@@ -245,6 +249,7 @@ int_t @(pre)zRecvLPanel(int_t k, int_t sender, @(type) alpha, @(type) beta,
 		    cblas_@(pre)scal (len2, (void*) &alpha, lnzval, 1);
 		    cblas_@(pre)axpy (len2, (void*) &beta, Lval_buf, 1, lnzval, 1);
 @precision !
+#endif
 		}
 	}
 
@@ -292,10 +297,11 @@ int_t @(pre)zRecvUPanel(int_t k, int_t sender, @(type) alpha, @(type) beta,
     int_t** Ufstnz_br_ptr = Llu->Ufstnz_br_ptr;
     @(type)** Unzval_br_ptr = Llu->Unzval_br_ptr;
     gridinfo_t* grid = &(grid3d->grid2d);
+    int inc = 1;
     int_t iam = grid->iam;
-
     int_t myrow = MYROW (iam, grid);
     int_t pr = PROW( k, grid );
+
     if (myrow == pr)
 	{
 	    int_t lk = LBi( k, grid ); /* Local block number */
@@ -312,6 +318,10 @@ int_t @(pre)zRecvUPanel(int_t k, int_t sender, @(type) alpha, @(type) beta,
 			     grid3d->zscp.comm, &status);
 		    
 		    /*reduce the updates*/
+#if 1
+		    @(pre)scal_(&lenv, &alpha, unzval, &inc);
+		    @(pre)axpy_(&lenv, &beta, Uval_buf, &inc, unzval, &inc);
+#else
 @precision DOUBLE
 		    cblas_@(pre)scal (lenv, alpha, unzval, 1);
 		    cblas_@(pre)axpy (lenv, beta, Uval_buf, 1, unzval, 1);
@@ -319,6 +329,7 @@ int_t @(pre)zRecvUPanel(int_t k, int_t sender, @(type) alpha, @(type) beta,
 		    cblas_@(pre)scal (lenv, (void*) &alpha, unzval, 1);
 		    cblas_@(pre)axpy (lenv, (void*) &beta, Uval_buf, 1, unzval, 1);
 @precision !
+#endif
 		}
 	}
     return 0;

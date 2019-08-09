@@ -1246,8 +1246,10 @@ p@(pre)gssvx3d (superlu_dist_options_t * options, SuperMatrix * A,
 		SCT_print3D(grid3d, SCT);
 	    }
 	SCT_printComm3D(grid3d, SCT);
+
 	/*print memory usage*/
-	printMemUse( trf3Dpartition, LUstruct, grid3d );
+	@(pre)3D_printMemUse( trf3Dpartition, LUstruct, grid3d );
+
 	/*print forest weight and costs*/
 	printForestWeightCost(trf3Dpartition->sForests, SCT, grid3d);
 	/*reduces stat from all the layers*/
