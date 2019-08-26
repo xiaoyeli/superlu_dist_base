@@ -533,7 +533,6 @@ extern void @(pre)trsm_(char*, char*, char*, char*, int*, int*,
                   int*, int, int, int, int);
 extern void @(pre)gemv_(char *, int *, int *, @(type) *, @(type) *a, int *,
                   @(type) *, int *, @(type) *, @(type) *, int *, int);
-extern void @(pre)trtri_(char*, char*, int*, @(type)*, int*,int*);
 
 @precision DOUBLE
 extern void @(pre)ger_(int*, int*, @(type)*, @(type)*, int*,
@@ -562,6 +561,13 @@ extern int @(pre)geru_(int*, int*, @(type)*, @(type)*, int*,
 @precision !
 
 #endif
+
+extern int @(pre)scal_(int *n, @(type) *da, @(type) *dx, int *incx);
+extern int @(pre)axpy_(int *n, @(type) *za, @(type) *zx, 
+	               int *incx, @(type) *zy, int *incy);
+// LAPACK routine
+extern void @(pre)trtri_(char*, char*, int*, @(type)*, int*, int*);
+
 
 /*==== For 3D code ====*/
 
