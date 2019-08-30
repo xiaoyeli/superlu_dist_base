@@ -1263,6 +1263,8 @@ p@(pre)gssvx3d (superlu_dist_options_t * options, SuperMatrix * A,
 	/*reduces stat from all the layers*/
 #endif
 
+        @(pre)Destroy_trf3Dpartition(trf3Dpartition, grid3d);
+
     } /* end if not Factored */
     
     if ( grid3d->zscp.Iam == 0 ) { // only process layer 0

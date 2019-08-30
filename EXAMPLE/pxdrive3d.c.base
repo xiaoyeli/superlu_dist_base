@@ -26,7 +26,7 @@ at the top-level directory.
  * Purpose
  * =======
  *
- * The driver program P@(PRE)DRIVEx3D.
+ * The driver program P@(PRE)DRIVE3D.
  *
  * This example illustrates how to use P@(PRE)GSSVX3D with the full
  * (default) options to solve a linear system.
@@ -247,27 +247,28 @@ main (int argc, char *argv[])
         p@(pre)inf_norm_error (iam, ((NRformat_loc *) A.Store)->m_loc,
                           nrhs, b, ldb, xtrue, ldx, &(grid.grid2d));
     fflush(stdout);
-    if ( grid.zscp.Iam == 0 )
-	PStatPrint (&options, &stat, &(grid.grid2d)); /* Print 2D statistics.*/
 
     /* ------------------------------------------------------------
        DEALLOCATE STORAGE.
        ------------------------------------------------------------ */
 
-    PStatFree (&stat);
     if ( grid.zscp.Iam == 0 ) { // process layer 0
+
+	PStatPrint (&options, &stat, &(grid.grid2d)); /* Print 2D statistics.*/
+
         Destroy_CompRowLoc_Matrix_dist (&A);
         Destroy_LU (n, &(grid.grid2d), &LUstruct);
         SUPERLU_FREE (b);
         SUPERLU_FREE (xtrue);
         SUPERLU_FREE (berr);
+        if (options.SolveInitialized) {
+            @(pre)SolveFinalize (&options, &SOLVEstruct);
+        }
     }
+
     ScalePermstructFree (&ScalePermstruct);
     LUstructFree (&LUstruct);
-    if (options.SolveInitialized)
-    {
-        @(pre)SolveFinalize (&options, &SOLVEstruct);
-    }
+    PStatFree (&stat);
 
     /* ------------------------------------------------------------
        RELEASE THE SUPERLU PROCESS GRID.

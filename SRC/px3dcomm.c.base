@@ -752,7 +752,7 @@ int_t @(pre)reduceAncestors3d(int_t sender, int_t receiver,
 
 int_t @(pre)gatherFactoredLU(int_t sender, int_t receiver,
                         int_t nnodes, int_t *nodeList,
-                        LUValSubBuf_t*LUvsb,
+                        @(pre)LUValSubBuf_t* LUvsb,
                         LUstruct_t* LUstruct, gridinfo3d_t* grid3d, SCT_t* SCT)
 {
 @precision DOUBLE
@@ -806,7 +806,7 @@ int_t @(pre)init3DLUstruct( int_t* myTreeIdxs, int_t* myZeroTrIdxs,
 
 
 int_t @(pre)reduceAllAncestors3d(int_t ilvl, int_t* myNodeCount, int_t** treePerm,
-                             LUValSubBuf_t* LUvsb, LUstruct_t* LUstruct,
+                             @(pre)LUValSubBuf_t* LUvsb, LUstruct_t* LUstruct,
                              gridinfo3d_t* grid3d, SCT_t* SCT )
 {
     @(type) * Lval_buf  = LUvsb->Lval_buf;
@@ -849,7 +849,7 @@ int_t @(pre)gatherAllFactoredLU( trf3Dpartition_t*  trf3Dpartition,
     int_t myGrid = grid3d->zscp.Iam;
     int_t* myZeroTrIdxs = trf3Dpartition->myZeroTrIdxs;
     sForest_t** sForests = trf3Dpartition->sForests;
-    LUValSubBuf_t* LUvsb =  trf3Dpartition->LUvsb;
+    @(pre)LUValSubBuf_t*  LUvsb =  trf3Dpartition->LUvsb;
     int_t*  gNodeCount = getNodeCountsFr(maxLvl, sForests);
     int_t** gNodeLists = getNodeListFr(maxLvl, sForests);
     
