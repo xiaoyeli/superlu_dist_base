@@ -1219,10 +1219,11 @@ p@(pre)gssvx3d (superlu_dist_options_t * options, SuperMatrix * A,
 	
 	/* send the LU structure to all the grids */
 	@(pre)p3dScatter(n, LUstruct, grid3d);
+
 	int_t nsupers = getNsupers(n, LUstruct);
 	trf3Dpartition = @(pre)initTrf3Dpartition(nsupers, options, LUstruct, grid3d);
-	SCT_t *SCT = (SCT_t *) SUPERLU_MALLOC(sizeof(SCT_t));
 
+	SCT_t *SCT = (SCT_t *) SUPERLU_MALLOC(sizeof(SCT_t));
 	SCT_init(SCT);
 	
 #if ( PRNTlevel>=1 )
@@ -1264,6 +1265,7 @@ p@(pre)gssvx3d (superlu_dist_options_t * options, SuperMatrix * A,
 #endif
 
         @(pre)Destroy_trf3Dpartition(trf3Dpartition, grid3d);
+	SCT_free(SCT);
 
     } /* end if not Factored */
     

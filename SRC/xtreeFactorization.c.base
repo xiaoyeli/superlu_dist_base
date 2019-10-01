@@ -49,6 +49,22 @@ diagFactBufs_t** @(pre)initDiagFactBufsArr(int_t mxLeafNode, int_t ldt, gridinfo
     return dFBufs;
 }
 
+// sherry added
+int @(pre)freeDiagFactBufsArr(int_t mxLeafNode, diagFactBufs_t** dFBufs)
+{
+    for (int i = 0; i < mxLeafNode; ++i) {
+	SUPERLU_FREE(dFBufs[i]->BlockUFactor);
+	SUPERLU_FREE(dFBufs[i]->BlockLFactor);
+	SUPERLU_FREE(dFBufs[i]);
+    }
+
+    /* Sherry fix:
+     * mxLeafNode can be 0 for the replicated layers of the processes ?? */
+    if ( mxLeafNode ) SUPERLU_FREE(dFBufs);
+
+    return 0;
+}
+
 @(pre)LUValSubBuf_t** @(pre)LluBufInitArr(int_t numLA, LUstruct_t *LUstruct)
 {
     @(pre)LUValSubBuf_t** LUvsbs = (@(pre)LUValSubBuf_t**) SUPERLU_MALLOC(numLA * sizeof(@(pre)LUValSubBuf_t*));
@@ -62,6 +78,19 @@ diagFactBufs_t** @(pre)initDiagFactBufsArr(int_t mxLeafNode, int_t ldt, gridinfo
     return LUvsbs;
 }
 
+// sherry added
+int @(pre)LluBufFreeArr(int_t numLA, @(pre)LUValSubBuf_t **LUvsbs)
+{
+    for (int_t i = 0; i < numLA; ++i) {
+	SUPERLU_FREE(LUvsbs[i]->Lsub_buf);
+	SUPERLU_FREE(LUvsbs[i]->Lval_buf);
+	SUPERLU_FREE(LUvsbs[i]->Usub_buf);
+	SUPERLU_FREE(LUvsbs[i]->Uval_buf);
+	SUPERLU_FREE(LUvsbs[i]);
+    }
+    SUPERLU_FREE(LUvsbs);
+}
+
 
 int_t @(pre)initScuBufs(int_t ldt, int_t num_threads, int_t nsupers,
                   scuBufs_t* scuBufs,
@@ -72,6 +101,15 @@ int_t @(pre)initScuBufs(int_t ldt, int_t num_threads, int_t nsupers,
     scuBufs->bigU = @(pre)getBigU(nsupers, grid, LUstruct);
     return 0;
 }
+
+// sherry added
+int @(pre)freeScuBufs(scuBufs_t* scuBufs)
+{
+    SUPERLU_FREE(scuBufs->bigV);
+    SUPERLU_FREE(scuBufs->bigU);
+    return 0;
+}
+
 int_t @(pre)initDiagFactBufs(int_t ldt, diagFactBufs_t* dFBuf)
 {
     dFBuf->BlockUFactor = @(type)Malloc_dist(ldt * ldt); //DOUBLE_ALLOC( ldt * ldt);
@@ -235,7 +273,7 @@ int_t @(pre)denseTreeFactor(
 } /* @(pre)denseTreeFactor */
 
 /*
- * 2D factorization at individual subtree.
+ * 2D factorization at individual subtree. -- CPU only
  */
 int_t @(pre)sparseTreeFactor_ASYNC(
     sForest_t* sforest,
@@ -262,6 +300,10 @@ int_t @(pre)sparseTreeFactor_ASYNC(
     {
         return 1;
     }
+
+#if ( DEBUGlevel>=1 )
+    CHECK_MALLOC (grid3d->iam, "Enter @(pre)sparseTreeFactor_ASYNC()");
+#endif
 
     int_t *perm_c_supno = sforest->nodeList ;  // list of nodes in the order of factorization
     treeTopoInfo_t* treeTopoInfo = &sforest->topoInfo;
@@ -683,5 +725,10 @@ int_t @(pre)sparseTreeFactor_ASYNC(
         }/*for main loop (int_t k0 = 0; k0 < gNodeCount[tree]; ++k0)*/
 
     }
+
+#if ( DEBUGlevel>=1 )
+    CHECK_MALLOC (grid3d->iam, "Exit @(pre)sparseTreeFactor_ASYNC()");
+#endif
+
     return 0;
 } /* @(pre)sparseTreeFactor_ASYNC */
