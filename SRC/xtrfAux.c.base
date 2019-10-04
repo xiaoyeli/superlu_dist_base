@@ -603,9 +603,9 @@ void @(pre)Destroy_trf3Dpartition(trf3Dpartition_t *trf3Dpartition, gridinfo3d_t
     for (int i = 0; i < numForests; ++i) {
 	if ( sForests[i] ) {
 	    SUPERLU_FREE(sForests[i]->nodeList);
-	    //SUPERLU_FREE(sForests[i]->treeHeads); // already freed
 	    SUPERLU_FREE((sForests[i]->topoInfo).eTreeTopLims);
 	    SUPERLU_FREE((sForests[i]->topoInfo).myIperm);
+	    SUPERLU_FREE(sForests[i]);
 	}
     }
     SUPERLU_FREE(trf3Dpartition->sForests); // double pointer 
