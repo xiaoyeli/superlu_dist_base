@@ -36,7 +36,7 @@ at the top-level directory.
  *        A may be overwritten by diag(R)*A*diag(C)*Pc^T.
  *        The type of A can be: Stype = SLU_NR_loc; Dtype = @(Dtype_PRE); Mtype = SLU_GE.
  *
- * ScalePermstruct (input) ScalePermstruct_t*
+ * ScalePermstruct (input) @(pre)ScalePermstruct_t*
  *        The data structure to store the scaling and permutation vectors
  *        describing the transformations performed to the original matrix A.
  *
@@ -59,7 +59,7 @@ at the top-level directory.
  * </pre>
  */
 int_t
-@(pre)ReDistribute_A(SuperMatrix *A, ScalePermstruct_t *ScalePermstruct,
+@(pre)ReDistribute_A(SuperMatrix *A, @(pre)ScalePermstruct_t *ScalePermstruct,
                 Glu_freeable_t *Glu_freeable, int_t *xsup, int_t *supno,
                 gridinfo_t *grid, int_t *colptr[], int_t *rowind[],
                 @(type) *a[])
@@ -319,8 +319,8 @@ int_t
 
 float
 p@(pre)distribute(fact_t fact, int_t n, SuperMatrix *A,
-	     ScalePermstruct_t *ScalePermstruct,
-	     Glu_freeable_t *Glu_freeable, LUstruct_t *LUstruct,
+	     @(pre)ScalePermstruct_t *ScalePermstruct,
+	     Glu_freeable_t *Glu_freeable, @(pre)LUstruct_t *LUstruct,
 	     gridinfo_t *grid)
 /*
  * -- Distributed SuperLU routine (version 2.0) --
@@ -349,14 +349,14 @@ p@(pre)distribute(fact_t fact, int_t n, SuperMatrix *A,
  *        A may be overwritten by diag(R)*A*diag(C)*Pc^T. The type of A can be:
  *        Stype = SLU_NR_loc; Dtype = @(Dtype_PRE); Mtype = SLU_GE.
  *
- * ScalePermstruct (input) ScalePermstruct_t*
+ * ScalePermstruct (input) @(pre)ScalePermstruct_t*
  *        The data structure to store the scaling and permutation vectors
  *        describing the transformations performed to the original matrix A.
  *
  * Glu_freeable (input) *Glu_freeable_t
  *        The global structure describing the graph of L and U.
  *
- * LUstruct (input) LUstruct_t*
+ * LUstruct (input) @(pre)LUstruct_t*
  *        Data structures for L and U factors.
  *
  * grid   (input) gridinfo_t*
@@ -369,7 +369,7 @@ p@(pre)distribute(fact_t fact, int_t n, SuperMatrix *A,
  */
 {
     Glu_persist_t *Glu_persist = LUstruct->Glu_persist;
-    LocalLU_t *Llu = LUstruct->Llu;
+    @(pre)LocalLU_t *Llu = LUstruct->Llu;
     int_t bnnz, fsupc, fsupc1, i, ii, irow, istart, j, ib, jb, jj, k, k1,
           len, len1, nsupc;
 	int_t lib;  /* local block row number */
@@ -449,9 +449,9 @@ p@(pre)distribute(fact_t fact, int_t n, SuperMatrix *A,
 	double rseed;
 	int rank_cnt,rank_cnt_ref,Root;
 	@(type) *dense, *dense_col; /* SPA */
-@precision DOUBLE
+@precision SINGLE DOUBLE
     @(type) zero = 0.0;
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
     @(type) zero = {0.0, 0.0};
 @precision !
     int_t ldaspa;     /* LDA of SPA */
@@ -1056,9 +1056,9 @@ p@(pre)distribute(fact_t fact, int_t n, SuperMatrix *A,
 			    irow = ilsum[lb] + irow - FstBlockC( gb );
 			    for (j = 0, dense_col = dense; j < nsupc; ++j) {
 				lusup[k] = dense_col[irow];
-@precision DOUBLE
+@precision SINGLE DOUBLE
 				dense_col[irow] = 0.0;
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 				dense_col[irow] = zero;
 @precision !
 				k += len;

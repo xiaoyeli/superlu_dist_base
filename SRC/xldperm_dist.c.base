@@ -92,12 +92,15 @@ extern void mc64ad_dist(int_t*, int_t*, int_t*, int_t [], int_t [], double [],
 
 int
 @(pre)ldperm_dist(int_t job, int_t n, int_t nnz, int_t colptr[], int_t adjncy[],
-	@(type) nzval[], int_t *perm, double u[], double v[])
+	@(type) nzval[], int_t *perm, @(mod_type) u[], @(mod_type) v[])
 {
     int_t i, liw, ldw, num;
     int_t *iw, icntl[10], info[10];
     double *dw;
-@precision DCOMPLEX
+    extern double *doubleMalloc_dist(int_t);
+@precision SINGLE
+    double *nzval_d = doubleMalloc_dist(nnz);
+@precision SCOMPLEX DCOMPLEX
     double *nzval_abs = doubleMalloc_dist(nnz);
 @precision !
 
@@ -140,11 +143,15 @@ int
     icntl[0] = -1;
     icntl[1] = -1;
 
+@precision SINGLE
+    for (i = 0; i < nnz; ++i) nzval_d[i] = nzval[i];
+    mc64ad_dist(&job, &n, &nnz, colptr, adjncy, nzval_d, &num, perm,
+	        &liw, iw, &ldw, dw, icntl, info);
 @precision DOUBLE
     mc64ad_dist(&job, &n, &nnz, colptr, adjncy, nzval, &num, perm,
 	        &liw, iw, &ldw, dw, icntl, info);
-@precision DCOMPLEX
-    for (i = 0; i < nnz; ++i) nzval_abs[i] = slud_z_abs1(&nzval[i]);
+@precision SCOMPLEX DCOMPLEX
+    for (i = 0; i < nnz; ++i) nzval_abs[i] = slud_@(pre)_abs1(&nzval[i]);
     mc64ad_dist(&job, &n, &nnz, colptr, adjncy, nzval_abs, &num, perm,
 	        &liw, iw, &ldw, dw, icntl, info);
 @precision !
@@ -171,7 +178,7 @@ int
 
     SUPERLU_FREE(iw);
     SUPERLU_FREE(dw);
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
     SUPERLU_FREE(nzval_abs);
 @precision !
 

@@ -97,8 +97,8 @@ void
     int_t i, liw, ldw, num;
     int_t *iw, icntl[10], info[10];
     double *dw;
-@precision DCOMPLEX
-    double *nzval_abs = doubleMalloc_dist(nnz);
+@precision SCOMPLEX DCOMPLEX
+    double *nzval_abs = @(type)Malloc_dist(nnz);
 @precision !
 
 #if ( DEBUGlevel>=1 )
@@ -142,11 +142,11 @@ void
     icntl[1] = -1;
 #endif
 
-@precision DOUBLE
+@precision SINGLE DOUBLE
     mc64ad_(&job, &n, &nnz, colptr, adjncy, nzval, &num, perm,
 	    &liw, iw, &ldw, dw, icntl, info);
-@precision DCOMPLEX
-    for (i = 0; i < nnz; ++i) nzval_abs[i] = slud_z_abs1(&nzval[i]);
+@precision SCOMPLEX DCOMPLEX
+    for (i = 0; i < nnz; ++i) nzval_abs[i] = slud_@(pre)_abs1(&nzval[i]);
     mc64ad_(&job, &n, &nnz, colptr, adjncy, nzval_abs, &num, perm,
 	    &liw, iw, &ldw, dw, icntl, info);
 @precision !

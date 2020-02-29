@@ -41,9 +41,9 @@ while (j < nub && iperm_u[j] <= k0 + num_look_aheads)
 while (j < nub && perm_u[2 * j] <= k0 + num_look_aheads)
 #endif
 {
-@precision DOUBLE
+@precision SINGLE DOUBLE
     double zero = 0.0;
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
     doublecomplex zero = {0.0, 0.0};
 @precision !
 
@@ -161,9 +161,9 @@ while (j < nub && perm_u[2 * j] <= k0 + num_look_aheads)
 	/*if (thread_id == 0) tt_start = SuperLU_timer_();*/
 
         /* calling gemm */
-@precision DOUBLE
+@precision SINGLE DOUBLE
 	stat->ops[FACT] += 2.0 * (flops_t)temp_nbrow * ldu * ncols;
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 	stat->ops[FACT] += 8.0 * (flops_t)temp_nbrow * ldu * ncols;
 @precision !
 #if defined (USE_VENDOR_BLAS)

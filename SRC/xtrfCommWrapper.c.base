@@ -42,7 +42,7 @@ int_t @(pre)DiagFactIBCast(int_t k,  int_t k0,      // supernode to be factored
                      gridinfo_t *grid,
                      superlu_dist_options_t *options,
                      double thresh,
-                     LUstruct_t *LUstruct,
+                     @(pre)LUstruct_t *LUstruct,
                      SuperLUStat_t *stat, int *info,
                      SCT_t *SCT,
 		     int tag_ub
@@ -50,7 +50,7 @@ int_t @(pre)DiagFactIBCast(int_t k,  int_t k0,      // supernode to be factored
 {
     // unpacking variables
     Glu_persist_t *Glu_persist = LUstruct->Glu_persist;
-    LocalLU_t *Llu = LUstruct->Llu;
+    @(pre)LocalLU_t *Llu = LUstruct->Llu;
     int_t* xsup = Glu_persist->xsup;
 
     int_t iam = grid->iam;
@@ -122,15 +122,15 @@ int_t @(pre)DiagFactIBCast(int_t k,  int_t k0,      // supernode to be factored
 int_t @(pre)LPanelTrSolve( int_t k,   int_t* factored_L,
 		      @(type)* BlockUFactor,
 		      gridinfo_t *grid,
-		      LUstruct_t *LUstruct)
+		      @(pre)LUstruct_t *LUstruct)
 {
-@precision DOUBLE
+@precision SINGLE DOUBLE
     double alpha = 1.0;
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
     doublecomplex alpha = {1.0, 0.0};
 @precision !
     Glu_persist_t *Glu_persist = LUstruct->Glu_persist;
-    LocalLU_t *Llu = LUstruct->Llu;
+    @(pre)LocalLU_t *Llu = LUstruct->Llu;
     int_t* xsup = Glu_persist->xsup;
 
     int_t iam = grid->iam;
@@ -186,10 +186,10 @@ int_t @(pre)LPanelTrSolve( int_t k,   int_t* factored_L,
 			ublk_ptr, &ld_ujrow, &lusup[off], &nsupr);
   #endif
 #else
-@precision DOUBLE
+@precision SINGLE DOUBLE
                 cblas_@(pre)trsm (CblasColMajor, CblasRight, CblasUpper, CblasNoTrans, CblasNonUnit,
                 len, nsupc, alpha, ublk_ptr, ld_ujrow, &lusup[off], nsupr);
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
                 cblas_@(pre)trsm (CblasColMajor, CblasRight, CblasUpper, CblasNoTrans, CblasNonUnit,
                 len, nsupc, (void*) &alpha, ublk_ptr, ld_ujrow, &lusup[off], nsupr);
 @precision !
@@ -239,10 +239,10 @@ int_t @(pre)LPanelTrSolve( int_t k,   int_t* factored_L,
 			ublk_ptr, &ld_ujrow, &lusup[nsupc + off], &nsupr);
   #endif
 #else
-@precision DOUBLE
+@precision SINGLE DOUBLE
                 cblas_@(pre)trsm (CblasColMajor, CblasRight, CblasUpper, CblasNoTrans, CblasNonUnit,
                              len, nsupc, alpha, ublk_ptr, ld_ujrow, &lusup[nsupc + off], nsupr);
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
                 cblas_@(pre)trsm (CblasColMajor, CblasRight, CblasUpper, CblasNoTrans, CblasNonUnit,
                              len, nsupc, (void*) &alpha, ublk_ptr, ld_ujrow, &lusup[nsupc + off], nsupr);
 @precision !
@@ -259,7 +259,7 @@ int_t @(pre)LPanelUpdate( int_t k,  int_t* IrecvPlcd_D, int_t* factored_L,
                     MPI_Request * U_diag_blk_recv_req,
                     @(type)* BlockUFactor,
                     gridinfo_t *grid,
-                    LUstruct_t *LUstruct, SCT_t *SCT)
+                    @(pre)LUstruct_t *LUstruct, SCT_t *SCT)
 {
 
     @(pre)UDiagBlockRecvWait( k,  IrecvPlcd_D, factored_L,
@@ -278,11 +278,11 @@ int_t @(pre)UPanelTrSolve( int_t k,
                      int_t ldt,
                      Ublock_info_t* Ublock_info,
                      gridinfo_t *grid,
-                     LUstruct_t *LUstruct,
+                     @(pre)LUstruct_t *LUstruct,
                      SuperLUStat_t *stat, SCT_t *SCT)
 {
     Glu_persist_t *Glu_persist = LUstruct->Glu_persist;
-    LocalLU_t *Llu = LUstruct->Llu;
+    @(pre)LocalLU_t *Llu = LUstruct->Llu;
     int_t* xsup = Glu_persist->xsup;
     int_t iam = grid->iam;
     int_t myrow = MYROW (iam, grid);
@@ -382,7 +382,7 @@ int_t @(pre)UPanelUpdate( int_t k,  int_t* factored_U,
                     int_t ldt,
                     Ublock_info_t* Ublock_info,
                     gridinfo_t *grid,
-                    LUstruct_t *LUstruct,
+                    @(pre)LUstruct_t *LUstruct,
                     SuperLUStat_t *stat, SCT_t *SCT)
 {
 
@@ -403,13 +403,13 @@ int_t @(pre)IBcastRecvLPanel(
     @(type)* Lval_buf,
     int_t * factored,
     gridinfo_t *grid,
-    LUstruct_t *LUstruct,
+    @(pre)LUstruct_t *LUstruct,
     SCT_t *SCT,
     int tag_ub
 )
 {
     Glu_persist_t *Glu_persist = LUstruct->Glu_persist;
-    LocalLU_t *Llu = LUstruct->Llu;
+    @(pre)LocalLU_t *Llu = LUstruct->Llu;
     int_t* xsup = Glu_persist->xsup;
     int_t** ToSendR = Llu->ToSendR;
     int_t* ToRecv = Llu->ToRecv;
@@ -463,10 +463,10 @@ int_t @(pre)IBcastRecvUPanel(int_t k, int_t k0, int* msgcnt,
     			     MPI_Request *send_requ,
     			     MPI_Request *recv_requ,
     			     int_t* Usub_buf, @(type)* Uval_buf,
-    			     gridinfo_t *grid, LUstruct_t *LUstruct,
+    			     gridinfo_t *grid, @(pre)LUstruct_t *LUstruct,
     			     SCT_t *SCT, int tag_ub)
 {
-    LocalLU_t *Llu = LUstruct->Llu;
+    @(pre)LocalLU_t *Llu = LUstruct->Llu;
 
     int_t* ToSendD = Llu->ToSendD;
     int_t* ToRecv = Llu->ToRecv;
@@ -511,9 +511,9 @@ int_t @(pre)IBcastRecvUPanel(int_t k, int_t k0, int* msgcnt,
 
 int_t @(pre)WaitL( int_t k, int* msgcnt, int* msgcntU,
               MPI_Request *send_req, MPI_Request *recv_req,
-    	      gridinfo_t *grid, LUstruct_t *LUstruct, SCT_t *SCT)
+    	      gridinfo_t *grid, @(pre)LUstruct_t *LUstruct, SCT_t *SCT)
 {
-    LocalLU_t *Llu = LUstruct->Llu;
+    @(pre)LocalLU_t *Llu = LUstruct->Llu;
     int_t** ToSendR = Llu->ToSendR;
     int_t* ToRecv = Llu->ToRecv;
     int_t iam = grid->iam;
@@ -539,9 +539,9 @@ int_t @(pre)WaitL( int_t k, int* msgcnt, int* msgcntU,
 
 int_t @(pre)WaitU( int_t k, int* msgcnt,
               MPI_Request *send_requ, MPI_Request *recv_requ,
-    	      gridinfo_t *grid, LUstruct_t *LUstruct, SCT_t *SCT)
+    	      gridinfo_t *grid, @(pre)LUstruct_t *LUstruct, SCT_t *SCT)
 {
-    LocalLU_t *Llu = LUstruct->Llu;
+    @(pre)LocalLU_t *Llu = LUstruct->Llu;
 
     int_t* ToRecv = Llu->ToRecv;
     int_t* ToSendD = Llu->ToSendD;

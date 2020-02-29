@@ -377,5 +377,4 @@ void
 	FormFullA(*ncol, nonz, nzval, rowind, colptr);
     }
 
-    fclose(fp);
 }

@@ -141,9 +141,9 @@ void @(pre)Print_CompCol_Matrix_dist(SuperMatrix *A)
 	    (long long) A->ncol, (long long) Astore->nnz);
     if ( (dp = (@(type) *) Astore->nzval) != NULL ) {
         printf("nzval:\n");
-@precision DOUBLE
+@precision SINGLE DOUBLE
         for (i = 0; i < Astore->nnz; ++i) printf("%f  ", dp[i]);
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
         for (i = 0; i < Astore->nnz; ++i) printf("%f\t%f\n", dp[i].r, dp[i].i);
 @precision !
     }
@@ -169,9 +169,9 @@ void @(pre)Print_Dense_Matrix_dist(SuperMatrix *A)
     printf("nrow %lld, ncol %lld, lda %lld\n",
         (long long) A->nrow, (long long) A->ncol, (long long) Astore->lda);
     printf("\nnzval: ");
-@precision DOUBLE
+@precision SINGLE DOUBLE
     for (i = 0; i < A->nrow; ++i) printf("%f  ", dp[i]);
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
     for (i = 0; i < A->nrow; ++i) printf("%f\t%f\n", dp[i].r, dp[i].i);
 @precision !
     printf("\nend Dense matrix.\n");
@@ -194,9 +194,9 @@ int @(pre)Print_CompRowLoc_Matrix_dist(SuperMatrix *A)
     PrintInt10("rowptr", m_loc+1, Astore->rowptr);
     PrintInt10("colind", nnz_loc, Astore->colind);
     if ( (dp = (@(type) *) Astore->nzval) != NULL )
-@precision DOUBLE
-        PrintDouble5("nzval", nnz_loc, dp);
-@precision DCOMPLEX
+@precision SINGLE DOUBLE
+        Print@(type)5("nzval", nnz_loc, dp);
+@precision SCOMPLEX DCOMPLEX
         PrintDoublecomplex("nzval", nnz_loc, dp);
 @precision !
     printf("==== end CompRowLoc matrix\n");
@@ -219,9 +219,9 @@ int file_@(pre)Print_CompRowLoc_Matrix_dist(FILE *fp, SuperMatrix *A)
     file_PrintInt10(fp, "rowptr", m_loc+1, Astore->rowptr);
     file_PrintInt10(fp, "colind", nnz_loc, Astore->colind);
     if ( (dp = (@(type) *) Astore->nzval) != NULL )
-@precision DOUBLE
-        file_PrintDouble5(fp, "nzval", nnz_loc, dp);
-@precision DCOMPLEX
+@precision SINGLE DOUBLE
+        file_Print@(type)5(fp, "nzval", nnz_loc, dp);
+@precision SCOMPLEX DCOMPLEX
         file_PrintDoublecomplex(fp, "nzval", nnz_loc, dp);
 @precision !
     fprintf(fp, "==== end CompRowLoc matrix\n");
@@ -353,9 +353,9 @@ void @(pre)Copy_CompRowLoc_Matrix_dist(SuperMatrix *A, SuperMatrix *B)
 /*! \brief Sets all entries of a matrix to zero, A_{i,j}=0, for i,j=1,..,n */
 void @(pre)Zero_CompRowLoc_Matrix_dist(SuperMatrix *A)
 {
-@precision DOUBLE
+@precision SINGLE DOUBLE
     @(type) zero = 0.0;
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
     @(type) zero = {0.0, 0.0};
 @precision !
     NRformat_loc  *Astore = A->Store;
@@ -374,9 +374,9 @@ void @(pre)Zero_CompRowLoc_Matrix_dist(SuperMatrix *A)
  */
 void @(pre)ScaleAddId_CompRowLoc_Matrix_dist(SuperMatrix *A, @(type) c)
 {
-@precision DOUBLE
+@precision SINGLE DOUBLE
     @(type) one = 1.0;
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
     @(type) one = {1.0, 0.0};
 @precision !
     NRformat_loc  *Astore = A->Store;
@@ -387,18 +387,18 @@ void @(pre)ScaleAddId_CompRowLoc_Matrix_dist(SuperMatrix *A, @(type) c)
     for (i = 0; i < Astore->m_loc; ++i) { /* Loop through each row */
         for (j = Astore->rowptr[i]; j < Astore->rowptr[i+1]; ++j) {
             if ( (Astore->fst_row + i) == Astore->colind[j] ) {  /* diagonal */
-@precision DOUBLE
+@precision SINGLE DOUBLE
                 temp = aval[j] * c;
                 aval[j] = temp + one;
-@precision DCOMPLEX
-                zz_mult(&temp, &aval[j], &c);
-		z_add(&aval[j], &temp, &one);
+@precision SCOMPLEX DCOMPLEX
+                @(pre)@(pre)_mult(&temp, &aval[j], &c);
+		@(pre)_add(&aval[j], &temp, &one);
 @precision !
             } else {
-@precision DOUBLE
+@precision SINGLE DOUBLE
                 aval[j] *= c;
-@precision DCOMPLEX
-                zz_mult(&temp, &aval[j], &c);
+@precision SCOMPLEX DCOMPLEX
+                @(pre)@(pre)_mult(&temp, &aval[j], &c);
 		aval[j] = temp;
 @precision !
 	   }
@@ -420,15 +420,45 @@ void @(pre)ScaleAdd_CompRowLoc_Matrix_dist(SuperMatrix *A, SuperMatrix *B, @(typ
     @(type) temp;
 
     for (i = 0; i < Astore->nnz_loc; ++i) { /* Loop through each nonzero */
-@precision DOUBLE
+@precision SINGLE DOUBLE
         aval[i] = c * aval[i] + bval[i];
-@precision DCOMPLEX
-        zz_mult (&temp, &aval[i], &c);
-	z_add (&aval[i], &temp, &bval[i]);
+@precision SCOMPLEX DCOMPLEX
+        @(pre)@(pre)_mult (&temp, &aval[i], &c);
+	@(pre)_add (&aval[i], &temp, &bval[i]);
 @precision !
     }
 
     return;
+}
+
+/*! \brief Allocate storage in ScalePermstruct */
+void @(pre)ScalePermstructInit(const int_t m, const int_t n,
+                         @(pre)ScalePermstruct_t *ScalePermstruct)
+{
+    ScalePermstruct->DiagScale = NOEQUIL;
+    if ( !(ScalePermstruct->perm_r = intMalloc_dist(m)) )
+        ABORT("Malloc fails for perm_r[].");
+    if ( !(ScalePermstruct->perm_c = intMalloc_dist(n)) )
+        ABORT("Malloc fails for perm_c[].");
+}
+
+/*! \brief Deallocate ScalePermstruct */
+void @(pre)ScalePermstructFree(@(pre)ScalePermstruct_t *ScalePermstruct)
+{
+    SUPERLU_FREE(ScalePermstruct->perm_r);
+    SUPERLU_FREE(ScalePermstruct->perm_c);
+    switch ( ScalePermstruct->DiagScale ) {
+      case ROW:
+        SUPERLU_FREE(ScalePermstruct->R);
+        break;
+      case COL:
+        SUPERLU_FREE(ScalePermstruct->C);
+        break;
+      case BOTH:
+        SUPERLU_FREE(ScalePermstruct->R);
+        SUPERLU_FREE(ScalePermstruct->C);
+        break;
+    }
 }
 
 
@@ -439,10 +469,10 @@ void
     int  i, j;
     for (j = 0; j < nrhs; ++j)
 	for (i = 0; i < n; ++i) {
-@precision DOUBLE
+@precision SINGLE DOUBLE
 	    if ( i % 2 ) x[i + j*ldx] = 1.0;/* + (double)(i+1.)/n;*/
 	    else x[i + j*ldx] = 1.0;
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 	    if ( i % 2 ) x[i + j*ldx].r = 1.0;
 	    else x[i + j*ldx].r = 2.0;
 	    x[i + j*ldx].i = 0.0;
@@ -456,10 +486,10 @@ void
 @(pre)FillRHS_dist(char *trans, int_t nrhs, @(type) *x, int_t ldx,
 	      SuperMatrix *A, @(type) *rhs, int_t ldb)
 {
-@precision DOUBLE
+@precision SINGLE DOUBLE
     @(type) one = 1.0;
     @(type) zero = 0.0;
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
     @(type) one = {1.0, 0.0};
     @(type) zero = {0.0, 0.0};
 @precision !
@@ -487,7 +517,7 @@ void @(pre)inf_norm_error_dist(int_t n, int_t nrhs, @(type) *x, int_t ldx,
 {
     double err, xnorm;
     @(type) *x_work, *xtrue_work;
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
     @(type) temp;
 @precision !
     int i, j;
@@ -497,11 +527,11 @@ void @(pre)inf_norm_error_dist(int_t n, int_t nrhs, @(type) *x, int_t ldx,
       xtrue_work = &xtrue[j*ldxtrue];
       err = xnorm = 0.0;
       for (i = 0; i < n; i++) {
-@precision DOUBLE
+@precision SINGLE DOUBLE
 	err = SUPERLU_MAX(err, fabs(x_work[i] - xtrue_work[i]));
 	xnorm = SUPERLU_MAX(xnorm, fabs(x_work[i]));
-@precision DCOMPLEX
-        z_sub(&temp, &x_work[i], &xtrue_work[i]);
+@precision SCOMPLEX DCOMPLEX
+        @(pre)_sub(&temp, &x_work[i], &xtrue_work[i]);
 	err = SUPERLU_MAX(err, slud_z_abs(&temp));
 	xnorm = SUPERLU_MAX(xnorm, slud_z_abs(&x_work[i]));
 @precision !
@@ -511,8 +541,8 @@ void @(pre)inf_norm_error_dist(int_t n, int_t nrhs, @(type) *x, int_t ldx,
     }
 }
 
-@precision DOUBLE
-void PrintDouble5(char *name, int_t len, double *x)
+@precision SINGLE DOUBLE
+void Print@(type)5(char *name, int_t len, @(type) *x)
 {
     register int_t i;
 
@@ -524,7 +554,7 @@ void PrintDouble5(char *name, int_t len, double *x)
     printf("\n");
 }
 
-int file_PrintDouble5(FILE *fp, char *name, int_t len, double *x)
+int file_Print@(type)5(FILE *fp, char *name, int_t len, @(type) *x)
 {
     register int_t i;
 
@@ -536,7 +566,7 @@ int file_PrintDouble5(FILE *fp, char *name, int_t len, double *x)
     fprintf(fp, "\n");
     return 0;
 }
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 void PrintDoublecomplex(char *name, int_t len, doublecomplex *x)
 {
     register int_t i;
@@ -560,7 +590,7 @@ int file_PrintDoublecomplex(FILE *fp, char *name, int_t len, doublecomplex *x)
 /*! \brief Print the blocks in the factored matrix L.
  */
 void @(pre)PrintLblocks(int iam, int_t nsupers, gridinfo_t *grid,
-		  Glu_persist_t *Glu_persist, LocalLU_t *Llu)
+		  Glu_persist_t *Glu_persist, @(pre)LocalLU_t *Llu)
 {
     register int c, extra, gb, j, lb, nsupc, nsupr, len, nb, ncb;
     register int_t k, mycol, r;
@@ -589,9 +619,9 @@ void @(pre)PrintLblocks(int iam, int_t nsupers, gridinfo_t *grid,
 		       iam, c, index[k], len);
 		PrintInt10("lsub", len, &index[k+LB_DESCRIPTOR]);
 		for (j = 0; j < nsupc; ++j) {
-@precision DOUBLE
-		    PrintDouble5("nzval", len, &nzval[r + j*nsupr]);
-@precision DCOMPLEX
+@precision SINGLE DOUBLE
+		    Print@(type)5("nzval", len, &nzval[r + j*nsupr]);
+@precision SCOMPLEX DCOMPLEX
 		    PrintDoublecomplex("nzval", len, &nzval[r + j*nsupr]);
 @precision !
 		}
@@ -612,16 +642,16 @@ void @(pre)PrintLblocks(int iam, int_t nsupers, gridinfo_t *grid,
 
 /*! \brief Sets all entries of matrix L to zero.
  */
-void @(pre)ZeroLblocks(int iam, int_t n, gridinfo_t *grid, LUstruct_t *LUstruct)
+void @(pre)ZeroLblocks(int iam, int_t n, gridinfo_t *grid, @(pre)LUstruct_t *LUstruct)
 {
-@precision DOUBLE
+@precision SINGLE DOUBLE
     @(type) zero = 0.0;
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
     @(type) zero = {0.0, 0.0};
 @precision !
     register int extra, gb, j, lb, nsupc, nsupr, ncb;
     register int_t k, mycol, r;
-    LocalLU_t *Llu = LUstruct->Llu;
+    @(pre)LocalLU_t *Llu = LUstruct->Llu;
     Glu_persist_t *Glu_persist = LUstruct->Glu_persist;
     int_t *xsup = Glu_persist->xsup;
     int_t *index;
@@ -652,7 +682,7 @@ void @(pre)ZeroLblocks(int iam, int_t n, gridinfo_t *grid, LUstruct_t *LUstruct)
 /*! \brief Dump the factored matrix L using matlab triple-let format
  */
 void @(pre)DumpLblocks(int iam, int_t nsupers, gridinfo_t *grid,
-		  Glu_persist_t *Glu_persist, LocalLU_t *Llu)
+		  Glu_persist_t *Glu_persist, @(pre)LocalLU_t *Llu)
 {
     register int c, extra, gb, j, i, lb, nsupc, nsupr, len, nb, ncb;
     register int_t k, mycol, r;
@@ -731,9 +761,9 @@ void @(pre)DumpLblocks(int iam, int_t nsupers, gridinfo_t *grid,
 		for (i=0; i<len; ++i){
 			fprintf(fp, IFMT IFMT " %e\n", index[k+LB_DESCRIPTOR+i]+1, xsup[gb]+j+1, (double)iam);
 #if 0
-@precision DOUBLE
+@precision SINGLE DOUBLE
 			fprintf(fp, IFMT IFMT " %e\n", index[k+LB_DESCRIPTOR+i]+1, xsup[gb]+j+1, nzval[r +i+ j*nsupr]);
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 			fprintf(fp, IFMT IFMT " %e %e\n", index[k+LB_DESCRIPTOR+i]+1, xsup[gb]+j+1, nzval[r +i+ j*nsupr].r,nzval[r +i+ j*nsupr].i);
 @precision !
 #endif
@@ -753,7 +783,7 @@ void @(pre)DumpLblocks(int iam, int_t nsupers, gridinfo_t *grid,
 /*! \brief Print the blocks in the factored matrix U.
  */
 void @(pre)PrintUblocks(int iam, int_t nsupers, gridinfo_t *grid,
-		  Glu_persist_t *Glu_persist, LocalLU_t *Llu)
+		  Glu_persist_t *Glu_persist, @(pre)LocalLU_t *Llu)
 {
     register int c, extra, jb, k, lb, len, nb, nrb, nsupc;
     register int_t myrow, r;
@@ -781,9 +811,9 @@ void @(pre)PrintUblocks(int iam, int_t nsupers, gridinfo_t *grid,
 		       iam, c, jb, index[k+1]);
 		nsupc = SuperSize( jb );
 		PrintInt10("fstnz", nsupc, &index[k+UB_DESCRIPTOR]);
-@precision DOUBLE
-		PrintDouble5("nzval", len, &nzval[r]);
-@precision DCOMPLEX
+@precision SINGLE DOUBLE
+		Print@(type)5("nzval", len, &nzval[r]);
+@precision SCOMPLEX DCOMPLEX
 		PrintDoublecomplex("nzval", len, &nzval[r]);
 @precision !
 		k += UB_DESCRIPTOR + nsupc;
@@ -813,17 +843,17 @@ int
 }
 
 
-@precision DOUBLE
+@precision SINGLE DOUBLE
 void
-GenXtrueRHS(int nrhs, SuperMatrix *A, Glu_persist_t *Glu_persist,
-	    gridinfo_t *grid, double **xact, int *ldx, double **b, int *ldb)
+@(pre)GenXtrueRHS(int nrhs, SuperMatrix *A, Glu_persist_t *Glu_persist,
+	    gridinfo_t *grid, @(type) **xact, int *ldx, @(type) **b, int *ldb)
 {
     int_t gb, gbrow, i, iam, irow, j, lb, lsup, myrow, n, nlrows,
           nsupr, nsupers, rel;
     int_t *supno, *xsup, *lxsup;
-    double *x, *bb;
+    @(type) *x, *bb;
     NCformat *Astore;
-    double   *aval;
+    @(type)   *aval;
 
     n = A->ncol;
     *ldb = 0;
@@ -833,7 +863,7 @@ GenXtrueRHS(int nrhs, SuperMatrix *A, Glu_persist_t *Glu_persist,
     iam = grid->iam;
     myrow = MYROW( iam, grid );
     Astore = (NCformat *) A->Store;
-    aval = (double *) Astore->nzval;
+    aval = Astore->nzval;
     lb = CEILING( nsupers, grid->nprow ) + 1;
     if ( !(lxsup = intMalloc_dist(lb)) )
 	ABORT("Malloc fails for lxsup[].");
@@ -850,9 +880,9 @@ GenXtrueRHS(int nrhs, SuperMatrix *A, Glu_persist_t *Glu_persist,
 	}
     }
     *ldx = n;
-    if ( !(x = doubleMalloc_dist(((size_t)*ldx) * nrhs)) )
+    if ( !(x = @(type)Malloc_dist(((size_t)*ldx) * nrhs)) )
 	ABORT("Malloc fails for x[].");
-    if ( !(bb = doubleCalloc_dist(*ldb * nrhs)) )
+    if ( !(bb = @(type)Calloc_dist(*ldb * nrhs)) )
 	ABORT("Calloc fails for bb[].");
     for (j = 0; j < nrhs; ++j)
 	for (i = 0; i < n; ++i) x[i + j*(*ldx)] = 1.0;
@@ -880,7 +910,7 @@ GenXtrueRHS(int nrhs, SuperMatrix *A, Glu_persist_t *Glu_persist,
     for (i = 0; i < grid->nprow*grid->npcol; ++i) {
 	if ( iam == i ) {
 	    printf("\n(%d)\n", iam);
-	    PrintDouble5("rhs", *ldb, *b);
+	    Print@(type)5("rhs", *ldb, *b);
 	}
 	MPI_Barrier( grid->comm );
     }
@@ -955,7 +985,7 @@ GenXtrueRHS(int nrhs, SuperMatrix *A, Glu_persist_t *Glu_persist,
    34    0    1.7628
    35    0    2.1658
 */
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 /* cg5.cua
             b = A*x           y = L\b
    0        1 + 4.0000i       1.0000 + 4.0000i

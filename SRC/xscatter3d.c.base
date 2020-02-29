@@ -131,10 +131,10 @@ void
     // int_t temp_nbrow = lsub[lptr + 1];
     // lptr += LB_DESCRIPTOR;
     // int_t cum_nrow =  Remain_info[lb].StRow;
-@precision DOUBLE
+@precision SINGLE DOUBLE
     double alpha = 1.0;
     double beta = 0.0;
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
     doublecomplex alpha = {1.0, 0.0}, beta = {0.0, 0.0};
 @precision !    
 
@@ -247,9 +247,9 @@ void
     lptr += LB_DESCRIPTOR;
     int_t cum_nrow =  Remain_info[lb].StRow;
 
-@precision DOUBLE
+@precision SINGLE DOUBLE
     double alpha = 1.0;  double beta = 0.0;
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
     doublecomplex alpha = {1.0, 0.0}, beta = {0.0, 0.0};
 @precision !    
 
@@ -348,13 +348,13 @@ int_t @(pre)block_gemm_scatterTopLeft( int_t lb, /* block number in L */
                                  @(type)* bigV, int_t knsupc,  int_t klst,
 				 int_t* lsub, int_t * usub, int_t ldt,
 				 int_t* indirect, int_t* indirect2, HyP_t* HyP,
-                                 LUstruct_t *LUstruct,
+                                 @(pre)LUstruct_t *LUstruct,
                                  gridinfo_t* grid,
                                  SCT_t*SCT, SuperLUStat_t *stat
                                )
 {
     Glu_persist_t *Glu_persist = LUstruct->Glu_persist;
-    LocalLU_t *Llu = LUstruct->Llu;
+    @(pre)LocalLU_t *Llu = LUstruct->Llu;
     int_t* xsup = Glu_persist->xsup;
     int_t** Lrowind_bc_ptr = Llu->Lrowind_bc_ptr;
     int_t** Ufstnz_br_ptr = Llu->Ufstnz_br_ptr;
@@ -384,13 +384,13 @@ int_t @(pre)block_gemm_scatterTopRight( int_t lb,  int_t j,
                                   @(type)* bigV, int_t knsupc,  int_t klst, int_t* lsub,
                                   int_t * usub, int_t ldt,  int_t* indirect, int_t* indirect2,
                                   HyP_t* HyP,
-                                  LUstruct_t *LUstruct,
+                                  @(pre)LUstruct_t *LUstruct,
                                   gridinfo_t* grid,
                                   SCT_t*SCT, SuperLUStat_t *stat
                                 )
 {
     Glu_persist_t *Glu_persist = LUstruct->Glu_persist;
-    LocalLU_t *Llu = LUstruct->Llu;
+    @(pre)LocalLU_t *Llu = LUstruct->Llu;
     int_t* xsup = Glu_persist->xsup;
     int_t** Lrowind_bc_ptr = Llu->Lrowind_bc_ptr;
     int_t** Ufstnz_br_ptr = Llu->Ufstnz_br_ptr;
@@ -415,13 +415,13 @@ int_t @(pre)block_gemm_scatterBottomLeft( int_t lb,  int_t j,
                                     @(type)* bigV, int_t knsupc,  int_t klst, int_t* lsub,
                                     int_t * usub, int_t ldt,  int_t* indirect, int_t* indirect2,
                                     HyP_t* HyP,
-                                    LUstruct_t *LUstruct,
+                                    @(pre)LUstruct_t *LUstruct,
                                     gridinfo_t* grid,
                                     SCT_t*SCT, SuperLUStat_t *stat
                                   )
 {
     Glu_persist_t *Glu_persist = LUstruct->Glu_persist;
-    LocalLU_t *Llu = LUstruct->Llu;
+    @(pre)LocalLU_t *Llu = LUstruct->Llu;
     int_t* xsup = Glu_persist->xsup;
     int_t** Lrowind_bc_ptr = Llu->Lrowind_bc_ptr;
     int_t** Ufstnz_br_ptr = Llu->Ufstnz_br_ptr;
@@ -448,13 +448,13 @@ int_t @(pre)block_gemm_scatterBottomRight( int_t lb,  int_t j,
                                      @(type)* bigV, int_t knsupc,  int_t klst, int_t* lsub,
                                      int_t * usub, int_t ldt,  int_t* indirect, int_t* indirect2,
                                      HyP_t* HyP,
-                                     LUstruct_t *LUstruct,
+                                     @(pre)LUstruct_t *LUstruct,
                                      gridinfo_t* grid,
                                      SCT_t*SCT, SuperLUStat_t *stat
                                    )
 {
     Glu_persist_t *Glu_persist = LUstruct->Glu_persist;
-    LocalLU_t *Llu = LUstruct->Llu;
+    @(pre)LocalLU_t *Llu = LUstruct->Llu;
     int_t* xsup = Glu_persist->xsup;
     int_t** Lrowind_bc_ptr = Llu->Lrowind_bc_ptr;
     int_t** Ufstnz_br_ptr = Llu->Ufstnz_br_ptr;
@@ -618,9 +618,9 @@ scatter_u (int_t ib,
         {
             for (i = 0; i < temp_nbrow; ++i)
             {
-@precision DOUBLE
+@precision SINGLE DOUBLE
                 ucol[indirect[i]] -= tempv[i];
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
                 @(pre)_sub(&ucol[indirect[i]], &ucol[indirect[i]], &tempv[i]);
 @precision !
             }                   /* for i=0..temp_nbropw */

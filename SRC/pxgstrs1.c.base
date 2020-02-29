@@ -65,10 +65,10 @@ _fcd ftcs3;
  * n      (input) int (global)
  *        The order of the system of linear equations.
  *
- * LUstruct (input) LUstruct_t*
+ * LUstruct (input) @(pre)LUstruct_t*
  *        The distributed data structures to store L and U factors,
  *        and the permutation vectors.
- *        See superlu_ddefs.h for the definition of 'LUstruct_t' structure.
+ *        See superlu_@(pre)defs.h for the definition of '@(pre)LUstruct_t' structure.
  *
  * grid   (input) gridinfo_t*
  *        The 2D process mesh.
@@ -93,16 +93,16 @@ _fcd ftcs3;
  * </pre>
  */
 
-void p@(pre)gstrs1(int_t n, LUstruct_t *LUstruct, gridinfo_t *grid,
+void p@(pre)gstrs1(int_t n, @(pre)LUstruct_t *LUstruct, gridinfo_t *grid,
 	      @(type) *x, int nrhs, SuperLUStat_t *stat, int *info)
 {
     Glu_persist_t *Glu_persist = LUstruct->Glu_persist;
-    LocalLU_t *Llu = LUstruct->Llu;
-@precision DOUBLE
-    double alpha = 1.0;
-@precision DCOMPLEX
-    doublecomplex alpha = {1.0, 0.0};
-    doublecomplex zero = {0.0, 0.0};
+    @(pre)LocalLU_t *Llu = LUstruct->Llu;
+@precision SINGLE DOUBLE
+    @(type) alpha = 1.0;
+@precision SCOMPLEX DCOMPLEX
+    @(type) alpha = {1.0, 0.0};
+    @(type) zero = {0.0, 0.0};
 @precision !
     @(type) *lsum;  /* Local running sum of the updates to B-components */
     @(type) *lusup, *dest;
@@ -232,9 +232,9 @@ void p@(pre)gstrs1(int_t n, LUstruct_t *LUstruct, gridinfo_t *grid,
 	if ( myrow == krow ) {
 	    lk = LBi( k, grid );   /* Local block number. */
 	    il = LSUM_BLK( lk );
-@precision DOUBLE
+@precision SINGLE DOUBLE
 	    lsum[il - LSUM_H] = k;
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 	    lsum[il - LSUM_H].r = k;
 	    lsum[il - LSUM_H].i = 0;
 @precision !
@@ -392,9 +392,9 @@ void p@(pre)gstrs1(int_t n, LUstruct_t *LUstruct, gridinfo_t *grid,
 		 MPI_ANY_TAG, grid->comm, &status );
 #endif
 
-@precision DOUBLE
+@precision SINGLE DOUBLE
 	k = *recvbuf;
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 	k = (*recvbuf).r;
 @precision !
 
@@ -432,9 +432,9 @@ void p@(pre)gstrs1(int_t n, LUstruct_t *LUstruct, gridinfo_t *grid,
 	      tempv = &recvbuf[LSUM_H];
 	      RHS_ITERATE(j)
 		  for (i = 0; i < knsupc; ++i)
-@precision DOUBLE
+@precision SINGLE DOUBLE
 		      x[i + ii + j*knsupc] += tempv[i + j*knsupc];
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 		      z_add(&x[i + ii + j*knsupc], &x[i + ii + j*knsupc],
 			    &tempv[i + j*knsupc]);
 @precision !
@@ -625,9 +625,9 @@ void p@(pre)gstrs1(int_t n, LUstruct_t *LUstruct, gridinfo_t *grid,
 	    il = LSUM_BLK( lk );
 	    dest = &lsum[il];
 	    RHS_ITERATE(j)
-@precision DOUBLE
+@precision SINGLE DOUBLE
 		for (i = 0; i < knsupc; ++i) dest[i + j*knsupc] = 0.0;
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 		for (i = 0; i < knsupc; ++i) dest[i + j*knsupc] = zero;
 @precision !
 	}
@@ -806,9 +806,9 @@ void p@(pre)gstrs1(int_t n, LUstruct_t *LUstruct, gridinfo_t *grid,
 	/* Receive a message. */
 	MPI_Recv( recvbuf, maxrecvsz, @(MPI_TYPE),
                  MPI_ANY_SOURCE, MPI_ANY_TAG, grid->comm, &status );
-@precision DOUBLE
+@precision SINGLE DOUBLE
 	k = *recvbuf;
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 	k = (*recvbuf).r;
 @precision !
 
@@ -838,9 +838,9 @@ void p@(pre)gstrs1(int_t n, LUstruct_t *LUstruct, gridinfo_t *grid,
 		tempv = &recvbuf[LSUM_H];
 		RHS_ITERATE(j)
 		    for (i = 0; i < knsupc; ++i)
-@precision DOUBLE
+@precision SINGLE DOUBLE
 			x[i + ii + j*knsupc] += tempv[i + j*knsupc];
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 			z_add(&x[i + ii + j*knsupc], &x[i + ii + j*knsupc],
 			      &tempv[i + j*knsupc]);
 @precision !

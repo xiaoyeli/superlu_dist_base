@@ -50,13 +50,13 @@ at the top-level directory.
  *        The norm of the original matrix A, or the scaled A if
  *        equilibration was done.
  *
- * LUstruct (input) LUstruct_t*
+ * LUstruct (input) @(pre)LUstruct_t*
  *        The distributed data structures storing L and U factors.
  *        The L and U factors are obtained from pdgstrf for
  *        the possibly scaled and permuted matrix A.
- *        See superlu_@(pre)defs.h for the definition of 'LUstruct_t'.
+ *        See superlu_@(pre)defs.h for the definition of '@(pre)LUstruct_t'.
  *
- * ScalePermstruct (input) ScalePermstruct_t* (global)
+ * ScalePermstruct (input) @(pre)ScalePermstruct_t* (global)
  *         The data structure to store the scaling and permutation vectors
  *         describing the transformations performed to the matrix A.
  *
@@ -92,11 +92,11 @@ at the top-level directory.
  * nrhs   (input) int
  *        Number of right-hand sides.
  *
- * SOLVEstruct (output) SOLVEstruct_t* (global)
+ * SOLVEstruct (output) @(pre)SOLVEstruct_t* (global)
  *        Contains the information for the communication during the
  *        solution phase.
  *
- * berr   (output) double*, dimension (nrhs)
+ * berr   (output) @(mod_type)*, dimension (nrhs)
  *         The componentwise relative backward error of each solution
  *         vector X(j) (i.e., the smallest relative change in
  *         any element of A or B that makes X(j) an exact solution).
@@ -116,16 +116,16 @@ at the top-level directory.
  * </pre>
  */
 void
-p@(pre)gsrfs(int_t n, SuperMatrix *A, double anorm, LUstruct_t *LUstruct,
-	ScalePermstruct_t *ScalePermstruct, gridinfo_t *grid,
+p@(pre)gsrfs(int_t n, SuperMatrix *A, @(mod_type) anorm, @(pre)LUstruct_t *LUstruct,
+	@(pre)ScalePermstruct_t *ScalePermstruct, gridinfo_t *grid,
 	@(type) *B, int_t ldb, @(type) *X, int_t ldx, int nrhs,
-	SOLVEstruct_t *SOLVEstruct,
-	double *berr, SuperLUStat_t *stat, int *info)
+	@(pre)SOLVEstruct_t *SOLVEstruct,
+	@(mod_type) *berr, SuperLUStat_t *stat, int *info)
 {
 #define ITMAX 20
 
     @(type) *ax, *R, *dx, *temp, *work, *B_col, *X_col;
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
     @(mod_type) *rtemp;
 @precision !
     int_t count, i, j, lwork, nz;
@@ -175,7 +175,7 @@ p@(pre)gsrfs(int_t n, SuperMatrix *A, double anorm, LUstruct_t *LUstruct,
 	ABORT("Malloc fails for work[]");
     ax = R = dx = work;
     temp = ax + m_loc;
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
     rtemp = (@(mod_type) *) temp;
 @precision !
 
@@ -210,24 +210,24 @@ p@(pre)gsrfs(int_t n, SuperMatrix *A, double anorm, LUstruct_t *LUstruct,
 	    p@(pre)gsmv(0, A, grid, gsmv_comm, X_col, ax);
 
 	    /* Compute residual, stored in R[]. */
-@precision DOUBLE
+@precision SINGLE DOUBLE
 	    for (i = 0; i < m_loc; ++i) R[i] = B_col[i] - ax[i];
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 	    for (i = 0; i < m_loc; ++i) z_sub(&R[i], &B_col[i], &ax[i]);
 @precision !
 
 	    /* Compute abs(op(A))*abs(X) + abs(B), stored in temp[]. */
 	    p@(pre)gsmv(1, A, grid, gsmv_comm, X_col, temp);
-@precision DOUBLE
+@precision SINGLE DOUBLE
 	    for (i = 0; i < m_loc; ++i) temp[i] += fabs(B_col[i]);
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
             /* NOTE: rtemp is aliased to temp */
 	    for (i = 0; i < m_loc; ++i) rtemp[i] += slud_z_abs1(&B_col[i]);
 @precision !
 
 	    s = 0.0;
 	    for (i = 0; i < m_loc; ++i) {
-@precision DOUBLE
+@precision SINGLE DOUBLE
 		if ( temp[i] > safe2 ) {
 		    s = SUPERLU_MAX(s, fabs(R[i]) / temp[i]);
 		} else if ( temp[i] != 0.0 ) {
@@ -235,7 +235,7 @@ p@(pre)gsrfs(int_t n, SuperMatrix *A, double anorm, LUstruct_t *LUstruct,
                        spuriously zero residuals (underflow). */
                     s = SUPERLU_MAX(s, (safe1 + fabs(R[i])) /temp[i]);
                 }
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 		if ( rtemp[i] > safe2 ) {
 		    s = SUPERLU_MAX(s, slud_z_abs1(&R[i]) / rtemp[i]);
 		} else if ( rtemp[i] != 0.0 ) {
@@ -258,11 +258,11 @@ p@(pre)gsrfs(int_t n, SuperMatrix *A, double anorm, LUstruct_t *LUstruct,
 			SOLVEstruct, stat, info);
 
 		/* Update solution. */
-@precision DOUBLE
+@precision SINGLE DOUBLE
 		for (i = 0; i < m_loc; ++i) X_col[i] += dx[i];
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 		for (i = 0; i < m_loc; ++i)
-                    z_add(&X_col[i], &X_col[i], &dx[i]);
+                    @(pre)_add(&X_col[i], &X_col[i], &dx[i]);
 @precision !
 
 		lstres = berr[j];

@@ -51,7 +51,7 @@ parse_command_line(int argc, char *argv[], int *nprow, int *npcol,
 extern int
 p@(pre)compute_resid(int m, int n, int nrhs, SuperMatrix *A,
 		@(type) *x, int ldx, @(type) *b, int ldb,
-		gridinfo_t *grid, SOLVEstruct_t *SOLVEstruct, double *resid);
+		gridinfo_t *grid, @(pre)SOLVEstruct_t *SOLVEstruct, double *resid);
 
 /*! \brief Copy matrix A into matrix B, in distributed compressed row format. */
 void
@@ -109,9 +109,9 @@ int main(int argc, char *argv[])
     SuperLUStat_t stat;
     SuperMatrix A, Asave;
     NRformat_loc *Astore;
-    ScalePermstruct_t ScalePermstruct;
-    LUstruct_t LUstruct;
-    SOLVEstruct_t SOLVEstruct;
+    @(pre)ScalePermstruct_t ScalePermstruct;
+    @(pre)LUstruct_t LUstruct;
+    @(pre)SOLVEstruct_t SOLVEstruct;
     gridinfo_t grid;
     @(type)   *nzval_save;
     int_t    *colind_save, *rowptr_save;
@@ -244,8 +244,8 @@ int main(int argc, char *argv[])
 		        @(pre)Copy_CompRowLoc_NoAllocation(&Asave, &A);
 
 		        /* Initialize ScalePermstruct and LUstruct. */
-		        ScalePermstructInit(m, n, &ScalePermstruct);
-		        LUstructInit(n, &LUstruct);
+		        @(pre)ScalePermstructInit(m, n, &ScalePermstruct);
+		        @(pre)LUstructInit(n, &LUstruct);
 
 		        if ( prefact ) {
 
@@ -318,7 +318,7 @@ int main(int argc, char *argv[])
 			    options.Fact = fact;
 			    if ( fact == SamePattern ) {
 			        // {L,U} not re-used in subsequent call to PDGSSVX.
-			        Destroy_LU(n, &grid, &LUstruct);
+			        @(pre)Destroy_LU(n, &grid, &LUstruct);
 			    } else if (fact == SamePattern_SameRowPerm) {
 			        // {L,U} structure is re-used in subsequent call to PDGSSVX.
 				@(pre)ZeroLblocks(iam, n, &grid, &LUstruct);
@@ -337,10 +337,10 @@ int main(int argc, char *argv[])
                                 /* Perturb the 1st diagonal of the matrix 
                                    to larger value, so to have a different A. */
 @precision DOUBLE
-                                ((@(type) *) Astore->nzval)[0] += 1.0e-8;
+                                ((@(type) *) Astore->nzval)[0] += 1.0e-12; //1.0e-8;
 @precision DCOMPLEX
-                                (@(type) *) Astore->nzval)[0].r += 1.0e-8;
-                                (@(type) *) Astore->nzval)[0].i += 1.0e-8;
+                                (@(type) *) Astore->nzval)[0].r += 1.0e-12; //1.0e-8;
+                                (@(type) *) Astore->nzval)[0].i += 1.0e-12; //1.0e-8;
 @precision !
                              }
 
@@ -404,9 +404,9 @@ int main(int argc, char *argv[])
 			    SUPERLU_FREE(C);
 			    ScalePermstruct.DiagScale = NOEQUIL; /* Avoid free R/C again. */
 		        }
-		        ScalePermstructFree(&ScalePermstruct);
-		        Destroy_LU(n, &grid, &LUstruct);
-		        LUstructFree(&LUstruct);
+		        @(pre)ScalePermstructFree(&ScalePermstruct);
+		        @(pre)Destroy_LU(n, &grid, &LUstruct);
+		        @(pre)LUstructFree(&LUstruct);
 		        if ( options.SolveInitialized ) {
 			    @(pre)SolveFinalize(&options, &SOLVEstruct);
 		        }
@@ -425,7 +425,7 @@ int main(int argc, char *argv[])
 	   ------------------------------------------------------------*/
 	Destroy_CompRowLoc_Matrix_dist(&A);
 	Destroy_CompRowLoc_Matrix_dist(&Asave);
-	//	ScalePermstructFree(&ScalePermstruct);
+	//	@(pre)ScalePermstructFree(&ScalePermstruct);
 	SUPERLU_FREE(b);
 	SUPERLU_FREE(bsave);
 	SUPERLU_FREE(xtrue);

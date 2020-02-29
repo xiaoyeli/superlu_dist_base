@@ -47,13 +47,21 @@ void
     /* First pass: determine N and NNZ */
     nz = *n = 0;
 
-@precision DOUBLE
+@precision SINGLE DOUBLE
 #ifdef _LONGINT
+    @precision SINGLE
+    ret_val = fscanf(fp, "%ld%ld%f%\n", &i, &j, &vali);
+    @precision DOUBLE
     ret_val = fscanf(fp, "%ld%ld%lf%\n", &i, &j, &vali);
+    @precision !
 #else
+    @precision SINGLE
+    ret_val = fscanf(fp, "%d%d%f\n", &i, &j, &vali);
+    @precision DOUBLE
     ret_val = fscanf(fp, "%d%d%lf\n", &i, &j, &vali);
+    @precision !
 #endif
-@precision DCOMPLEX
+@precision SCOMPELX DCOMPLEX
 #ifdef _LONGINT
     ret_val = fscanf(fp, "%ld%ld%lf%lf\n", &i, &j, &vali.r, &vali.i);
 #else
@@ -68,17 +76,33 @@ void
 	minn = SUPERLU_MIN(minn, j);
 	++nz;
 
-@precision DOUBLE
+@precision SINGLE DOUBLE
 #ifdef _LONGINT
+    @precision SINGLE
+        ret_val = fscanf(fp, "%ld%ld%f%\n", &i, &j, &vali);
+    @precision DOUBLE
         ret_val = fscanf(fp, "%ld%ld%lf%\n", &i, &j, &vali);
+    @precision !
 #else
+    @precision SINGLE
+        ret_val = fscanf(fp, "%d%d%f\n", &i, &j, &vali);
+    @precision DOUBLE
         ret_val = fscanf(fp, "%d%d%lf\n", &i, &j, &vali);
+    @precision !
 #endif
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 #ifdef _LONGINT
+    @precision SCOMPLEX
+        ret_val = fscanf(fp, "%ld%ld%f%f\n", &i, &j, &vali.r, &vali.i);
+    @precision DCOMPLEX
         ret_val = fscanf(fp, "%ld%ld%lf%lf\n", &i, &j, &vali.r, &vali.i);
+    @precision !
 #else
+    @precision SCOMPLEX
+        ret_val = fscanf(fp, "%d%d%f%f\n", &i, &j, &vali.r, &vali.i);
+    @precision DCOMPLEX
         ret_val = fscanf(fp, "%d%d%lf%lf\n", &i, &j, &vali.r, &vali.i);
+    @precision !
 #endif
 @precision !
     }
@@ -119,13 +143,21 @@ void
 
     /* Read into the triplet array from a file */
     for (nnz = 0, nz = 0; nnz < *nonz; ++nnz) {
-@precision DOUBLE
+@precision SINGLE DOUBLE
 #ifdef _LONGINT
+       @precision SINGLE
+	fscanf(fp, "%ld%ld%f\n", &row[nz], &col[nz], &val[nz]);
+       @precision DOUBLE
 	fscanf(fp, "%ld%ld%lf\n", &row[nz], &col[nz], &val[nz]);
+       @precision !
 #else
+       @precision SINGLE
+	fscanf(fp, "%d%d%f\n", &row[nz], &col[nz], &val[nz]);
+       @precision DOUBLE
 	fscanf(fp, "%d%d%lf\n", &row[nz], &col[nz], &val[nz]);
+       @precision !
 #endif
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 #ifdef _LONGINT
 	fscanf(fp, "%ld%ld%lf%lf\n", &row[nz], &col[nz], &val[nz].r, &val[nz].i);
 #else
@@ -141,10 +173,10 @@ void
 
 	if (row[nz] < 0 || row[nz] >= *m || col[nz] < 0 || col[nz] >= *n
 	    /*|| val[nz] == 0.*/) {
-@precision DOUBLE
+@precision SINGLE DOUBLE
 	    fprintf(stderr, "nz %d, (%d, %d) = %e out of bound, removed\n",
 		    nz, row[nz], col[nz], val[nz]);
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 	    fprintf(stderr, "nz %d, (%d, %d) = (%e, %e) out of bound, removed\n",
 		    nz, row[nz], col[nz], val[nz].r, val[nz].i);
 @precision !
@@ -219,8 +251,12 @@ void @(pre)readrhs(int m, @(type) *b)
 	exit(-1);
     }
     for (i = 0; i < m; ++i)
+@precision SINGLE
+      fscanf(fp, "%f\n", &b[i]);
 @precision DOUBLE
       fscanf(fp, "%lf\n", &b[i]);
+@precision SCOMPLEX
+      fscanf(fp, "%f%f\n", &(b[i].r), &(b[i].i));
 @precision DCOMPLEX
       fscanf(fp, "%lf%lf\n", &(b[i].r), &(b[i].i));
 @precision !

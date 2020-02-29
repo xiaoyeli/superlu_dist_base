@@ -252,9 +252,9 @@ p@(pre)gsmv
     int_t *ind_tosend, *ind_torecv, *ptr_ind_tosend, *ptr_ind_torecv;
     int_t *extern_start, TotalValSend;
     @(type) *nzval, *val_tosend, *val_torecv;
-@precision DOUBLE
+@precision SINGLE DOUBLE
     @(type) zero = 0.0;
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
     @(type) zero = {0.0, 0.0}, temp;
     @(mod_type) *ax_abs = (@(mod_type) *) ax;
 @precision !
@@ -322,16 +322,16 @@ p@(pre)gsmv
     if ( abs ) { /* Perform abs(A)*abs(x) */
         /* Multiply the local part. */
         for (i = 0; i < m_loc; ++i) { /* Loop through each row */
-@precision DOUBLE
+@precision SINGLE DOUBLE
 	    ax[i] = 0.0;
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
             ax_abs[i] = 0.0;
 @precision !
 	    for (j = rowptr[i]; j < extern_start[i]; ++j) {
 	        jcol = colind[j];
-@precision DOUBLE
+@precision SINGLE DOUBLE
 		ax[i] += fabs(nzval[j]) * fabs(x[jcol]);
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 		ax_abs[i] += slud_z_abs1(&nzval[j]) * slud_z_abs1(&x[jcol]);
 @precision !
 	    }
@@ -346,9 +346,9 @@ p@(pre)gsmv
         for (i = 0; i < m_loc; ++i) { /* Loop through each row */
 	    for (j = extern_start[i]; j < rowptr[i+1]; ++j) {
 	        jcol = colind[j];
-@precision DOUBLE
+@precision SINGLE DOUBLE
 	        ax[i] += fabs(nzval[j]) * fabs(val_torecv[jcol]);
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 	        ax_abs[i] += slud_z_abs1(&nzval[j]) * slud_z_abs(&val_torecv[jcol]);
 @precision !
 	    }
@@ -359,9 +359,9 @@ p@(pre)gsmv
 	    ax[i] = zero;
 	    for (j = rowptr[i]; j < extern_start[i]; ++j) {
 	        jcol = colind[j];
-@precision DOUBLE
+@precision SINGLE DOUBLE
 		ax[i] += nzval[j] * x[jcol];
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
                 @(pre)@(pre)_mult(&temp, &nzval[j], &x[jcol]);
                 @(pre)_add(&ax[i], &ax[i], &temp);
 @precision !
@@ -377,9 +377,9 @@ p@(pre)gsmv
         for (i = 0; i < m_loc; ++i) { /* Loop through each row */
 	    for (j = extern_start[i]; j < rowptr[i+1]; ++j) {
 	        jcol = colind[j];
-@precision DOUBLE
+@precision SINGLE DOUBLE
 	        ax[i] += nzval[j] * val_torecv[jcol];
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
                 @(pre)@(pre)_mult(&temp, &nzval[j], &val_torecv[jcol]);
                 @(pre)_add(&ax[i], &ax[i], &temp);
 @precision !

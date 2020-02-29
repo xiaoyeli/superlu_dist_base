@@ -342,7 +342,7 @@ at the top-level directory.
  *         NOTE: Currently, A must reside in all processes when calling
  *               this routine.
  *
- * ScalePermstruct (input/output) ScalePermstruct_t*
+ * ScalePermstruct (input/output) @(pre)ScalePermstruct_t*
  *         The data structure to store the scaling and permutation vectors
  *         describing the transformations performed to the matrix A.
  *         It contains the following fields:
@@ -418,7 +418,7 @@ at the top-level directory.
  *         Grid can be initialized by subroutine SUPERLU_GRIDINIT.
  *         See superlu_@(pre)defs.h for the definition of 'gridinfo_t'.
  *
- * LUstruct (input/output) LUstruct_t*
+ * LUstruct (input/output) @(pre)LUstruct_t*
  *         The data structures to store the distributed L and U factors.
  *         It contains the following fields:
  *
@@ -441,9 +441,9 @@ at the top-level directory.
  *	       xsup[s] is the leading column of the s-th supernode,
  *             supno[i] is the supernode number to which column i belongs.
  *
- *         o Llu (LocalLU_t*)
+ *         o Llu (@(pre)LocalLU_t*)
  *           The distributed data structures to store L and U factors.
- *           See superlu_ddefs.h for the definition of 'LocalLU_t'.
+ *           See superlu_ddefs.h for the definition of '@(pre)LocalLU_t'.
  *
  * berr    (output) double*, dimension (nrhs)
  *         The componentwise relative backward error of each solution
@@ -469,9 +469,9 @@ at the top-level directory.
  */
 void
 p@(pre)gssvx_ABglobal(superlu_dist_options_t *options, SuperMatrix *A,
-		 ScalePermstruct_t *ScalePermstruct,
+		 @(pre)ScalePermstruct_t *ScalePermstruct,
 		 @(type) B[], int ldb, int nrhs, gridinfo_t *grid,
-		 LUstruct_t *LUstruct, double *berr,
+		 @(pre)LUstruct_t *LUstruct, @(mod_type) *berr,
 		 SuperLUStat_t *stat, int *info)
 {
     SuperMatrix AC;
@@ -501,7 +501,7 @@ p@(pre)gssvx_ABglobal(superlu_dist_options_t *options, SuperMatrix *A,
     int      iam;
     int      ldx;  /* LDA for matrix X (global). */
     char     equed[1], norm[1];
-    double   *C, *R, *C1, *R1, amax, anorm, colcnd, rowcnd;
+    @(mod_type)   *C, *R, *C1, *R1, amax, anorm, colcnd, rowcnd;
     @(type)   *X, *b_col, *b_work, *x_col;
     double   t;
     static superlu_dist_mem_usage_t num_mem_usage, symb_mem_usage;
@@ -570,20 +570,20 @@ p@(pre)gssvx_ABglobal(superlu_dist_options_t *options, SuperMatrix *A,
 	/* Allocate storage if not done so before. */
 	switch ( ScalePermstruct->DiagScale ) {
 	    case NOEQUIL:
-		if ( !(R = (double *) doubleMalloc_dist(m)) )
+		if ( !(R = (@(mod_type) *) @(mod_type)Malloc_dist(m)) )
 		    ABORT("Malloc fails for R[].");
-	        if ( !(C = (double *) doubleMalloc_dist(n)) )
+	        if ( !(C = (@(mod_type) *) @(mod_type)Malloc_dist(n)) )
 		    ABORT("Malloc fails for C[].");
 		ScalePermstruct->R = R;
 		ScalePermstruct->C = C;
 		break;
 	    case ROW:
-	        if ( !(C = (double *) doubleMalloc_dist(n)) )
+	        if ( !(C = (@(mod_type) *) @(mod_type)Malloc_dist(n)) )
 		    ABORT("Malloc fails for C[].");
 		ScalePermstruct->C = C;
 		break;
 	    case COL:
-		if ( !(R = (double *) doubleMalloc_dist(m)) )
+		if ( !(R = (@(mod_type) *) @(mod_type)Malloc_dist(m)) )
 		    ABORT("Malloc fails for R[].");
 		ScalePermstruct->R = R;
 		break;
@@ -608,10 +608,10 @@ p@(pre)gssvx_ABglobal(superlu_dist_options_t *options, SuperMatrix *A,
 		for (j = 0; j < n; ++j) {
 		    for (i = colptr[j]; i < colptr[j+1]; ++i) {
 			irow = rowind[i];
-@precision DOUBLE
+@precision SINGLE DOUBLE
 			a[i] *= R[irow];       /* Scale rows. */
-@precision DCOMPLEX
-			zd_mult(&a[i], &a[i], R[i]); /* Scale rows. */
+@precision SCOMPLEX DCOMPLEX
+			@(pre)@(mod_pre)_mult(&a[i], &a[i], R[i]); /* Scale rows. */
 @precision !
 		    }
 		}
@@ -619,21 +619,21 @@ p@(pre)gssvx_ABglobal(superlu_dist_options_t *options, SuperMatrix *A,
 	      case COL:
 		for (j = 0; j < n; ++j)
 		    for (i = colptr[j]; i < colptr[j+1]; ++i)
-@precision DOUBLE
+@precision SINGLE DOUBLE
 			a[i] *= C[j];          /* Scale columns. */
-@precision DCOMPLEX
-			zd_mult(&a[i], &a[i], C[j]); /* Scale columns. */
+@precision SCOMPLEX DCOMPLEX
+			@(pre)@(mod_pre)_mult(&a[i], &a[i], C[j]); /* Scale columns. */
 @precision !
 		break;
 	      case BOTH:
 		for (j = 0; j < n; ++j) {
 		    for (i = colptr[j]; i < colptr[j+1]; ++i) {
 			irow = rowind[i];
-@precision DOUBLE
+@precision SINGLE DOUBLE
 			a[i] *= R[irow] * C[j]; /* Scale rows and columns. */
-@precision DCOMPLEX
-			zd_mult(&a[i], &a[i], R[irow]); /* Scale rows. */
-			zd_mult(&a[i], &a[i], C[j]); /* Scale columns. */
+@precision SCOMPLEX DCOMPLEX
+			@(pre)@(mod_pre)_mult(&a[i], &a[i], R[irow]); /* Scale rows. */
+			@(pre)@(mod_pre)_mult(&a[i], &a[i], C[j]); /* Scale columns. */
 @precision !
 		    }
 		}
@@ -715,12 +715,12 @@ p@(pre)gssvx_ABglobal(superlu_dist_options_t *options, SuperMatrix *A,
 
 	if ( Fact == SamePattern_SameRowPerm /* Reuse perm_r. */
 	    || options->RowPerm == MY_PERMR ) { /* Use my perm_r. */
-@precision DOUBLE
+@precision SINGLE DOUBLE
 	    for (i = 0; i < colptr[n]; ++i) {
 		    irow = rowind[i];
 		    rowind[i] = perm_r[irow];
 	    }
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 	    for (j = 0; j < n; ++j) {
 		for (i = colptr[j]; i < colptr[j+1]; ++i) {
 		    irow = rowind[i];
@@ -731,9 +731,9 @@ p@(pre)gssvx_ABglobal(superlu_dist_options_t *options, SuperMatrix *A,
 	} else if ( !factored ) {
 	    if ( job == 5 ) {
 		/* Allocate storage for scaling factors. */
-		if ( !(R1 = (double *) SUPERLU_MALLOC(m * sizeof(double))) )
+		if ( !(R1 = (@(mod_type) *) SUPERLU_MALLOC(m * sizeof(@(mod_type)))) )
 		    ABORT("SUPERLU_MALLOC fails for R1[]");
-		if ( !(C1 = (double *) SUPERLU_MALLOC(n * sizeof(double))) )
+		if ( !(C1 = (@(mod_type) *) SUPERLU_MALLOC(n * sizeof(@(mod_type)))) )
 		    ABORT("SUPERLU_MALLOC fails for C1[]");
 	    }
 
@@ -746,8 +746,8 @@ p@(pre)gssvx_ABglobal(superlu_dist_options_t *options, SuperMatrix *A,
 		if ( iinfo == 0 ) {
 		    MPI_Bcast( perm_r, m, mpi_int_t, 0, grid->comm );
 		    if ( job == 5 && Equil ) {
-		       MPI_Bcast( R1, m, MPI_DOUBLE, 0, grid->comm );
-		       MPI_Bcast( C1, n, MPI_DOUBLE, 0, grid->comm );
+		       MPI_Bcast( R1, m, @(MPI_MOD_TYPE), 0, grid->comm );
+		       MPI_Bcast( C1, n, @(MPI_MOD_TYPE), 0, grid->comm );
 		   }
 		}
 	    } else {
@@ -755,8 +755,8 @@ p@(pre)gssvx_ABglobal(superlu_dist_options_t *options, SuperMatrix *A,
 		if ( iinfo == 0 ) {
 		   MPI_Bcast( perm_r, m, mpi_int_t, 0, grid->comm );
 		   if ( job == 5 && Equil ) {
-		      MPI_Bcast( R1, m, MPI_DOUBLE, 0, grid->comm );
-		      MPI_Bcast( C1, n, MPI_DOUBLE, 0, grid->comm );
+		      MPI_Bcast( R1, m, @(MPI_MOD_TYPE), 0, grid->comm );
+		      MPI_Bcast( C1, n, @(MPI_MOD_TYPE), 0, grid->comm );
 		   }
 		}
 	    }
@@ -781,19 +781,19 @@ p@(pre)gssvx_ABglobal(superlu_dist_options_t *options, SuperMatrix *A,
 		    for (j = 0; j < n; ++j) {
 			for (i = colptr[j]; i < colptr[j+1]; ++i) {
 			    irow = rowind[i];
-@precision DOUBLE
+@precision SINGLE DOUBLE
 			    a[i] *= R1[irow] * C1[j]; /* Scale the matrix. */
-@precision DCOMPLEX
-			    zd_mult(&a[i], &a[i], R1[irow]); /* Scale rows. */
-			    zd_mult(&a[i], &a[i], C1[j]); /* Scale columns. */
+@precision SCOMPLEX DCOMPLEX
+			    @(pre)@(mod_pre)_mult(&a[i], &a[i], R1[irow]); /* Scale rows. */
+			    @(pre)@(mod_pre)_mult(&a[i], &a[i], C1[j]); /* Scale columns. */
 @precision !
 			    rowind[i] = perm_r[irow];
 #if ( PRNTlevel>=2 )
 			    if ( rowind[i] == j ) /* New diagonal */
-@precision DOUBLE
+@precision SINGLE DOUBLE
 				dprod *= fabs(a[i]);
-@precision DCOMPLEX
-				dprod *= slud_z_abs1(&a[i]);
+@precision SCOMPLEX DCOMPLEX
+				dprod *= slud_@(pre)_abs1(&a[i]);
 @precision !
 #endif
 			}
@@ -808,12 +808,12 @@ p@(pre)gssvx_ABglobal(superlu_dist_options_t *options, SuperMatrix *A,
 		    ScalePermstruct->DiagScale = BOTH;
 		    rowequ = colequ = 1;
 		} else { /* No equilibration. */
-@precision DOUBLE
+@precision SINGLE DOUBLE
 		    for (i = colptr[0]; i < colptr[n]; ++i) {
 		        irow = rowind[i];
 			rowind[i] = perm_r[irow];
          	    }
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 		    for (j = 0; j < n; ++j) {
 			for (i = colptr[j]; i < colptr[j+1]; ++i) {
 			    irow = rowind[i];
@@ -832,22 +832,22 @@ p@(pre)gssvx_ABglobal(superlu_dist_options_t *options, SuperMatrix *A,
 #if ( PRNTlevel>=2 )
 			if ( rowind[i] == j ) { /* New diagonal */
 			    if ( job == 2 || job == 3 )
-@precision DOUBLE
+@precision SINGLE DOUBLE
 				dmin = SUPERLU_MIN(dmin, fabs(a[i]));
-@precision DCOMPLEX
-				dmin = SUPERLU_MIN(dmin, slud_z_abs1(&a[i]));
+@precision SCOMPLEX DCOMPLEX
+				dmin = SUPERLU_MIN(dmin, slud_@(pre)_abs1(&a[i]));
 @precision !
 			    else if ( job == 4 )
-@precision DOUBLE
+@precision SINGLE DOUBLE
 				dsum += fabs(a[i]);
-@precision DCOMPLEX
-				dsum += slud_z_abs1(&a[i]);
+@precision SCOMPLEX DCOMPLEX
+				dsum += slud_@(pre)_abs1(&a[i]);
 @precision !
 			    else if ( job == 5 )
-@precision DOUBLE
+@precision SINGLE DOUBLE
 				dprod *= fabs(a[i]);
-@precision DCOMPLEX
-				dprod *= slud_z_abs1(&a[i]);
+@precision SCOMPLEX DCOMPLEX
+				dprod *= slud_@(pre)_abs1(&a[i]);
 @precision !
 			}
 #endif
@@ -872,7 +872,7 @@ p@(pre)gssvx_ABglobal(superlu_dist_options_t *options, SuperMatrix *A,
 
 	t = SuperLU_timer_() - t;
 	stat->utime[ROWPERM] = t;
-@precision DOUBLE
+@precision SINGLE DOUBLE
 #if ( PRNTlevel>=1 )
 	if ( !iam ) printf(".. LDPERM job " IFMT "\t time: %.2f\n", job, t);
 #endif
@@ -887,7 +887,7 @@ p@(pre)gssvx_ABglobal(superlu_dist_options_t *options, SuperMatrix *A,
 	if ( notran ) *(unsigned char *)norm = '1';
 	else *(unsigned char *)norm = 'I';
 	anorm = @(pre)langs_dist(norm, A);
-@precision DOUBLE
+@precision SINGLE DOUBLE
 #if ( PRNTlevel>=1 )
 	if ( !iam ) printf(".. anorm %e\n", anorm);
 #endif
@@ -1040,10 +1040,10 @@ p@(pre)gssvx_ABglobal(superlu_dist_options_t *options, SuperMatrix *A,
 	    if ( rowequ ) {
 		b_col = B;
 		for (j = 0; j < nrhs; ++j) {
-@precision DOUBLE
+@precision SINGLE DOUBLE
 		    for (i = 0; i < m; ++i) b_col[i] *= R[i];
-@precision DCOMPLEX
-		    for (i = 0; i < m; ++i) zd_mult(&b_col[i], &b_col[i], R[i]);
+@precision SCOMPLEX DCOMPLEX
+		    for (i = 0; i < m; ++i) @(pre)@(mod_pre)_mult(&b_col[i], &b_col[i], R[i]);
 @precision !
 		    b_col += ldb;
 		}
@@ -1051,10 +1051,10 @@ p@(pre)gssvx_ABglobal(superlu_dist_options_t *options, SuperMatrix *A,
 	} else if ( colequ ) {
 	    b_col = B;
 	    for (j = 0; j < nrhs; ++j) {
-@precision DOUBLE
+@precision SINGLE DOUBLE
 		for (i = 0; i < m; ++i) b_col[i] *= C[i];
-@precision DCOMPLEX
-		for (i = 0; i < m; ++i) zd_mult(&b_col[i], &b_col[i], C[i]);
+@precision SCOMPLEX DCOMPLEX
+		for (i = 0; i < m; ++i) @(pre)@(mod_pre)_mult(&b_col[i], &b_col[i], C[i]);
 @precision !
 		b_col += ldb;
 	    }
@@ -1127,10 +1127,10 @@ p@(pre)gssvx_ABglobal(superlu_dist_options_t *options, SuperMatrix *A,
 	    if ( colequ ) {
 		b_col = B;
 		for (j = 0; j < nrhs; ++j) {
-@precision DOUBLE
+@precision SINGLE DOUBLE
 		    for (i = 0; i < n; ++i) b_col[i] *= C[i];
-@precision DCOMPLEX
-		    for (i = 0; i < n; ++i) zd_mult(&b_col[i], &b_col[i], C[i]);
+@precision SCOMPLEX DCOMPLEX
+		    for (i = 0; i < n; ++i) @(pre)@(mod_pre)_mult(&b_col[i], &b_col[i], C[i]);
 @precision !
 		    b_col += ldb;
 		}
@@ -1138,10 +1138,10 @@ p@(pre)gssvx_ABglobal(superlu_dist_options_t *options, SuperMatrix *A,
 	} else if ( rowequ ) {
 	    b_col = B;
 	    for (j = 0; j < nrhs; ++j) {
-@precision DOUBLE
+@precision SINGLE DOUBLE
 		for (i = 0; i < n; ++i) b_col[i] *= R[i];
-@precision DCOMPLEX
-		for (i = 0; i < n; ++i) zd_mult(&b_col[i], &b_col[i], R[i]);
+@precision SCOMPLEX DCOMPLEX
+		for (i = 0; i < n; ++i) @(pre)@(mod_pre)_mult(&b_col[i], &b_col[i], R[i]);
 @precision !
 		b_col += ldb;
 	    }

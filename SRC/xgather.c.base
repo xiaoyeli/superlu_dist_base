@@ -33,9 +33,9 @@ int_t @(pre)printMatrix(char*s, int n, int m, @(type)* A, int LDA)
     {
         for(int j =0; j<m; j++)
         {
-@precision DOUBLE
+@precision SINGLE DOUBLE
             printf("%g ", A[j*LDA +i]);
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
             printf("%g %g\n", A[j*LDA +i].r, A[j*LDA +i].r);
 @precision !
         }
@@ -53,9 +53,9 @@ void @(pre)gather_u(int_t num_u_blks,
     // return;
     //  private(j,iukp,rukp,tempu, jb, nsupc,ljb,segsize,lead_zero, \
     // jj, i)
-@precision DOUBLE
+@precision SINGLE DOUBLE
     double zero = 0.0;
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
     doublecomplex zero = {0.0, 0.0};
 @precision !
 

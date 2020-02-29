@@ -5,20 +5,217 @@ EXM = ./EXAMPLE
 F90 = ./FORTRAN
 BLS = ./CBLAS
 
-TGTSRC 	= ../superlu_dist.git/SRC
-# TGTTST = ../superlu_dist.git/TESTING
-TGTTST 	= ../superlu_dist.git/TEST
-TGTEXM 	= ../superlu_dist.git/EXAMPLE
-TGTF90 	= ../superlu_dist.git/FORTRAN
+#TGTSRC 	= ../superlu_dist.git/SRC
+#TGTTST 	= ../superlu_dist.git/TEST
+#TGTEXM 	= ../superlu_dist.git/EXAMPLE
+#TGTF90 	= ../superlu_dist.git/FORTRAN
+#TGTSRC 	= ../Mixed-Prec-slud.git/SRC
+#TGTTST 	= ../Mixed-Prec-slud.git/TEST
+#TGTEXM 	= ../Mixed-Prec-slud.git/EXAMPLE
+#TGTF90 	= ../Mixed-Prec-slud.git/FORTRAN
+TGTSRC 	= ../ssg1-superlu_dist.git/SRC
+TGTTST 	= ../ssg1-superlu_dist.git/TEST
+TGTEXM 	= ../ssg1-superlu_dist.git/EXAMPLE
+TGTF90 	= ../ssg1-superlu_dist.git/FORTRAN
 
+#all: single
 all: double dcomplex
+
+single:	\
+	$(TGTSRC)/superlu_sdefs.h \
+	$(TGTSRC)/psgstrf.c \
+	$(TGTSRC)/sstatic_schedule.c \
+	$(TGTSRC)/psgstrf2.c \
+	$(TGTSRC)/sscatter.c \
+	$(TGTSRC)/sscatter3d.c \
+	$(TGTSRC)/slook_ahead_update.c \
+	$(TGTSRC)/sSchCompUdt-2Ddynamic.c \
+	$(TGTSRC)/sSchCompUdt-cuda.c \
+	$(TGTSRC)/psgssvx_ABglobal.c \
+	$(TGTSRC)/psgstrs_Bglobal.c \
+	$(TGTSRC)/psgsrfs_ABXglobal.c \
+	$(TGTSRC)/psgsmv_AXglobal.c \
+	$(TGTSRC)/psgstrs_lsum.c \
+	$(TGTSRC)/psgstrs1.c \
+	$(TGTSRC)/psgssvx.c \
+	$(TGTSRC)/psgstrs.c \
+	$(TGTSRC)/sdistribute.c \
+	$(TGTSRC)/psdistribute.c \
+	$(TGTSRC)/pssymbfact_distdata.c \
+	$(TGTSRC)/pslangs.c \
+	$(TGTSRC)/psgsequ.c \
+	$(TGTSRC)/pslaqgs.c \
+	$(TGTSRC)/psutil.c \
+	$(TGTSRC)/psgsrfs.c \
+	$(TGTSRC)/psgsmv.c \
+	$(TGTSRC)/sldperm_dist.c \
+	$(TGTSRC)/sutil_dist.c \
+	$(TGTSRC)/smyblas2_dist.c \
+	$(TGTSRC)/psGetDiagU.c \
+	$(TGTSRC)/sreadhb.c \
+	$(TGTSRC)/sreadrb.c \
+	$(TGTSRC)/sreadtriple.c \
+	$(TGTSRC)/sreadtriple_noheader.c \
+	$(TGTSRC)/sreadMM.c \
+	$(TGTSRC)/smemory_dist.c \
+	$(TGTSRC)/sgather.c \
+	$(TGTSRC)/ps3dcomm.c \
+	$(TGTSRC)/strfAux.c \
+	$(TGTSRC)/scommunication_aux.c \
+	$(TGTSRC)/strfCommWrapper.c \
+	$(TGTSRC)/streeFactorization.c \
+	$(TGTSRC)/psgstrf3d.c \
+	$(TGTSRC)/psgssvx3d.c \
+	$(TGTEXM)/psdrive_ABglobal.c \
+	$(TGTEXM)/psdrive1_ABglobal.c \
+	$(TGTEXM)/psdrive2_ABglobal.c \
+	$(TGTEXM)/psdrive3_ABglobal.c \
+	$(TGTEXM)/psdrive4_ABglobal.c \
+	$(TGTEXM)/psdrive.c \
+	$(TGTEXM)/psdrive1.c \
+	$(TGTEXM)/psdrive2.c \
+	$(TGTEXM)/psdrive3.c \
+	$(TGTEXM)/psdrive4.c \
+	$(TGTEXM)/psdrive3d.c \
+	$(TGTEXM)/screate_matrix.c \
+	$(TGTEXM)/screate_matrix_perturbed.c \
+	$(TGTF90)/f_psdrive.f90 \
+	$(TGTF90)/superlu_c2f_swrap.c \
+	$(TGTF90)/screate_dist_matrix.c \
+	$(TGTTST)/pstest.c \
+	$(TGTTST)/pscompute_resid.c
+
+$(TGTSRC)/superlu_sdefs.h:	$(SRC)/superlu_xdefs.h.base
+	extract -b $? -o $@ precision=single
+$(TGTSRC)/psgstrf.c:	$(SRC)/pxgstrf.c.base
+	extract -b $? -o $@ precision=single
+$(TGTSRC)/sstatic_schedule.c:	$(SRC)/xstatic_schedule.c.base
+	extract -b $? -o $@ precision=single
+$(TGTSRC)/psgstrf2.c:	$(SRC)/pxgstrf2.c.base
+	extract -b $? -o $@ precision=single
+$(TGTSRC)/sscatter.c:	$(SRC)/xscatter.c.base
+	extract -b $? -o $@ precision=single
+$(TGTSRC)/sscatter3d.c:	$(SRC)/xscatter3d.c.base
+	extract -b $? -o $@ precision=single
+$(TGTSRC)/slook_ahead_update.c:	$(SRC)/xlook_ahead_update.c.base
+	extract -b $? -o $@ precision=single
+$(TGTSRC)/sSchCompUdt-2Ddynamic.c:	$(SRC)/xSchCompUdt-2Ddynamic.c.base
+	extract -b $? -o $@ precision=single
+$(TGTSRC)/sSchCompUdt-cuda.c:	$(SRC)/xSchCompUdt-cuda.c.base
+	extract -b $? -o $@ precision=single
+$(TGTSRC)/psgssvx_ABglobal.c:	$(SRC)/pxgssvx_ABglobal.c.base
+	extract -b $? -o $@ precision=single
+$(TGTSRC)/psgstrs_Bglobal.c:	$(SRC)/pxgstrs_Bglobal.c.base
+	extract -b $? -o $@ precision=single
+$(TGTSRC)/psgsrfs_ABXglobal.c:	$(SRC)/pxgsrfs_ABXglobal.c.base
+	extract -b $? -o $@ precision=single
+$(TGTSRC)/psgsmv_AXglobal.c:	$(SRC)/pxgsmv_AXglobal.c.base
+	extract -b $? -o $@ precision=single
+$(TGTSRC)/psgstrs_lsum.c:	$(SRC)/pxgstrs_lsum.c.base
+	extract -b $? -o $@ precision=single
+$(TGTSRC)/psgstrs1.c:	$(SRC)/pxgstrs1.c.base
+	extract -b $? -o $@ precision=single
+$(TGTSRC)/psgssvx.c:	$(SRC)/pxgssvx.c.base
+	extract -b $? -o $@ precision=single
+$(TGTSRC)/psgstrs.c:	$(SRC)/pxgstrs.c.base
+	extract -b $? -o $@ precision=single
+$(TGTSRC)/sdistribute.c:	$(SRC)/xdistribute.c.base
+	extract -b $? -o $@ precision=single
+$(TGTSRC)/psdistribute.c:	$(SRC)/pxdistribute.c.base
+	extract -b $? -o $@ precision=single
+$(TGTSRC)/pssymbfact_distdata.c: $(SRC)/pxsymbfact_distdata.c.base
+	extract -b $? -o $@ precision=single
+$(TGTSRC)/pslangs.c:	$(SRC)/pxlangs.c.base
+	extract -b $? -o $@ precision=single
+$(TGTSRC)/psgsequ.c:	$(SRC)/pxgsequ.c.base
+	extract -b $? -o $@ precision=single
+$(TGTSRC)/pslaqgs.c:	$(SRC)/pxlaqgs.c.base
+	extract -b $? -o $@ precision=single
+$(TGTSRC)/psutil.c:	$(SRC)/pxutil.c.base
+	extract -b $? -o $@ precision=single
+$(TGTSRC)/psgsrfs.c:	$(SRC)/pxgsrfs.c.base
+	extract -b $? -o $@ precision=single
+$(TGTSRC)/psgsmv.c:	$(SRC)/pxgsmv.c.base
+	extract -b $? -o $@ precision=single
+$(TGTSRC)/sldperm_dist.c: $(SRC)/xldperm_dist.c.base
+	extract -b $? -o $@ precision=single
+$(TGTSRC)/sutil_dist.c:	$(SRC)/xutil_dist.c.base
+	extract -b $? -o $@ precision=single
+$(TGTSRC)/psGetDiagU.c:	$(SRC)/pxGetDiagU.c.base
+	extract -b $? -o $@ precision=single
+$(TGTSRC)/smyblas2_dist.c:	$(SRC)/xmyblas2_dist.c.base
+	extract -b $? -o $@ precision=single
+$(TGTSRC)/sreadhb.c:	$(SRC)/xreadhb.c.base
+	extract -b $? -o $@ precision=single
+$(TGTSRC)/sreadrb.c:	$(SRC)/xreadrb.c.base
+	extract -b $? -o $@ precision=single
+$(TGTSRC)/sreadtriple.c:	$(SRC)/xreadtriple.c.base
+	extract -b $? -o $@ precision=single
+$(TGTSRC)/sreadtriple_noheader.c:	$(SRC)/xreadtriple_noheader.c.base
+	extract -b $? -o $@ precision=single
+$(TGTSRC)/sreadMM.c:	$(SRC)/xreadMM.c.base
+	extract -b $? -o $@ precision=single
+$(TGTSRC)/smemory_dist.c:	$(SRC)/xmemory_dist.c.base
+	extract -b $? -o $@ precision=single
+$(TGTSRC)/sgather.c:	$(SRC)/xgather.c.base
+	extract -b $? -o $@ precision=single
+$(TGTSRC)/ps3dcomm.c:	$(SRC)/px3dcomm.c.base
+	extract -b $? -o $@ precision=single
+$(TGTSRC)/strfAux.c:	$(SRC)/xtrfAux.c.base
+	extract -b $? -o $@ precision=single
+$(TGTSRC)/scommunication_aux.c:	$(SRC)/xcommunication_aux.c.base
+	extract -b $? -o $@ precision=single
+$(TGTSRC)/strfCommWrapper.c:	$(SRC)/xtrfCommWrapper.c.base
+	extract -b $? -o $@ precision=single
+$(TGTSRC)/streeFactorization.c:	$(SRC)/xtreeFactorization.c.base
+	extract -b $? -o $@ precision=single
+$(TGTSRC)/psgstrf3d.c:	$(SRC)/pxgstrf3d.c.base
+	extract -b $? -o $@ precision=single
+$(TGTSRC)/psgssvx3d.c:	$(SRC)/pxgssvx3d.c.base
+	extract -b $? -o $@ precision=single
+$(TGTEXM)/psdrive_ABglobal.c:	$(EXM)/pxdrive_ABglobal.c.base
+	extract -b $? -o $@ precision=single
+$(TGTEXM)/psdrive1_ABglobal.c:	$(EXM)/pxdrive1_ABglobal.c.base
+	extract -b $? -o $@ precision=single
+$(TGTEXM)/psdrive2_ABglobal.c:	$(EXM)/pxdrive2_ABglobal.c.base
+	extract -b $? -o $@ precision=single
+$(TGTEXM)/psdrive3_ABglobal.c:	$(EXM)/pxdrive3_ABglobal.c.base
+	extract -b $? -o $@ precision=single
+$(TGTEXM)/psdrive4_ABglobal.c:	$(EXM)/pxdrive4_ABglobal.c.base
+	extract -b $? -o $@ precision=single
+$(TGTEXM)/psdrive.c:	$(EXM)/pxdrive.c.base
+	extract -b $? -o $@ precision=single
+$(TGTEXM)/psdrive1.c:	$(EXM)/pxdrive1.c.base
+	extract -b $? -o $@ precision=single
+$(TGTEXM)/psdrive2.c:	$(EXM)/pxdrive2.c.base
+	extract -b $? -o $@ precision=single
+$(TGTEXM)/psdrive3.c:	$(EXM)/pxdrive3.c.base
+	extract -b $? -o $@ precision=single
+$(TGTEXM)/psdrive4.c:	$(EXM)/pxdrive4.c.base
+	extract -b $? -o $@ precision=single
+$(TGTEXM)/psdrive3d.c:	$(EXM)/pxdrive3d.c.base
+	extract -b $? -o $@ precision=single
+$(TGTEXM)/screate_matrix.c:	$(EXM)/xcreate_matrix.c.base
+	extract -b $? -o $@ precision=single
+$(TGTEXM)/screate_matrix_perturbed.c:	$(EXM)/xcreate_matrix_perturbed.c.base
+	extract -b $? -o $@ precision=single
+$(TGTF90)/f_psdrive.f90:	$(F90)/f_pxdrive.f90.base
+	extract -b $? -o $@ precision=single
+$(TGTF90)/superlu_c2f_swrap.c:	$(F90)/superlu_c2f_xwrap.c.base
+	extract -b $? -o $@ precision=single
+$(TGTF90)/screate_dist_matrix.c:	$(F90)/xcreate_dist_matrix.c.base
+	extract -b $? -o $@ precision=single
+$(TGTTST)/pstest.c:	$(TST)/pxtest.c.base
+	extract -b $? -o $@ precision=single
+$(TGTTST)/pscompute_resid.c:	$(TST)/pxcompute_resid.c.base
+	extract -b $? -o $@ precision=single
 
 double:	\
 	$(TGTSRC)/superlu_ddefs.h \
 	$(TGTSRC)/pdgstrf.c \
+	$(TGTSRC)/dstatic_schedule.c \
 	$(TGTSRC)/pdgstrf2.c \
 	$(TGTSRC)/dscatter.c \
-	$(TGTSRC)/dscatter3d.c \
 	$(TGTSRC)/dlook_ahead_update.c \
 	$(TGTSRC)/dSchCompUdt-2Ddynamic.c \
 	$(TGTSRC)/dSchCompUdt-cuda.c \
@@ -49,14 +246,6 @@ double:	\
 	$(TGTSRC)/dreadtriple_noheader.c \
 	$(TGTSRC)/dreadMM.c \
 	$(TGTSRC)/dmemory_dist.c \
-	$(TGTSRC)/dgather.c \
-	$(TGTSRC)/pd3dcomm.c \
-	$(TGTSRC)/dtrfAux.c \
-	$(TGTSRC)/dcommunication_aux.c \
-	$(TGTSRC)/dtrfCommWrapper.c \
-	$(TGTSRC)/dtreeFactorization.c \
-	$(TGTSRC)/pdgstrf3d.c \
-	$(TGTSRC)/pdgssvx3d.c \
 	$(TGTEXM)/pddrive_ABglobal.c \
 	$(TGTEXM)/pddrive1_ABglobal.c \
 	$(TGTEXM)/pddrive2_ABglobal.c \
@@ -67,7 +256,6 @@ double:	\
 	$(TGTEXM)/pddrive2.c \
 	$(TGTEXM)/pddrive3.c \
 	$(TGTEXM)/pddrive4.c \
-	$(TGTEXM)/pddrive3d.c \
 	$(TGTEXM)/dcreate_matrix.c \
 	$(TGTEXM)/dcreate_matrix_perturbed.c \
 	$(TGTF90)/f_pddrive.f90 \
@@ -75,11 +263,23 @@ double:	\
 	$(TGTF90)/dcreate_dist_matrix.c \
 	$(TGTTST)/pdtest.c \
 	$(TGTTST)/pdcompute_resid.c
+#	$(TGTEXM)/pddrive3d.c \
+#	$(TGTSRC)/dscatter3d.c \
+#	$(TGTSRC)/dgather.c \
+#	$(TGTSRC)/pd3dcomm.c \
+#	$(TGTSRC)/dtrfAux.c \
+#	$(TGTSRC)/dcommunication_aux.c \
+#	$(TGTSRC)/dtrfCommWrapper.c \
+#	$(TGTSRC)/dtreeFactorization.c \
+#	$(TGTSRC)/pdgstrf3d.c \
+#	$(TGTSRC)/pdgssvx3d.c \
 
 
 $(TGTSRC)/superlu_ddefs.h:	$(SRC)/superlu_xdefs.h.base
 	extract -b $? -o $@ precision=double
 $(TGTSRC)/pdgstrf.c:	$(SRC)/pxgstrf.c.base
+	extract -b $? -o $@ precision=double
+$(TGTSRC)/dstatic_schedule.c:	$(SRC)/xstatic_schedule.c.base
 	extract -b $? -o $@ precision=double
 $(TGTSRC)/pdgstrf2.c:	$(SRC)/pxgstrf2.c.base
 	extract -b $? -o $@ precision=double
@@ -203,9 +403,9 @@ $(TGTTST)/pdcompute_resid.c:	$(TST)/pxcompute_resid.c.base
 dcomplex: \
 	$(TGTSRC)/superlu_zdefs.h \
 	$(TGTSRC)/pzgstrf.c \
+	$(TGTSRC)/zstatic_schedule.c \
 	$(TGTSRC)/pzgstrf2.c \
 	$(TGTSRC)/zscatter.c \
-	$(TGTSRC)/zscatter3d.c \
 	$(TGTSRC)/zlook_ahead_update.c \
 	$(TGTSRC)/zSchCompUdt-2Ddynamic.c \
 	$(TGTSRC)/zSchCompUdt-cuda.c \
@@ -236,14 +436,6 @@ dcomplex: \
 	$(TGTSRC)/zreadtriple_noheader.c \
 	$(TGTSRC)/zreadMM.c \
 	$(TGTSRC)/zmemory_dist.c \
-	$(TGTSRC)/zgather.c \
-	$(TGTSRC)/pz3dcomm.c \
-	$(TGTSRC)/ztrfAux.c \
-	$(TGTSRC)/zcommunication_aux.c \
-	$(TGTSRC)/ztrfCommWrapper.c \
-	$(TGTSRC)/ztreeFactorization.c \
-	$(TGTSRC)/pzgstrf3d.c \
-	$(TGTSRC)/pzgssvx3d.c \
 	$(TGTEXM)/pzdrive_ABglobal.c \
 	$(TGTEXM)/pzdrive1_ABglobal.c \
 	$(TGTEXM)/pzdrive2_ABglobal.c \
@@ -254,7 +446,6 @@ dcomplex: \
 	$(TGTEXM)/pzdrive2.c \
 	$(TGTEXM)/pzdrive3.c \
 	$(TGTEXM)/pzdrive4.c \
-	$(TGTEXM)/pzdrive3d.c \
 	$(TGTEXM)/zcreate_matrix.c \
 	$(TGTEXM)/zcreate_matrix_perturbed.c \
 	$(TGTF90)/f_pzdrive.f90 \
@@ -262,10 +453,22 @@ dcomplex: \
 	$(TGTF90)/zcreate_dist_matrix.c \
 	$(TGTTST)/pztest.c \
 	$(TGTTST)/pzcompute_resid.c
+#	$(TGTEXM)/pzdrive3d.c \
+#	$(TGTSRC)/zscatter3d.c \
+#	$(TGTSRC)/zgather.c \
+#	$(TGTSRC)/pz3dcomm.c \
+#	$(TGTSRC)/ztrfAux.c \
+#	$(TGTSRC)/zcommunication_aux.c \
+#	$(TGTSRC)/ztrfCommWrapper.c \
+#	$(TGTSRC)/ztreeFactorization.c \
+#	$(TGTSRC)/pzgstrf3d.c \
+#	$(TGTSRC)/pzgssvx3d.c \
 
 $(TGTSRC)/superlu_zdefs.h:	$(SRC)/superlu_xdefs.h.base
 	extract -b $? -o $@ precision=dcomplex
 $(TGTSRC)/pzgstrf.c:	$(SRC)/pxgstrf.c.base
+	extract -b $? -o $@ precision=dcomplex
+$(TGTSRC)/zstatic_schedule.c:	$(SRC)/xstatic_schedule.c.base
 	extract -b $? -o $@ precision=dcomplex
 $(TGTSRC)/pzgstrf2.c:	$(SRC)/pxgstrf2.c.base
 	extract -b $? -o $@ precision=dcomplex

@@ -31,7 +31,7 @@ at the top-level directory.
  * Purpose
  * =======
  *
- * P@(PRE)GSSVX solves a system of linear equations A*X=B,
+ * P@(PRE)GSSVX3D solves a system of linear equations A*X=B,
  * by using Gaussian elimination with "static pivoting" to
  * compute the LU factorization of A.
  *
@@ -360,7 +360,7 @@ at the top-level directory.
  *           If all the above condition are true, the LU decomposition is
  *           performed on the matrix Pc*Pr*diag(R)*A*diag(C)*Pc^T.
  *
- * ScalePermstruct (input/output) ScalePermstruct_t* (global)
+ * ScalePermstruct (input/output) @(pre)ScalePermstruct_t* (global)
  *         The data structure to store the scaling and permutation vectors
  *         describing the transformations performed to the matrix A.
  *         It contains the following fields:
@@ -435,7 +435,7 @@ at the top-level directory.
  *         Grid can be initialized by subroutine SUPERLU_GRIDINIT.
  *         See superlu_ddefs.h for the definition of 'gridinfo_t'.
  *
- * LUstruct (input/output) LUstruct_t*
+ * LUstruct (input/output) @(pre)LUstruct_t*
  *         The data structures to store the distributed L and U factors.
  *         It contains the following fields:
  *
@@ -458,17 +458,17 @@ at the top-level directory.
  *	       xsup[s] is the leading column of the s-th supernode,
  *             supno[i] is the supernode number to which column i belongs.
  *
- *         o Llu (LocalLU_t*) (local)
+ *         o Llu (@(pre)LocalLU_t*) (local)
  *           The distributed data structures to store L and U factors.
- *           See superlu_ddefs.h for the definition of 'LocalLU_t'.
+ *           See superlu_ddefs.h for the definition of '@(pre)LocalLU_t'.
  *
- * SOLVEstruct (input/output) SOLVEstruct_t*
+ * SOLVEstruct (input/output) @(pre)SOLVEstruct_t*
  *         The data structure to hold the communication pattern used
  *         in the phases of triangular solution and iterative refinement.
  *         This pattern should be intialized only once for repeated solutions.
  *         If options->SolveInitialized = YES, it is an input argument.
  *         If options->SolveInitialized = NO and nrhs != 0, it is an output
- *         argument. See superlu_ddefs.h for the definition of 'SOLVEstruct_t'.
+ *         argument. See superlu_ddefs.h for the definition of '@(pre)SOLVEstruct_t'.
  *
  * berr    (output) double*, dimension (nrhs) (global)
  *         The componentwise relative backward error of each solution
@@ -494,9 +494,9 @@ at the top-level directory.
 
 void
 p@(pre)gssvx3d (superlu_dist_options_t * options, SuperMatrix * A,
-           ScalePermstruct_t * ScalePermstruct,
+           @(pre)ScalePermstruct_t * ScalePermstruct,
            @(type) B[], int ldb, int nrhs, gridinfo3d_t * grid3d,
-           LUstruct_t * LUstruct, SOLVEstruct_t * SOLVEstruct,
+           @(pre)LUstruct_t * LUstruct, @(pre)SOLVEstruct_t * SOLVEstruct,
            double *berr, SuperLUStat_t * stat, int *info)
 {
     NRformat_loc *Astore;
@@ -685,9 +685,9 @@ p@(pre)gssvx3d (superlu_dist_options_t * options, SuperMatrix * A,
 		    irow = fst_row;
 		    for (j = 0; j < m_loc; ++j) {
 			for (i = rowptr[j]; i < rowptr[j + 1]; ++i) {
-@precision DOUBLE
+@precision SINGLE DOUBLE
 			    a[i] *= R[irow];    /* Scale rows. */
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
                             @(pre)@(mod_pre)_mult(&a[i], &a[i], R[irow]); /* Scale rows */
 @precision !
 			}
@@ -698,9 +698,9 @@ p@(pre)gssvx3d (superlu_dist_options_t * options, SuperMatrix * A,
 		    for (j = 0; j < m_loc; ++j)
 			for (i = rowptr[j]; i < rowptr[j + 1]; ++i) {
 			    icol = colind[i];
-@precision DOUBLE
+@precision SINGLE DOUBLE
 			    a[i] *= C[icol];          /* Scale columns. */
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
                             @(pre)@(mod_pre)_mult(&a[i], &a[i], C[icol]); /* Scale columns */
 @precision !
 			}
@@ -712,9 +712,9 @@ p@(pre)gssvx3d (superlu_dist_options_t * options, SuperMatrix * A,
 			for (i = rowptr[j]; i < rowptr[j + 1]; ++i)
 			    {
 				icol = colind[i];
-@precision DOUBLE
+@precision SINGLE DOUBLE
 			        a[i] *= R[irow] * C[icol]; /* Scale rows and cols. */
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
                                 @(pre)@(mod_pre)_mult(&a[i], &a[i], R[irow]); /* Scale rows */
                                 @(pre)@(mod_pre)_mult(&a[i], &a[i], C[icol]); /* Scale columns */
 @precision !
@@ -869,9 +869,9 @@ p@(pre)gssvx3d (superlu_dist_options_t * options, SuperMatrix * A,
 				    for (j = 0; j < m_loc; ++j) {
 					for (i = rowptr[j]; i < rowptr[j + 1]; ++i) {
 					    icol = colind[i];
-@precision DOUBLE
+@precision SINGLE DOUBLE
 			                    a[i] *= R1[irow] * C1[icol];
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
                                             @(pre)@(mod_pre)_mult(&a[i], &a[i], R1[irow]);
                                             @(pre)@(mod_pre)_mult(&a[i], &a[i], C1[icol]);
 @precision !
@@ -879,21 +879,21 @@ p@(pre)gssvx3d (superlu_dist_options_t * options, SuperMatrix * A,
 					    if (perm_r[irow] == icol) {
 						/* New diagonal */
 						if (job == 2 || job == 3)
-@precision DOUBLE
+@precision SINGLE DOUBLE
 				                  dmin = SUPERLU_MIN(dmin, fabs(a[i]));
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 			                          dmin = SUPERLU_MIN(dmin, slud_z_abs1(&a[i]));
 @precision !
 						else if (job == 4)
-@precision DOUBLE
+@precision SINGLE DOUBLE
 				                  dsum += fabs(a[i]);
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 				                  dsum += slud_z_abs1(&a[i]);
 @precision !
 						else if (job == 5)
-@precision DOUBLE
+@precision SINGLE DOUBLE
 				                  dprod *= fabs(a[i]);
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 				                  dprod *= slud_z_abs1(&a[i]);
 @precision !
 					    }
@@ -1337,9 +1337,9 @@ p@(pre)gssvx3d (superlu_dist_options_t * options, SuperMatrix * A,
 					irow = fst_row;
 					for (i = 0; i < m_loc; ++i)
 					    {
-@precision DOUBLE
+@precision SINGLE DOUBLE
 		                                b_col[i] *= R[irow];
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
                                                 @(pre)@(mod_pre)_mult(&b_col[i], &b_col[i], R[irow]);
 @precision !
 						++irow;
@@ -1356,9 +1356,9 @@ p@(pre)gssvx3d (superlu_dist_options_t * options, SuperMatrix * A,
 				irow = fst_row;
 				for (i = 0; i < m_loc; ++i)
 				    {
-@precision DOUBLE
+@precision SINGLE DOUBLE
 		                        b_col[i] *= C[irow];
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 		                        @(pre)@(mod_pre)_mult(&b_col[i], &b_col[i], C[irow]);
 @precision !
 					++irow;
@@ -1384,7 +1384,7 @@ p@(pre)gssvx3d (superlu_dist_options_t * options, SuperMatrix * A,
 		   ------------------------------------------------------*/
 		if (options->SolveInitialized == NO) /* First time */
                    /* Inside this routine, SolveInitialized is set to YES.
-	              For repeated call to p@(pre)gssvx(), no need to re-initialilze
+	              For repeated call to p@(pre)gssvx3d(), no need to re-initialilze
 	              the Solve data & communication structures, unless a new
 	              factorization with Fact == DOFACT or SamePattern is asked for. */
 		    {
@@ -1408,7 +1408,7 @@ p@(pre)gssvx3d (superlu_dist_options_t * options, SuperMatrix * A,
 		    {
 			/* Improve the solution by iterative refinement. */
 			int_t *it, *colind_gsmv = SOLVEstruct->A_colind_gsmv;
-			SOLVEstruct_t *SOLVEstruct1;    /* Used by refinement. */
+			@(pre)SOLVEstruct_t *SOLVEstruct1;    /* Used by refinement. */
 
 			t = SuperLU_timer_ ();
 			if (options->RefineInitialized == NO || Fact == DOFACT) {
@@ -1464,8 +1464,8 @@ p@(pre)gssvx3d (superlu_dist_options_t * options, SuperMatrix * A,
 		is different than the solve with nrhs RHS.
 		So we use SOLVEstruct1 for the refinement step.
 	      */
-				if (!(SOLVEstruct1 = (SOLVEstruct_t *)
-				      SUPERLU_MALLOC (sizeof (SOLVEstruct_t))))
+				if (!(SOLVEstruct1 = (@(pre)SOLVEstruct_t *)
+				      SUPERLU_MALLOC (sizeof (@(pre)SOLVEstruct_t))))
 				    ABORT ("Malloc fails for SOLVEstruct1");
 				/* Copy the same stuff */
 				SOLVEstruct1->row_to_proc = SOLVEstruct->row_to_proc;
@@ -1519,9 +1519,9 @@ p@(pre)gssvx3d (superlu_dist_options_t * options, SuperMatrix * A,
 					irow = fst_row;
 					for (i = 0; i < m_loc; ++i)
 					    {
-@precision DOUBLE
+@precision SINGLE DOUBLE
 						b_col[i] *= C[irow];
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 						@(pre)@(mod_pre)_mult(&b_col[i], &b_col[i], C[irow]);
 @precision !
 						++irow;
@@ -1538,9 +1538,9 @@ p@(pre)gssvx3d (superlu_dist_options_t * options, SuperMatrix * A,
 				irow = fst_row;
 				for (i = 0; i < m_loc; ++i)
 				    {
-@precision DOUBLE
+@precision SINGLE DOUBLE
 					b_col[i] *= R[irow];
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 					@(pre)@(mod_pre)_mult(&b_col[i], &b_col[i], R[irow]);
 @precision !
 					++irow;

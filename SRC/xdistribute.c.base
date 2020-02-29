@@ -45,7 +45,7 @@ at the top-level directory.
  *        (A->nrow, A->ncol). The type of A can be:
  *        Stype = SLU_NCP; Dtype = @(Dtype_PRE); Mtype = SLU_GE.
  *
- * LUstruct (input) LUstruct_t*
+ * LUstruct (input) @(pre)LUstruct_t*
  *        Data structures for L and U factors.
  *
  * grid   (input) gridinfo_t*
@@ -61,10 +61,10 @@ at the top-level directory.
 float
 @(pre)distribute(fact_t fact, int_t n, SuperMatrix *A,
             Glu_freeable_t *Glu_freeable,
-	    LUstruct_t *LUstruct, gridinfo_t *grid)
+	    @(pre)LUstruct_t *LUstruct, gridinfo_t *grid)
 {
     Glu_persist_t *Glu_persist = LUstruct->Glu_persist;
-    LocalLU_t *Llu = LUstruct->Llu;
+    @(pre)LocalLU_t *Llu = LUstruct->Llu;
     int_t bnnz, fsupc, fsupc1, i, ii, irow, istart, j, ib, jb, jj, k, k1,
           len, len1, nsupc;
 	int_t lib;  /* local block row number */
@@ -144,9 +144,9 @@ float
 	double rseed;
 	int rank_cnt,rank_cnt_ref,Root;
     @(type) *dense, *dense_col; /* SPA */
-@precision DOUBLE
+@precision SINGLE DOUBLE
     @(type) zero = 0.0;
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
     doublecomplex zero = {0.0, 0.0};
 @precision !
     int_t  ldaspa;     /* LDA of SPA */

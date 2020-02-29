@@ -41,7 +41,7 @@ _fcd ftcs2;
 _fcd ftcs3;
 #endif
 static void gather_diag_to_all(int_t, int_t, @(type) [], Glu_persist_t *,
-                               LocalLU_t *, gridinfo_t *, int_t, int_t [],
+                               @(pre)LocalLU_t *, gridinfo_t *, int_t, int_t [],
                                int_t [], @(type) [], int_t, @(type) []);
 
 /*! \brief
@@ -60,11 +60,11 @@ static void gather_diag_to_all(int_t, int_t, @(type) [], Glu_persist_t *,
  * n      (input) int (global)
  *        The order of the system of linear equations.
  *
- * LUstruct (input) LUstruct_t*
+ * LUstruct (input) @(pre)LUstruct_t*
  *        The distributed data structures storing L and U factors.
  *        The L and U factors are obtained from p@(pre)gstrf for
  *        the possibly scaled and permuted matrix A.
- *        See superlu_ddefs.h for the definition of 'LUstruct_t'.
+ *        See superlu_ddefs.h for the definition of '@(pre)LUstruct_t'.
  *
  * grid   (input) gridinfo_t*
  *        The 2D process mesh. It contains the MPI communicator, the number
@@ -100,17 +100,17 @@ static void gather_diag_to_all(int_t, int_t, @(type) [], Glu_persist_t *,
  */
 
 void
-p@(pre)gstrs_Bglobal(int_t n, LUstruct_t *LUstruct, gridinfo_t *grid,
+p@(pre)gstrs_Bglobal(int_t n, @(pre)LUstruct_t *LUstruct, gridinfo_t *grid,
                 @(type) *B, int_t ldb, int nrhs,
                 SuperLUStat_t *stat, int *info)
 {
     Glu_persist_t *Glu_persist = LUstruct->Glu_persist;
-    LocalLU_t *Llu = LUstruct->Llu;
-@precision DOUBLE
-    double alpha = 1.0;
-@precision DCOMPLEX
-    doublecomplex alpha = {1.0, 0.0};
-    doublecomplex zero = {0.0, 0.0};
+    @(pre)LocalLU_t *Llu = LUstruct->Llu;
+@precision SINGLE DOUBLE
+    @(type) alpha = 1.0;
+@precision SCOMPLEX DCOMPLEX
+    @(type) alpha = {1.0, 0.0};
+    @(type) zero = {0.0, 0.0};
 @precision !
     @(type) *lsum;  /* Local running sum of the updates to B-components */
     @(type) *x;     /* X component at step k. */
@@ -246,18 +246,18 @@ p@(pre)gstrs_Bglobal(int_t n, LUstruct_t *LUstruct, gridinfo_t *grid,
 	if ( myrow == krow ) {
 	    lk = LBi( k, grid );   /* Local block number. */
 	    il = LSUM_BLK( lk );
-@precision DOUBLE
+@precision SINGLE DOUBLE
 	    lsum[il - LSUM_H] = k; /* Block number prepended in the header. */
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 	    lsum[il - LSUM_H].r = k;/* Block number prepended in the header. */
 	    lsum[il - LSUM_H].i = 0;
 @precision !
 	    kcol = PCOL( k, grid );
 	    if ( mycol == kcol ) { /* Diagonal process. */
 		jj = X_BLK( lk );
-@precision DOUBLE
+@precision SINGLE DOUBLE
 		x[jj - XK_H] = k;  /* Block number prepended in the header. */
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 		x[jj - XK_H].r = k; /* Block number prepended in the header. */
 		x[jj - XK_H].i = 0;
 @precision !
@@ -357,9 +357,9 @@ p@(pre)gstrs_Bglobal(int_t n, LUstruct_t *LUstruct, gridinfo_t *grid,
 		@(pre)trsm_("L", "L", "N", "U", &knsupc, &nrhs, &alpha,
 		       lusup, &nsupr, &x[ii], &knsupc);
 #endif
-@precision DOUBLE
+@precision SINGLE DOUBLE
 		stat->ops[SOLVE] += knsupc * (knsupc - 1) * nrhs;
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 		stat->ops[SOLVE] += 4 * knsupc * (knsupc - 1) * nrhs
 		    + 10 * knsupc * nrhs; /* complex division */
 @precision !
@@ -420,25 +420,25 @@ p@(pre)gstrs_Bglobal(int_t n, LUstruct_t *LUstruct, gridinfo_t *grid,
     while ( nfrecvx || nfrecvmod ) { /* While not finished. */
 
 	/* Receive a message. */
-@precision DOUBLE
+@precision SINGLE DOUBLE
 #ifdef ISEND_IRECV
 	/* -MPI- FATAL: Remote protocol queue full */
-	MPI_Irecv( recvbuf, maxrecvsz, MPI_DOUBLE, MPI_ANY_SOURCE,
+	MPI_Irecv( recvbuf, maxrecvsz, @(MPI_TYPE), MPI_ANY_SOURCE,
 		 MPI_ANY_TAG, grid->comm, &recv_req );
 	MPI_Wait( &recv_req, &status );
 #else
-	MPI_Recv( recvbuf, maxrecvsz, MPI_DOUBLE, MPI_ANY_SOURCE,
+	MPI_Recv( recvbuf, maxrecvsz, @(MPI_TYPE), MPI_ANY_SOURCE,
 		 MPI_ANY_TAG, grid->comm, &status );
 #endif
 
 	k = *recvbuf;
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 #if 1
-	MPI_Recv( recvbuf, maxrecvsz, SuperLU_MPI_DOUBLE_COMPLEX,
+	MPI_Recv( recvbuf, maxrecvsz, @(MPI_TYPE),
 		 MPI_ANY_SOURCE, MPI_ANY_TAG, grid->comm, &status );
 #else
 	/* -MPI- FATAL: Remote protocol queue full */
-	MPI_Irecv( recvbuf, maxrecvsz, SuperLU_MPI_DOUBLE_COMPLEX,
+	MPI_Irecv( recvbuf, maxrecvsz, @(MPI_TYPE),
 		  MPI_ANY_SOURCE, MPI_ANY_TAG, grid->comm, &request );
 	MPI_Wait( &request, &status );
 #endif
@@ -482,10 +482,10 @@ p@(pre)gstrs_Bglobal(int_t n, LUstruct_t *LUstruct, gridinfo_t *grid,
 	      tempv = &recvbuf[LSUM_H];
 	      RHS_ITERATE(j)
 		  for (i = 0; i < knsupc; ++i)
-@precision DOUBLE
+@precision SINGLE DOUBLE
 		      x[i + ii + j*knsupc] += tempv[i + j*knsupc];
-@precision DCOMPLEX
-		      z_add(&x[i + ii + j*knsupc],
+@precision SCOMPLEX DCOMPLEX
+		      @(pre)_add(&x[i + ii + j*knsupc],
 			    &x[i + ii + j*knsupc],
 			    &tempv[i + j*knsupc]);
 @precision !
@@ -506,9 +506,9 @@ p@(pre)gstrs_Bglobal(int_t n, LUstruct_t *LUstruct, gridinfo_t *grid,
 		  @(pre)trsm_("L", "L", "N", "U", &knsupc, &nrhs, &alpha,
 			 lusup, &nsupr, &x[ii], &knsupc);
 #endif
-@precision DOUBLE
+@precision SINGLE DOUBLE
 		  stat->ops[SOLVE] += knsupc * (knsupc - 1) * nrhs;
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 		  stat->ops[SOLVE] += 4 * knsupc * (knsupc - 1) * nrhs
 		      + 10 * knsupc * nrhs; /* complex division */
 @precision !
@@ -687,9 +687,9 @@ p@(pre)gstrs_Bglobal(int_t n, LUstruct_t *LUstruct, gridinfo_t *grid,
 	    il = LSUM_BLK( lk );
 	    dest = &lsum[il];
 	    RHS_ITERATE(j)
-@precision DOUBLE
+@precision SINGLE DOUBLE
 		for (i = 0; i < knsupc; ++i) dest[i + j*knsupc] = 0.0;
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 		for (i = 0; i < knsupc; ++i) dest[i + j*knsupc] = zero;
 @precision !
 	}
@@ -824,9 +824,9 @@ p@(pre)gstrs_Bglobal(int_t n, LUstruct_t *LUstruct, gridinfo_t *grid,
 		@(pre)trsm_("L", "U", "N", "N", &knsupc, &nrhs, &alpha,
 		       lusup, &nsupr, &x[ii], &knsupc);
 #endif
-@precision DOUBLE
+@precision SINGLE DOUBLE
 		stat->ops[SOLVE] += knsupc * (knsupc + 1) * nrhs;
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 		stat->ops[SOLVE] += 4 * knsupc * (knsupc + 1) * nrhs
 		    + 10 * knsupc * nrhs; /* complex division */
 @precision !
@@ -880,9 +880,9 @@ p@(pre)gstrs_Bglobal(int_t n, LUstruct_t *LUstruct, gridinfo_t *grid,
 	MPI_Recv( recvbuf, maxrecvsz, @(MPI_TYPE), MPI_ANY_SOURCE,
 		 MPI_ANY_TAG, grid->comm, &status );
 
-@precision DOUBLE
+@precision SINGLE DOUBLE
 	k = *recvbuf;
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 	k = (*recvbuf).r;
 @precision !
 
@@ -912,10 +912,10 @@ p@(pre)gstrs_Bglobal(int_t n, LUstruct_t *LUstruct, gridinfo_t *grid,
 		tempv = &recvbuf[LSUM_H];
 		RHS_ITERATE(j)
 		    for (i = 0; i < knsupc; ++i)
-@precision DOUBLE
+@precision SINGLE DOUBLE
 			x[i + ii + j*knsupc] += tempv[i + j*knsupc];
-@precision DCOMPLEX
-			z_add(&x[i + ii + j*knsupc],
+@precision SCOMPLEX DCOMPLEX
+			@(pre)_add(&x[i + ii + j*knsupc],
 			      &x[i + ii + j*knsupc],
 			      &tempv[i + j*knsupc]);
 @precision !
@@ -936,9 +936,9 @@ p@(pre)gstrs_Bglobal(int_t n, LUstruct_t *LUstruct, gridinfo_t *grid,
 		    @(pre)trsm_("L", "U", "N", "N", &knsupc, &nrhs, &alpha,
 			   lusup, &nsupr, &x[ii], &knsupc);
 #endif
-@precision DOUBLE
+@precision SINGLE DOUBLE
 		    stat->ops[SOLVE] += knsupc * (knsupc + 1) * nrhs;
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 		    stat->ops[SOLVE] += 4 * knsupc * (knsupc + 1) * nrhs
 			+ 10 * knsupc * nrhs; /* complex division */
 @precision !
@@ -1056,7 +1056,7 @@ p@(pre)gstrs_Bglobal(int_t n, LUstruct_t *LUstruct, gridinfo_t *grid,
  */
 static void
 gather_diag_to_all(int_t n, int_t nrhs, @(type) x[],
-		   Glu_persist_t *Glu_persist, LocalLU_t *Llu,
+		   Glu_persist_t *Glu_persist, @(pre)LocalLU_t *Llu,
 		   gridinfo_t *grid, int_t num_diag_procs,
 		   int_t diag_procs[], int_t diag_len[],
 		   @(type) y[], int_t ldy, @(type) work[])

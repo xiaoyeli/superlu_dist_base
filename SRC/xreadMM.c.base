@@ -78,13 +78,13 @@ void
        exit(-1);
      }
 
-@precision DOUBLE
+@precision SINGLE DOUBLE
      if(strcmp(arith,"real")) {
        if(!strcmp(arith,"complex")) {
          printf("Complex matrix; use zreadMM instead!\n");
          exit(-1);
        }
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
      if(strcmp(arith,"complex")) {
        if(!strcmp(arith,"real")) {
          printf("Complex matrix; use dreadMM instead!\n");
@@ -149,19 +149,16 @@ void
 
     /* 4/ Read triplets of values */
     for (nnz = 0, nz = 0; nnz < *nonz; ++nnz) {
-@precision DOUBLE
-#ifdef _LONGINT
+
+    @precision SINGLE
+	j = fscanf(fp, IFMT IFMT "%f\n", &row[nz], &col[nz], &val[nz]);
+    @precision DOUBLE
 	j = fscanf(fp, IFMT IFMT "%lf\n", &row[nz], &col[nz], &val[nz]);
-#else
-	j = fscanf(fp, "%d%d%lf\n", &row[nz], &col[nz], &val[nz]);
-#endif
-@precision DCOMPLEX
-#ifdef _LONGINT
+    @precision SCOMPLEX
+	j = fscanf(fp, IFMT IFMT "%f%f\n", &row[nz], &col[nz], &val[nz].r, &val[nz].i);
+    @precision DCOMPLEX
 	j = fscanf(fp, IFMT IFMT "%lf%lf\n", &row[nz], &col[nz], &val[nz].r, &val[nz].i);
-#else
-	j = fscanf(fp, "%d%d%lf%lf\n", &row[nz], &col[nz], &val[nz].r, &val[nz].i);
-#endif
-@precision !
+    @precision !
 
 	if ( nnz == 0 ) /* first nonzero */ {
 	    if ( row[0] == 0 || col[0] == 0 ) {
@@ -180,10 +177,10 @@ void
 
 	if (row[nz] < 0 || row[nz] >= *m || col[nz] < 0 || col[nz] >= *n
 	    /*|| val[nz] == 0.*/) {
-@precision DOUBLE
+@precision SINGLE DOUBLE
 	    fprintf(stderr, "nz " IFMT ", (" IFMT ", " IFMT ") = %e out of bound, removed\n",
 		    nz, row[nz], col[nz], val[nz]);
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 	    fprintf(stderr, "nz " IFMT ", (" IFMT ", " IFMT ") = {%e\t%e} out of bound, removed\n",
 		    nz, row[nz], col[nz], val[nz].r, val[nz].i);
 @precision !
@@ -260,11 +257,11 @@ static void @(pre)readrhs(int m, @(type) *b)
 	exit(-1);
     }
     for (i = 0; i < m; ++i)
-@precision DOUBLE
+@precision SINGLE DOUBLE
       i = fscanf(fp, "%lf\n", &b[i]);
       /*fscanf(fp, "%d%lf\n", &j, &b[i]);*/
     /*        readpair_(j, &b[i]);*/
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
       i = fscanf(fp, "%lf%lf\n", &b[i].r, &b[i].i);
 @precision !
     fclose(fp);

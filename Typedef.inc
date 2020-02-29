@@ -19,6 +19,8 @@
 	@define SC_PRE @S@
 	@define Dtype_PRE @SLU_S@
 	@define scan_fmt @%f@
+	@define MPI_TYPE @MPI_FLOAT@
+	@define MPI_MOD_TYPE @MPI_FLOAT@
 
 @precision DOUBLE
 	@define version @Double Precision Version@
@@ -34,6 +36,7 @@
 	@define Dtype_PRE @SLU_D@
 	@define scan_fmt @%lf@
 	@define MPI_TYPE @MPI_DOUBLE@
+	@define MPI_MOD_TYPE @MPI_DOUBLE@
 
 @precision SCOMPLEX
 	@define version @Single Complex Version@
@@ -50,6 +53,8 @@
 	@define SC_PRE @C@
 	@define Dtype_PRE @SLU_C@
 	@define scan_fmt @%f%f@
+	@define MPI_TYPE @SuperLU_MPI_FLOAT_COMPLEX@
+	@define MPI_MOD_TYPE @MPI_FLOAT@
 
 @precision DCOMPLEX
 	@define version @Double Complex Version@
@@ -67,3 +72,4 @@
 	@define Dtype_PRE @SLU_Z@
 	@define scan_fmt @%lf%lf@
 	@define MPI_TYPE @SuperLU_MPI_DOUBLE_COMPLEX@
+	@define MPI_MOD_TYPE @MPI_DOUBLE@

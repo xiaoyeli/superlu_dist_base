@@ -18,9 +18,9 @@ at the top-level directory.
  * September 1, 1999
  * </pre>
  */
-@precision DOUBLE
+@precision SINGLE DOUBLE
 #include <math.h>
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 #include "dcomplex.h"
 @precision !
 #include <stdio.h>
@@ -32,8 +32,8 @@ at the top-level directory.
  */
 static void ReadVector(FILE *, int_t, int_t *, int_t, int_t);
 static void @(pre)ReadValues(FILE *, int_t, @(type) *, int_t, int_t);
-@precision DOUBLE
-extern void FormFullA(int_t, int_t *, double **, int_t **, int_t **);
+@precision SINGLE DOUBLE
+extern void FormFullA(int_t, int_t *, @(type) **, int_t **, int_t **);
 @precision !
 static int DumpLine(FILE *);
 static int ParseIntFormat(char *, int_t *, int_t *);
@@ -116,7 +116,7 @@ void
     register int_t i, numer_lines, rhscrd = 0;
     int_t tmp, colnum, colsize, rownum, rowsize, valnum, valsize;
     char buf[100], type[4];
-@precision DOUBLE
+@precision SINGLE DOUBLE
     int_t sym;
 @precision !
 
@@ -190,20 +190,20 @@ void
 #endif
     if ( numer_lines ) {
         @(pre)ReadValues(fp, *nonz, *nzval, valnum, valsize);
-@precision DOUBLE
+@precision SINGLE DOUBLE
 #if ( DEBUGlevel>=1 )
 	if ( !iam ) printf("read nzval[" IFMT "] = %e\n", *nonz-1, (*nzval)[*nonz-1]);
 #endif
 @precision !
     }
 
-@precision DOUBLE
+@precision SINGLE DOUBLE
     sym = (type[1] == 'S' || type[1] == 's');
     if ( sym ) {
 	FormFullA(*ncol, nonz, nzval, rowind, colptr);
     }
 @precision !
-    fclose(fp);
+
 #if ( DEBUGlevel>=1 )
     CHECK_MALLOC(0, "Exit @(pre)readhb_dist()");
 #endif
@@ -276,7 +276,7 @@ ReadVector(FILE *fp, int_t n, int_t *where, int_t perline, int_t persize)
     }
 }
 
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 /* Read complex numbers as pairs of (real, imaginary) */
 @precision !
 void
@@ -284,14 +284,14 @@ void
              int_t perline, int_t persize)
 {
     register int_t i, j, k, s;
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
     register int_t pair;
     register double realpart;
 @precision !
     char tmp, buf[100];
 
     i = 0;
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
     pair = 0;
 @precision !
     while (i < n) {
@@ -302,9 +302,9 @@ void
 	    s = j*persize;
 	    for (k = 0; k < persize; ++k) /* No D_ format in C */
 		if ( buf[s+k] == 'D' || buf[s+k] == 'd' ) buf[s+k] = 'E';
-@precision DOUBLE
+@precision SINGLE DOUBLE
 	    destination[i++] = atof(&buf[s]);
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 	    if ( pair == 0 ) {
 	  	/* The value is real part */
 		realpart = atof(&buf[s]);
@@ -321,7 +321,7 @@ void
     }
 }
 
-@precision DOUBLE
+@precision SINGLE DOUBLE
 /*! \brief
  *
  * <pre>
@@ -330,12 +330,12 @@ void
  * </pre>
  */
 extern void
-FormFullA(int_t n, int_t *nonz, double **nzval, int_t **rowind, int_t **colptr)
+FormFullA(int_t n, int_t *nonz, @(type) **nzval, int_t **rowind, int_t **colptr)
 {
     register int_t i, j, k, col, new_nnz;
     int_t *t_rowind, *t_colptr, *al_rowind, *al_colptr, *a_rowind, *a_colptr;
     int_t *marker;
-    double *t_val, *al_val, *a_val;
+    @(type) *t_val, *al_val, *a_val;
 
     al_rowind = *rowind;
     al_colptr = *colptr;
@@ -347,7 +347,7 @@ FormFullA(int_t n, int_t *nonz, double **nzval, int_t **rowind, int_t **colptr)
 	ABORT("SUPERLU_MALLOC t_colptr[]");
     if ( !(t_rowind = (int_t *) SUPERLU_MALLOC( *nonz * sizeof(int_t)) ) )
 	ABORT("SUPERLU_MALLOC fails for t_rowind[]");
-    if ( !(t_val = (double*) SUPERLU_MALLOC( *nonz * sizeof(double)) ) )
+    if ( !(t_val = (@(type)*) SUPERLU_MALLOC( *nonz * sizeof(@(type))) ) )
 	ABORT("SUPERLU_MALLOC fails for t_val[]");
 
     /* Get counts of each column of T, and set up column pointers */
@@ -376,7 +376,7 @@ FormFullA(int_t n, int_t *nonz, double **nzval, int_t **rowind, int_t **colptr)
 	ABORT("SUPERLU_MALLOC a_colptr[]");
     if ( !(a_rowind = (int_t *) SUPERLU_MALLOC( new_nnz * sizeof(int_t)) ) )
 	ABORT("SUPERLU_MALLOC fails for a_rowind[]");
-    if ( !(a_val = (double*) SUPERLU_MALLOC( new_nnz * sizeof(double)) ) )
+    if ( !(a_val = (@(type)*) SUPERLU_MALLOC( new_nnz * sizeof(@(type))) ) )
 	ABORT("SUPERLU_MALLOC fails for a_val[]");
 
     a_colptr[0] = 0;

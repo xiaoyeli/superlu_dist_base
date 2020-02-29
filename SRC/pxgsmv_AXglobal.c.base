@@ -179,9 +179,9 @@ static void @(pre)create_msr_matrix
     NCPformat *Astore;
     @(type) *nzval;
     int_t *rowcnt;
-@precision DOUBLE
+@precision SINGLE DOUBLE
     double zero = 0.0;
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
     doublecomplex zero = {0.0, 0.0};
 @precision !
 
@@ -271,19 +271,19 @@ p@(pre)gsmv_AXglobal(int_t m, int_t update[], @(type) val[], int_t bindx[],
     if ( m <= 0 ) return 0; /* number of rows (local) */
 
     for (i = 0; i < m; ++i) {
-@precision DOUBLE
+@precision SINGLE DOUBLE
 	ax[i] = 0.0;
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 	ax[i] = zero;
 @precision !
 
-@precision DOUBLE
+@precision SINGLE DOUBLE
 	for (k = bindx[i]; k < bindx[i+1]; ++k) {
 	    j = bindx[k];       /* column index */
 	    ax[i] += val[k] * X[j];
 	}
 	ax[i] += val[i] * X[update[i]]; /* diagonal */
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 	for (k = bindx[i]; k < bindx[i+1]; ++k) {
 	    j = bindx[k];       /* column index */
 	    zz_mult(&temp, &val[k], &X[j]);
@@ -304,7 +304,7 @@ p@(pre)gsmv_AXglobal(int_t m, int_t update[], @(type) val[], int_t bindx[],
  */
 int
 p@(pre)gsmv_AXglobal_abs(int_t m, int_t update[], @(type) val[], int_t bindx[],
-	            @(type) X[], double ax[])
+	            @(type) X[], @(mod_type) ax[])
 {
     int_t i, j, k;
 
@@ -314,16 +314,16 @@ p@(pre)gsmv_AXglobal_abs(int_t m, int_t update[], @(type) val[], int_t bindx[],
 	ax[i] = 0.0;
 	for (k = bindx[i]; k < bindx[i+1]; ++k) {
 	    j = bindx[k];       /* column index */
-@precision DOUBLE
+@precision SINGLE DOUBLE
 	    ax[i] += fabs(val[k]) * fabs(X[j]);
-@precision DCOMPLEX
-	    ax[i] += slud_z_abs1(&val[k]) * slud_z_abs1(&X[j]);
+@precision SCOMPLEX DCOMPLEX
+	    ax[i] += slud_@(pre)_abs1(&val[k]) * slud_@(pre)_abs1(&X[j]);
 @precision !
 	}
-@precision DOUBLE
+@precision SINGLE DOUBLE
 	ax[i] += fabs(val[i]) * fabs(X[update[i]]); /* diagonal */
-@precision DCOMPLEX
-	ax[i] += slud_z_abs1(&val[i]) * slud_z_abs1(&X[update[i]]); /* diagonal */
+@precision SCOMPLEX DCOMPLEX
+	ax[i] += slud_@(pre)_abs1(&val[i]) * slud_@(pre)_abs1(&X[update[i]]); /* diagonal */
 @precision !
     }
 
@@ -348,9 +348,9 @@ static void @(pre)PrintMSRmatrix
     iam = grid->iam;
     nnzp1 = bindx[m];
     printf("(%2d) MSR submatrix has %d rows -->\n", iam, m);
-@precision DOUBLE
-    PrintDouble5("val", nnzp1, val);
-@precision DCOMPLEX
+@precision SINGLE DOUBLE
+    Print@(type)5("val", nnzp1, val);
+@precision SCOMPLEX DCOMPLEX
     PrintDoublecomplex("val", nnzp1, val);
 @precision !
     PrintInt10("bindx", nnzp1, bindx);

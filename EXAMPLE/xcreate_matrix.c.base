@@ -118,9 +118,9 @@ int @(pre)create_matrix(SuperMatrix *A, int nrhs, @(type) **rhs,
     }
 
 #if 0
-@precision DOUBLE
+@precision SINGLE DOUBLE
     nzval[0]=0.1;
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
     nzval[0].r = 0.1; nzval[0].i = 0.0;
 @precision !
 #endif
@@ -267,9 +267,9 @@ int @(pre)create_matrix_postfix(SuperMatrix *A, int nrhs, @(type) **rhs,
     if ( !iam ) {
     double t = SuperLU_timer_(); 
 
-@precision DOUBLE
+@precision SINGLE DOUBLE
     if(!strcmp(postfix,"rua")){
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
     if(!strcmp(postfix,"cua")){
 @precision !	
 		/* Read the matrix stored on disk in Harwell-Boeing format. */
@@ -318,9 +318,9 @@ int @(pre)create_matrix_postfix(SuperMatrix *A, int nrhs, @(type) **rhs,
     }
 
 #if 0
-@precision DOUBLE
+@precision SINGLE DOUBLE
     nzval[0]=0.1;
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
     nzval[0].r = 0.1; nzval[0].i = 0.0;
 @precision !
 #endif

@@ -69,9 +69,9 @@ double p@(pre)langs(char *norm, SuperMatrix *A, gridinfo_t *grid)
     @(type)   *Aval;
     int_t    i, j, jcol;
     double   value=0., sum;
-    double   *rwork;
-    double   tempvalue;
-    double   *temprwork;
+    @(mod_type)   *rwork;
+    @(mod_type)   tempvalue;
+    @(mod_type)   *temprwork;
 
     Astore = (NRformat_loc *) A->Store;
     m_loc = Astore->m_loc;
@@ -84,14 +84,14 @@ double p@(pre)langs(char *norm, SuperMatrix *A, gridinfo_t *grid)
 	value = 0.;
 	for (i = 0; i < m_loc; ++i) {
 	    for (j = Astore->rowptr[i]; j < Astore->rowptr[i+1]; ++j)
-@precision DOUBLE
+@precision SINGLE DOUBLE
 		value = SUPERLU_MAX( value, fabs(Aval[j]) );
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 		value = SUPERLU_MAX( value, slud_z_abs(&Aval[j]) );
 @precision !
 	}
 
-	MPI_Allreduce(&value, &tempvalue, 1, MPI_DOUBLE, MPI_MAX, grid->comm);
+	MPI_Allreduce(&value, &tempvalue, 1, @(MPI_MOD_TYPE), MPI_MAX, grid->comm);
 	value = tempvalue;
 
     } else if ( strncmp(norm, "O", 1)==0 || *(unsigned char *)norm == '1') {
@@ -104,23 +104,23 @@ double p@(pre)langs(char *norm, SuperMatrix *A, gridinfo_t *grid)
 		sum += fabs(Aval[i]);
 	    value = SUPERLU_MAX(value,sum);
 	}
-#else /* XSL ==> */
-	if ( !(rwork = (double *) doubleCalloc_dist(A->ncol)) )
-	    ABORT("doubleCalloc_dist fails for rwork.");
+#else /* Sherry ==> */
+	if ( !(rwork = @(mod_type)Calloc_dist(A->ncol)) )
+	    ABORT("@(mod_type)Calloc_dist fails for rwork.");
 	for (i = 0; i < m_loc; ++i) {
 	    for (j = Astore->rowptr[i]; j < Astore->rowptr[i+1]; ++j) {
 	        jcol = Astore->colind[j];
-@precision DOUBLE
+@precision SINGLE DOUBLE
 		rwork[jcol] += fabs(Aval[j]);
-@precision DCOMPLEX
-		rwork[jcol] += slud_z_abs(&Aval[j]);
+@precision SCOMPLEX DCOMPLEX
+		rwork[jcol] += slud_@(pre)_abs(&Aval[j]);
 @precision !
 	    }
 	}
 
-	if ( !(temprwork = (double *) doubleCalloc_dist(A->ncol)) )
-	    ABORT("doubleCalloc_dist fails for temprwork.");
-	MPI_Allreduce(rwork, temprwork, A->ncol, MPI_DOUBLE, MPI_SUM, grid->comm);
+	if ( !(temprwork = @(mod_type)Calloc_dist(A->ncol)) )
+	    ABORT("@(mod_type)Calloc_dist fails for temprwork.");
+	MPI_Allreduce(rwork, temprwork, A->ncol, @(MPI_MOD_TYPE), MPI_SUM, grid->comm);
 	value = 0.;
 	for (j = 0; j < A->ncol; ++j) {
 	    value = SUPERLU_MAX(value, temprwork[j]);
@@ -134,14 +134,14 @@ double p@(pre)langs(char *norm, SuperMatrix *A, gridinfo_t *grid)
 	sum = 0.;
 	for (i = 0; i < m_loc; ++i) {
 	    for (j = Astore->rowptr[i]; j < Astore->rowptr[i+1]; ++j)
-@precision DOUBLE
+@precision SINGLE DOUBLE
 	        sum += fabs(Aval[j]);
-@precision DCOMPLEX
-	        sum += slud_z_abs(&Aval[j]);
+@precision SCOMPLEX DCOMPLEX
+	        sum += slud_@(pre)_abs(&Aval[j]);
 @precision !
 	    value = SUPERLU_MAX(value, sum);
 	}
-	MPI_Allreduce(&value, &tempvalue, 1, MPI_DOUBLE, MPI_MAX, grid->comm);
+	MPI_Allreduce(&value, &tempvalue, 1, @(MPI_MOD_TYPE), MPI_MAX, grid->comm);
 	value = tempvalue;
 
     } else if ( strncmp(norm, "F", 1)==0 || strncmp(norm, "E", 1)==0 ) {

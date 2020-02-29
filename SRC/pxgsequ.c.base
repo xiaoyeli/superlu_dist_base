@@ -82,20 +82,20 @@ at the top-level directory.
 */
 
 void
-p@(pre)gsequ(SuperMatrix *A, double *r, double *c, double *rowcnd,
-	double *colcnd, double *amax, int_t *info, gridinfo_t *grid)
+p@(pre)gsequ(SuperMatrix *A, @(mod_type) *r, @(mod_type) *c, @(mod_type) *rowcnd,
+	@(mod_type) *colcnd, @(mod_type) *amax, int_t *info, gridinfo_t *grid)
 {
 
     /* Local variables */
     NRformat_loc *Astore;
     @(type) *Aval;
     int i, j, irow, jcol, m_loc;
-    double rcmin, rcmax;
-    double bignum, smlnum;
-    double tempmax, tempmin;
-    double *loc_max;
+    @(mod_type) rcmin, rcmax;
+    @(mod_type) bignum, smlnum;
+    @(mod_type) tempmax, tempmin;
+    @(mod_type) *loc_max;
     int *r_sizes, *displs;
-    double *loc_r;
+    @(mod_type) *loc_r;
     int_t  procs;
 
     /* Test the input parameters. */
@@ -132,9 +132,9 @@ p@(pre)gsequ(SuperMatrix *A, double *r, double *c, double *rowcnd,
     irow = Astore->fst_row;
     for (i = 0; i < m_loc; ++i) {
 	for (j = Astore->rowptr[i]; j < Astore->rowptr[i+1]; ++j)
-@precision DOUBLE
+@precision SINGLE DOUBLE
 	    r[irow] = SUPERLU_MAX( r[irow], fabs(Aval[j]) );
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
             r[irow] = SUPERLU_MAX( r[irow], slud_z_abs1(&Aval[j]) );
 @precision !
 	++irow;
@@ -182,9 +182,9 @@ p@(pre)gsequ(SuperMatrix *A, double *r, double *c, double *rowcnd,
     for (i = 0; i < m_loc; ++i) {
         for (j = Astore->rowptr[i]; j < Astore->rowptr[i+1]; ++j) {
 	    jcol = Astore->colind[j];
-@precision DOUBLE
+@precision SINGLE DOUBLE
 	    c[jcol] = SUPERLU_MAX( c[jcol], fabs(Aval[j]) * r[irow] );
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 	    c[jcol] = SUPERLU_MAX( c[jcol], slud_z_abs1(&Aval[j]) * r[irow] );
 @precision !
 	}
@@ -192,10 +192,10 @@ p@(pre)gsequ(SuperMatrix *A, double *r, double *c, double *rowcnd,
     }
 
     /* Find the global maximum for c[j] */
-    if ( !(loc_max = doubleMalloc_dist(A->ncol)))
+    if ( !(loc_max = @(mod_type)Malloc_dist(A->ncol)))
       ABORT("Malloc fails for loc_max[].");
     for (j = 0; j < A->ncol; ++j) loc_max[j] = c[j];
-    MPI_Allreduce(loc_max, c, A->ncol, MPI_DOUBLE, MPI_MAX, grid->comm);
+    MPI_Allreduce(loc_max, c, A->ncol, @(MPI_MOD_TYPE), MPI_MAX, grid->comm);
     SUPERLU_FREE(loc_max);
 
     /* Find the maximum and minimum scale factors. */
@@ -227,7 +227,7 @@ p@(pre)gsequ(SuperMatrix *A, double *r, double *c, double *rowcnd,
     if ( !(r_sizes = SUPERLU_MALLOC(2 * procs * sizeof(int))))
       ABORT("Malloc fails for r_sizes[].");
     displs = r_sizes + procs;
-    if ( !(loc_r = doubleMalloc_dist(m_loc)))
+    if ( !(loc_r = @(mod_type)Malloc_dist(m_loc)))
       ABORT("Malloc fails for loc_r[].");
     j = Astore->fst_row;
     for (i = 0; i < m_loc; ++i) loc_r[i] = r[j++];
@@ -240,8 +240,8 @@ p@(pre)gsequ(SuperMatrix *A, double *r, double *c, double *rowcnd,
     for (i = 1; i < procs; ++i) displs[i] = displs[i-1] + r_sizes[i-1];
 
     /* Now gather the actual data */
-    MPI_Allgatherv(loc_r, m_loc, MPI_DOUBLE, r, r_sizes, displs,
-                MPI_DOUBLE, grid->comm);
+    MPI_Allgatherv(loc_r, m_loc, @(MPI_MOD_TYPE), r, r_sizes, displs,
+                @(MPI_MOD_TYPE), grid->comm);
 
     SUPERLU_FREE(r_sizes);
     SUPERLU_FREE(loc_r);

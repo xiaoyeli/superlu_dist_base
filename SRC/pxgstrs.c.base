@@ -106,7 +106,7 @@ _fcd ftcs3;
  *
  * Note
  * ====
- *   This routine can only be called after the routine pxgstrs_init(),
+ *   This routine can only be called after the routine p@(pre)gstrs_init(),
  *   in which the structures of the send and receive buffers are set up.
  *
  * Arguments
@@ -134,14 +134,14 @@ _fcd ftcs3;
  * x      (output) @(type)*
  *        The solution vector. It is valid only on the diagonal processes.
  *
- * ScalePermstruct (input) ScalePermstruct_t*
+ * ScalePermstruct (input) @(pre)ScalePermstruct_t*
  *        The data structure to store the scaling and permutation vectors
  *        describing the transformations performed to the original matrix A.
  *
  * grid   (input) gridinfo_t*
  *        The 2D process mesh.
  *
- * SOLVEstruct (input) SOLVEstruct_t*
+ * SOLVEstruct (input) @(pre)SOLVEstruct_t*
  *        Contains the information for the communication during the
  *        solution phase.
  *
@@ -153,9 +153,9 @@ _fcd ftcs3;
 int_t
 p@(pre)ReDistribute_B_to_X(@(type) *B, int_t m_loc, int nrhs, int_t ldb,
                       int_t fst_row, int_t *ilsum, @(type) *x,
-		      ScalePermstruct_t *ScalePermstruct,
+		      @(pre)ScalePermstruct_t *ScalePermstruct,
 		      Glu_persist_t *Glu_persist,
-		      gridinfo_t *grid, SOLVEstruct_t *SOLVEstruct)
+		      gridinfo_t *grid, @(pre)SOLVEstruct_t *SOLVEstruct)
 {
     int  *SendCnt, *SendCnt_nrhs, *RecvCnt, *RecvCnt_nrhs;
     int  *sdispls, *sdispls_nrhs, *rdispls, *rdispls_nrhs;
@@ -219,12 +219,12 @@ p@(pre)ReDistribute_B_to_X(@(type) *B, int_t m_loc, int nrhs, int_t ldb,
 			knsupc = SuperSize( k );
 			l = X_BLK( k );
 
-		@precision DOUBLE
+@precision SINGLE DOUBLE
 			x[l - XK_H] = k;      /* Block number prepended in the header. */
-		@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 			x[l - XK_H].r = k; /* Block number prepended in the header. */
 			x[l - XK_H].i = 0;
-		@precision !
+@precision !
 
 			irow = irow - FstBlockC(k); /* Relative row number in X-block */
 			RHS_ITERATE(j) {
@@ -368,12 +368,12 @@ p@(pre)ReDistribute_B_to_X(@(type) *B, int_t m_loc, int nrhs, int_t ldb,
 			knsupc = SuperSize( k );
 			lk = LBi( k, grid );  /* Local block number. */
 			l = X_BLK( lk );
-		@precision DOUBLE
+@precision SINGLE DOUBLE
 			x[l - XK_H] = k;      /* Block number prepended in the header. */
-		@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 			x[l - XK_H].r = k; /* Block number prepended in the header. */
 			x[l - XK_H].i = 0;
-		@precision !
+@precision !
 
 			irow = irow - FstBlockC(k); /* Relative row number in X-block */
 			RHS_ITERATE(j) {
@@ -411,7 +411,7 @@ p@(pre)ReDistribute_B_to_X(@(type) *B, int_t m_loc, int nrhs, int_t ldb,
  *
  * Note
  * ====
- *   This routine can only be called after the routine pxgstrs_init(),
+ *   This routine can only be called after the routine p@(pre)gstrs_init(),
  *   in which the structures of the send and receive buffers are set up.
  * </pre>
  */
@@ -419,9 +419,9 @@ p@(pre)ReDistribute_B_to_X(@(type) *B, int_t m_loc, int nrhs, int_t ldb,
 int_t
 p@(pre)ReDistribute_X_to_B(int_t n, @(type) *B, int_t m_loc, int_t ldb, int_t fst_row,
 		      int_t nrhs, @(type) *x, int_t *ilsum,
-		      ScalePermstruct_t *ScalePermstruct,
+		      @(pre)ScalePermstruct_t *ScalePermstruct,
 		      Glu_persist_t *Glu_persist, gridinfo_t *grid,
-		      SOLVEstruct_t *SOLVEstruct)
+		      @(pre)SOLVEstruct_t *SOLVEstruct)
 {
     int_t  i, ii, irow, j, jj, k, knsupc, nsupers, l, lk;
     int_t  *xsup, *supno;
@@ -655,12 +655,12 @@ p@(pre)ReDistribute_X_to_B(int_t n, @(type) *B, int_t m_loc, int_t ldb, int_t fs
  * </pre>
  */
 void
-p@(pre)Compute_Diag_Inv(int_t n, LUstruct_t *LUstruct,gridinfo_t *grid,
+p@(pre)Compute_Diag_Inv(int_t n, @(pre)LUstruct_t *LUstruct,gridinfo_t *grid,
                    SuperLUStat_t *stat, int *info)
 {
 #ifdef SLU_HAVE_LAPACK
     Glu_persist_t *Glu_persist = LUstruct->Glu_persist;
-    LocalLU_t *Llu = LUstruct->Llu;
+    @(pre)LocalLU_t *Llu = LUstruct->Llu;
 
     @(type) *lusup;
     @(type) *recvbuf, *tempv;
@@ -683,10 +683,10 @@ p@(pre)Compute_Diag_Inv(int_t n, LUstruct_t *LUstruct,gridinfo_t *grid,
     int INFO;
     double t;
 
-@precision DOUBLE
+@precision SINGLE DOUBLE
     @(type) one = 1.0;
     @(type) zero = 0.0;
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
     @(type) one = {1.0, 0.0};
     @(type) zero = {0.0, 0.0};
 @precision !
@@ -748,7 +748,7 @@ p@(pre)Compute_Diag_Inv(int_t n, LUstruct_t *LUstruct,gridinfo_t *grid,
 	          }
 
 	   	  for (j=0 ; j<knsupc; j++){
-@precision DOUBLE
+@precision SINGLE DOUBLE
 		      Linv[j*knsupc+j] = one;
 		      for (i=j+1 ; i<knsupc; i++){
 		          Linv[j*knsupc+i] = lusup[j*nsupr+i];
@@ -756,7 +756,7 @@ p@(pre)Compute_Diag_Inv(int_t n, LUstruct_t *LUstruct,gridinfo_t *grid,
 		      for (i=0 ; i<j+1; i++){
 			  Uinv[j*knsupc+i] = lusup[j*nsupr+i];
 	              }
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 		      Linv[j*knsupc+j] = one;
 		      for (i=j+1 ; i<knsupc; i++){
 		  	  z_copy(&Linv[j*knsupc+i],&lusup[j*nsupr+i]);
@@ -812,11 +812,11 @@ p@(pre)Compute_Diag_Inv(int_t n, LUstruct_t *LUstruct,gridinfo_t *grid,
  * n      (input) int (global)
  *        The order of the system of linear equations.
  *
- * LUstruct (input) LUstruct_t*
+ * LUstruct (input) @(pre)LUstruct_t*
  *        The distributed data structures storing L and U factors.
  *        The L and U factors are obtained from P@(PRE)GSTRF for
  *        the possibly scaled and permuted matrix A.
- *        See superlu_@(pre)defs.h for the definition of 'LUstruct_t'.
+ *        See superlu_@(pre)defs.h for the definition of '@(pre)LUstruct_t'.
  *        A may be scaled and permuted into A1, so that
  *        A1 = Pc*Pr*diag(R)*A*diag(C)*Pc^T = L*U
  *
@@ -847,7 +847,7 @@ p@(pre)Compute_Diag_Inv(int_t n, LUstruct_t *LUstruct,gridinfo_t *grid,
  * nrhs   (input) int (global)
  *        Number of right-hand sides.
  *
- * SOLVEstruct (input) SOLVEstruct_t* (global)
+ * SOLVEstruct (input) @(pre)SOLVEstruct_t* (global)
  *        Contains the information for the communication during the
  *        solution phase.
  *
@@ -862,20 +862,20 @@ p@(pre)Compute_Diag_Inv(int_t n, LUstruct_t *LUstruct,gridinfo_t *grid,
  */
 
 void
-p@(pre)gstrs(int_t n, LUstruct_t *LUstruct,
-	ScalePermstruct_t *ScalePermstruct,
+p@(pre)gstrs(int_t n, @(pre)LUstruct_t *LUstruct,
+	@(pre)ScalePermstruct_t *ScalePermstruct,
 	gridinfo_t *grid, @(type) *B,
 	int_t m_loc, int_t fst_row, int_t ldb, int nrhs,
-	SOLVEstruct_t *SOLVEstruct,
+	@(pre)SOLVEstruct_t *SOLVEstruct,
 	SuperLUStat_t *stat, int *info)
 {
     Glu_persist_t *Glu_persist = LUstruct->Glu_persist;
-    LocalLU_t *Llu = LUstruct->Llu;
-@precision DOUBLE
+    @(pre)LocalLU_t *Llu = LUstruct->Llu;
+@precision SINGLE DOUBLE
     @(type) alpha = 1.0;
 	@(type) beta = 0.0;
     @(type) zero = 0.0;
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
     @(type) alpha = {1.0, 0.0};
 	@(type) beta = {0.0, 0.0};
     @(type) zero = {0.0, 0.0};
@@ -977,7 +977,7 @@ p@(pre)gstrs(int_t n, LUstruct_t *LUstruct,
 		      *     3 : transferred in Uval_buf[]
 		      */
     int iword = sizeof (int_t);
-    int dword = sizeof (double);
+    int dword = sizeof (@(type));
     int Nwork;
 	int_t procs = grid->nprow * grid->npcol;
     	yes_no_t done;
@@ -1159,9 +1159,9 @@ p@(pre)gstrs(int_t n, LUstruct_t *LUstruct,
 	if ( myrow == krow ) {
 	    lk = LBi( k, grid );   /* Local block number. */
 	    il = LSUM_BLK( lk );
-@precision DOUBLE
+@precision SINGLE DOUBLE
 	    lsum[il - LSUM_H] = k; /* Block number prepended in the header. */
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 	    lsum[il - LSUM_H].r = k;/* Block number prepended in the header.*/
 	    lsum[il - LSUM_H].i = 0;
 @precision !
@@ -1237,9 +1237,9 @@ if(procs==1){
 		ABORT("Malloc fails for recvbuf_BC_fwd[].");
 	nfrecvx_buf=0;
 
-@precision DOUBLE
+@precision SINGLE DOUBLE
 	log_memory(nlb*aln_i*iword+nlb*iword+(CEILING( nsupers, Pr )+CEILING( nsupers, Pc ))*aln_i*2.0*iword+ nsupers_i*iword + sizelsum*num_thread * dword + (ldalsum * nrhs + nlb * XK_H) *dword + (sizertemp*num_thread + 1)*dword+maxrecvsz*(nfrecvx+1)*dword, stat);	//account for fmod, frecv, leaf_send, root_send, leafsups, recvbuf_BC_fwd	, lsum, x, rtemp
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 	log_memory(nlb*aln_i*iword+nlb*iword+(CEILING( nsupers, Pr )+CEILING( nsupers, Pc ))*aln_i*2.0*iword+ nsupers_i*iword + sizelsum*num_thread * dword*2.0 + (ldalsum * nrhs + nlb * XK_H) *dword*2.0 + (sizertemp*num_thread + 1)*dword*2.0+maxrecvsz*(nfrecvx+1)*dword*2.0, stat);	//account for fmod, frecv, leaf_send, root_send, leafsups, recvbuf_BC_fwd	, lsum, x, rtemp
 @precision !
 
@@ -1332,24 +1332,24 @@ if(procs==1){
 					#pragma omp simd
 				#endif
 					for (i=0 ; i<knsupc*nrhs ; i++){
-			@precision DOUBLE
+@precision SINGLE DOUBLE
 						x[ii+i] = rtemp_loc[i];
-			@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 						z_copy(&x[ii+i],&rtemp_loc[i]);
-			@precision !
+@precision !
 					}
 
-		@precision DOUBLE
+@precision SINGLE DOUBLE
 					// for (i=0 ; i<knsupc*nrhs ; i++){
 					// printf("x_l: %f\n",x[ii+i]);
 					// fflush(stdout);
 					// }
-		@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 					// for (i=0 ; i<knsupc*nrhs ; i++){
 					// printf("x_l: %f %f\n",x[ii+i].r,x[ii+i].i);
 					// fflush(stdout);
 					// }
-		@precision !
+@precision !
 
 
 #if ( PROFlevel>=1 )
@@ -1358,12 +1358,12 @@ if(procs==1){
 
 #endif
 
-		@precision DOUBLE
+@precision SINGLE DOUBLE
 					stat_loc[thread_id]->ops[SOLVE] += knsupc * (knsupc - 1) * nrhs;
-		@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 					stat_loc[thread_id]->ops[SOLVE] += 4 * knsupc * (knsupc - 1) * nrhs
 					+ 10 * knsupc * nrhs; /* complex division */
-		@precision !
+@precision !
 
 
 					// --nleaf;
@@ -1422,28 +1422,15 @@ if(procs==1){
 					lusup, &nsupr, &x[ii], &knsupc);
 #endif
 
-@precision DOUBLE
-		// for (i=0 ; i<knsupc*nrhs ; i++){
-		// printf("x_l: %f\n",x[ii+i]);
-		// fflush(stdout);
-		// }
-@precision DCOMPLEX
-		// for (i=0 ; i<knsupc*nrhs ; i++){
-		// printf("x_l: %f %f\n",x[ii+i].r,x[ii+i].i);
-		// fflush(stdout);
-		// }
-@precision !
-
-
 #if ( PROFlevel>=1 )
 		    TOC(t2, t1);
 		    stat_loc[thread_id]->utime[SOL_TRSM] += t2;
 
 #endif
 
-@precision DOUBLE
+@precision SINGLE DOUBLE
 		    stat_loc[thread_id]->ops[SOLVE] += knsupc * (knsupc - 1) * nrhs;
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 		    stat_loc[thread_id]->ops[SOLVE] += 4 * knsupc * (knsupc - 1) * nrhs
 				+ 10 * knsupc * nrhs; /* complex division */
 @precision !
@@ -1573,11 +1560,11 @@ if(procs==1){
 
 						{
 
-				@precision DOUBLE
+@precision SINGLE DOUBLE
 							k = *recvbuf0;
-				@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 							k = (*recvbuf0).r;
-				@precision !
+@precision !
 
 #if ( DEBUGlevel>=2 )
 							printf("(%2d) Recv'd block %d, tag %2d\n", iam, k, status.MPI_TAG);
@@ -1631,13 +1618,13 @@ if(procs==1){
 								il = LSUM_BLK( lk );
 								RHS_ITERATE(j) {
 									for (i = 0; i < knsupc; ++i)
-							@precision DOUBLE
+@precision SINGLE DOUBLE
 										lsum[i + il + j*knsupc + thread_id*sizelsum] += tempv[i + j*knsupc];
-							@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 										z_add(&lsum[i + il + j*knsupc + thread_id*sizelsum],
 											  &lsum[i + il + j*knsupc + thread_id*sizelsum],
 											  &tempv[i + j*knsupc]);
-							@precision !
+@precision !
 
 								}
 
@@ -1657,13 +1644,13 @@ if(procs==1){
 												#pragma omp simd
 											#endif
 												for (jj=0;jj<knsupc*nrhs;jj++)
-										@precision DOUBLE
+@precision SINGLE DOUBLE
 													lsum[il + jj ] += lsum[il + jj + ii*sizelsum];
-										@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 													z_add(&lsum[il + jj ],
 														  &lsum[il + jj ],
 														  &lsum[il + jj + ii*sizelsum]);
-										@precision !
+@precision !
 
 											ii = X_BLK( lk );
 											RHS_ITERATE(j)
@@ -1671,13 +1658,13 @@ if(procs==1){
 													#pragma omp simd
 												#endif
 												for (i = 0; i < knsupc; ++i)
-										@precision DOUBLE
+@precision SINGLE DOUBLE
 													x[i + ii + j*knsupc] += lsum[i + il + j*knsupc ];
-										@precision DCOMPLEX
-													z_add(&x[i + ii + j*knsupc],
+@precision SCOMPLEX DCOMPLEX
+													@(pre)_add(&x[i + ii + j*knsupc],
 														  &x[i + ii + j*knsupc],
 														  &lsum[i + il + j*knsupc] );
-										@precision !
+@precision !
 
 											// fmod[lk] = -1; /* Do not solve X[k] in the future. */
 											lk = LBj( k, grid ); /* Local block number, column-wise. */
@@ -1708,11 +1695,11 @@ if(procs==1){
 													#pragma omp simd
 												#endif
 												for (i=0 ; i<knsupc*nrhs ; i++){
-										@precision DOUBLE
+@precision SINGLE DOUBLE
 													x[ii+i] = rtemp_loc[i];
-										@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 													z_copy(&x[ii+i],&rtemp_loc[i]);
-										@precision !
+@precision !
 												}
 											}
 											else{
@@ -1733,12 +1720,13 @@ if(procs==1){
 											stat_loc[thread_id]->utime[SOL_TRSM] += t2;
 #endif
 
-								@precision DOUBLE
+@precision SINGLE DOUBLE
 											stat_loc[thread_id]->ops[SOLVE] += knsupc * (knsupc - 1) * nrhs;
-								@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 											stat_loc[thread_id]->ops[SOLVE] += 4 * knsupc * (knsupc - 1) * nrhs
 											+ 10 * knsupc * nrhs; /* complex division */
-								@precision !
+@precision !
+
 #if ( DEBUGlevel>=2 )
 											printf("(%2d) Solve X[%2d]\n", iam, k);
 #endif
@@ -1779,13 +1767,13 @@ if(procs==1){
 												#pragma omp simd
 											#endif
 											for (jj=0;jj<knsupc*nrhs;jj++)
-									@precision DOUBLE
+@precision SINGLE DOUBLE
 												lsum[il + jj] += lsum[il + jj + ii*sizelsum];
-									@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 												z_add(&lsum[il + jj ],
 													  &lsum[il + jj ],
 													  &lsum[il + jj + ii*sizelsum]);
-									@precision !
+@precision !
 										RdTree_forwardMessageSimple(LRtree_ptr[lk],&lsum[il-LSUM_H],RdTree_GetMsgSize(LRtree_ptr[lk],'@(pre)')*nrhs+LSUM_H,'@(pre)');
 									}
 
@@ -1845,11 +1833,11 @@ if(procs==1){
 		SUPERLU_FREE(leaf_send);
 		SUPERLU_FREE(leafsups);
 		SUPERLU_FREE(recvbuf_BC_fwd);
-	@precision DOUBLE
+@precision SINGLE DOUBLE
 		log_memory(-nlb*aln_i*iword-nlb*iword-(CEILING( nsupers, Pr )+CEILING( nsupers, Pc ))*aln_i*iword- nsupers_i*iword -maxrecvsz*(nfrecvx+1)*dword, stat);	//account for fmod, frecv, leaf_send, leafsups, recvbuf_BC_fwd
-	@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 		log_memory(-nlb*aln_i*iword-nlb*iword-(CEILING( nsupers, Pr )+CEILING( nsupers, Pc ))*aln_i*iword- nsupers_i*iword -maxrecvsz*(nfrecvx+1)*dword*2.0, stat);	//account for fmod, frecv, leaf_send, leafsups, recvbuf_BC_fwd
-	@precision !
+@precision !
 
 		for (lk=0;lk<nsupers_j;++lk){
 			if(LBtree_ptr[lk]!=NULL){
@@ -1911,9 +1899,9 @@ if(procs==1){
 	if ( myrow == krow ) {
 	    lk = LBi( k, grid );   /* Local block number. */
 	    il = LSUM_BLK( lk );
-@precision DOUBLE
+@precision SINGLE DOUBLE
 	    lsum[il - LSUM_H] = k; /* Block number prepended in the header. */
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 	    lsum[il - LSUM_H].r = k;/* Block number prepended in the header.*/
 	    lsum[il - LSUM_H].i = 0;
 @precision !
@@ -2031,9 +2019,9 @@ if(procs==1){
 		ABORT("Malloc fails for recvbuf_BC_fwd[].");
 	nbrecvx_buf=0;
 
-@precision DOUBLE
+@precision SINGLE DOUBLE
 	log_memory(nlb*aln_i*iword+nlb*iword + nsupers_i*iword + maxrecvsz*(nbrecvx+1)*dword, stat);	//account for bmod, brecv, rootsups, recvbuf_BC_fwd
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 	log_memory(nlb*aln_i*iword+nlb*iword + nsupers_i*iword + maxrecvsz*(nbrecvx+1)*dword*2.0, stat);	//account for bmod, brecv, rootsups, recvbuf_BC_fwd
 @precision !
 
@@ -2115,11 +2103,11 @@ if(procs==1){
 					#pragma omp simd
 				#endif
 				for (i=0 ; i<knsupc*nrhs ; i++){
-		@precision DOUBLE
+@precision SINGLE DOUBLE
 					x[ii+i] = rtemp_loc[i];
-		@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 					z_copy(&x[ii+i],&rtemp_loc[i]);
-		@precision !
+@precision !
 				}
 			}else{
 #ifdef _CRAY
@@ -2133,30 +2121,14 @@ if(procs==1){
 						lusup, &nsupr, &x[ii], &knsupc);
 #endif
 			}
-@precision DOUBLE
-			// for (i=0 ; i<knsupc*nrhs ; i++){
-			// printf("x_u: %f\n",x[ii+i]);
-			// fflush(stdout);
-			// }
-@precision DCOMPLEX
-			// for (i=0 ; i<knsupc*nrhs ; i++){
-			// printf("x_u: %f %f\n",x[ii+i].r,x[ii+i].i);
-			// fflush(stdout);
-			// }
-@precision !
-
-			// for (i=0 ; i<knsupc*nrhs ; i++){
-				// printf("x: %f\n",x[ii+i]);
-				// fflush(stdout);
-			// }
 
 #if ( PROFlevel>=1 )
 			TOC(t2, t1);
 			stat_loc[thread_id]->utime[SOL_TRSM] += t2;
 #endif
-@precision DOUBLE
+@precision SINGLE DOUBLE
 			stat_loc[thread_id]->ops[SOLVE] += knsupc * (knsupc + 1) * nrhs;
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 			stat_loc[thread_id]->ops[SOLVE] += 4 * knsupc * (knsupc + 1) * nrhs
 			+ 10 * knsupc * nrhs; /* complex division */
 @precision !
@@ -2264,9 +2236,9 @@ for (i=0;i<nroot_send;i++){
 			msg_vol += maxrecvsz * dword;
 #endif
 
-@precision DOUBLE
+@precision SINGLE DOUBLE
 			k = *recvbuf0;
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 			k = (*recvbuf0).r;
 @precision !
 #if ( DEBUGlevel>=2 )
@@ -2306,13 +2278,13 @@ for (i=0;i<nroot_send;i++){
 						#pragma omp simd
 					#endif
 					for (i = 0; i < knsupc; ++i)
-			@precision DOUBLE
+@precision SINGLE DOUBLE
 						lsum[i + il + j*knsupc + thread_id*sizelsum] += tempv[i + j*knsupc];
-			@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 						z_add(&lsum[i + il + j*knsupc + thread_id*sizelsum],
 							  &lsum[i + il + j*knsupc + thread_id*sizelsum],
 							  &tempv[i + j*knsupc]);
-			@precision !
+@precision !
 
 				}
 			// #ifdef _OPENMP
@@ -2330,13 +2302,13 @@ for (i=0;i<nroot_send;i++){
 								#pragma omp simd
 							#endif
 							for (jj=0;jj<knsupc*nrhs;jj++)
-					@precision DOUBLE
+@precision SINGLE DOUBLE
 								lsum[il+ jj ] += lsum[il + jj + ii*sizelsum];
-					@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 								z_add(&lsum[il+ jj ],
 									  &lsum[il+ jj ],
 									  &lsum[il + jj + ii*sizelsum]);
-					@precision !
+@precision !
 
 						ii = X_BLK( lk );
 						RHS_ITERATE(j)
@@ -2344,13 +2316,13 @@ for (i=0;i<nroot_send;i++){
 								#pragma omp simd
 							#endif
 							for (i = 0; i < knsupc; ++i)
-					@precision DOUBLE
-								x[i + ii + j*knsupc] += lsum[i + il + j*knsupc ];
-					@precision DCOMPLEX
-								z_add(&x[i + ii + j*knsupc],
+@precision SINGLE DOUBLE
+							    x[i + ii + j*knsupc] += lsum[i + il + j*knsupc ];
+@precision SCOMPLEX DCOMPLEX
+							    @(pre)_add(&x[i + ii + j*knsupc],
 									  &x[i + ii + j*knsupc],
 									  &lsum[i + il + j*knsupc] );
-					@precision !
+@precision !
 
 						lk = LBj( k, grid ); /* Local block number, column-wise. */
 						lsub = Lrowind_bc_ptr[lk];
@@ -2379,11 +2351,11 @@ for (i=0;i<nroot_send;i++){
 								#pragma omp simd
 							#endif
 							for (i=0 ; i<knsupc*nrhs ; i++){
-					@precision DOUBLE
+@precision SINGLE DOUBLE
 								x[ii+i] = rtemp_loc[i];
-					@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 								z_copy(&x[ii+i],&rtemp_loc[i]);
-					@precision !
+@precision !
 							}
 						}else{
 #ifdef _CRAY
@@ -2402,12 +2374,12 @@ for (i=0;i<nroot_send;i++){
 							TOC(t2, t1);
 							stat_loc[thread_id]->utime[SOL_TRSM] += t2;
 #endif
-				@precision DOUBLE
+@precision SINGLE DOUBLE
 							stat_loc[thread_id]->ops[SOLVE] += knsupc * (knsupc + 1) * nrhs;
-				@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 							stat_loc[thread_id]->ops[SOLVE] += 4 * knsupc * (knsupc + 1) * nrhs
 							+ 10 * knsupc * nrhs; /* complex division */
-				@precision !
+@precision !
 
 #if ( DEBUGlevel>=2 )
 						printf("(%2d) Solve X[%2d]\n", iam, k);
@@ -2439,13 +2411,13 @@ for (i=0;i<nroot_send;i++){
 								#pragma omp simd
 							#endif
 							for (jj=0;jj<knsupc*nrhs;jj++)
-					@precision DOUBLE
+@precision SINGLE DOUBLE
 								lsum[il+ jj ] += lsum[il + jj + ii*sizelsum];
-					@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 								z_add(&lsum[il+ jj ],
 									  &lsum[il+ jj ],
 									  &lsum[il + jj + ii*sizelsum]);
-					@precision !
+@precision !
 
 						RdTree_forwardMessageSimple(URtree_ptr[lk],&lsum[il-LSUM_H],RdTree_GetMsgSize(URtree_ptr[lk],'@(pre)')*nrhs+LSUM_H,'@(pre)');
 					}
@@ -2546,11 +2518,11 @@ for (i=0;i<nroot_send;i++){
 		SUPERLU_FREE(rootsups);
 		SUPERLU_FREE(recvbuf_BC_fwd);
 
-	@precision DOUBLE
+@precision SINGLE DOUBLE
 		log_memory(-nlb*aln_i*iword-nlb*iword - nsupers_i*iword - (CEILING( nsupers, Pr )+CEILING( nsupers, Pc ))*aln_i*iword - maxrecvsz*(nbrecvx+1)*dword - sizelsum*num_thread * dword - (ldalsum * nrhs + nlb * XK_H) *dword - (sizertemp*num_thread + 1)*dword, stat);	//account for bmod, brecv, root_send, rootsups, recvbuf_BC_fwd,rtemp,lsum,x
-	@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 		log_memory(-nlb*aln_i*iword-nlb*iword - nsupers_i*iword - (CEILING( nsupers, Pr )+CEILING( nsupers, Pc ))*aln_i*iword - maxrecvsz*(nbrecvx+1)*dword*2.0 - sizelsum*num_thread * dword*2.0 - (ldalsum * nrhs + nlb * XK_H) *dword*2.0 - (sizertemp*num_thread + 1)*dword*2.0, stat);	//account for bmod, brecv, root_send, rootsups, recvbuf_BC_fwd,rtemp,lsum,x
-	@precision !
+@precision !
 
 		for (lk=0;lk<nsupers_j;++lk){
 			if(UBtree_ptr[lk]!=NULL){

@@ -39,10 +39,10 @@ at the top-level directory.
             the equilibrated matrix. The type of A can be:
 	    Stype = SLU_NR_loc; Dtype = @(Dtype_PRE); Mtype = SLU_GE.
 
-    R       (input) double*, dimension (A->nrow)
+    R       (input) @(mod_type)*, dimension (A->nrow)
             The row scale factors for A.
 
-    C       (input) double*, dimension (A->ncol)
+    C       (input) @(mod_type)*, dimension (A->ncol)
             The column scale factors for A.
 
     ROWCND  (input) double
@@ -81,8 +81,8 @@ at the top-level directory.
 */
 
 void
-p@(pre)laqgs(SuperMatrix *A, double *r, double *c,
-       double rowcnd, double colcnd, double amax, char *equed)
+p@(pre)laqgs(SuperMatrix *A, @(mod_type) *r, @(mod_type) *c,
+       @(mod_type) rowcnd, @(mod_type) colcnd, @(mod_type) amax, char *equed)
 {
 
 #define THRESH    (0.1)
@@ -92,8 +92,8 @@ p@(pre)laqgs(SuperMatrix *A, double *r, double *c,
     @(type) *Aval;
     int_t i, j, irow, jcol, m_loc;
     double large, small;
-@precision DCOMPLEX
-    double temp;
+@precision SCOMPLEX DCOMPLEX
+    @(mod_type) temp;
 @precision !
 
     /* Quick return if possible */
@@ -119,9 +119,9 @@ p@(pre)laqgs(SuperMatrix *A, double *r, double *c,
 	    for (i = 0; i < m_loc; ++i) {
 	        for (j = Astore->rowptr[i]; j < Astore->rowptr[i+1]; ++j) {
 		    jcol = Astore->colind[j];
-@precision DOUBLE
+@precision SINGLE DOUBLE
 		    Aval[j] *= c[jcol];
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
                     @(pre)@(mod_pre)_mult(&Aval[j], &Aval[j], c[jcol]);
 @precision !
 	      }
@@ -134,9 +134,9 @@ p@(pre)laqgs(SuperMatrix *A, double *r, double *c,
 	irow = Astore->fst_row;
 	for (i = 0; i < m_loc; ++i) {
 	    for (j = Astore->rowptr[i]; j < Astore->rowptr[i+1]; ++j)
-@precision DOUBLE
+@precision SINGLE DOUBLE
 	        Aval[j] *= r[irow];
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
                 @(pre)@(mod_pre)_mult(&Aval[j], &Aval[j], r[irow]);
 @precision !
 	    ++irow;
@@ -148,9 +148,9 @@ p@(pre)laqgs(SuperMatrix *A, double *r, double *c,
 	for (i = 0; i < m_loc; ++i) {
 	    for (j = Astore->rowptr[i]; j < Astore->rowptr[i+1]; ++j) {
 	        jcol = Astore->colind[j];
-@precision DOUBLE
+@precision SINGLE DOUBLE
 	        Aval[j] = Aval[j] * r[irow] * c[jcol];
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
                 temp = r[irow] * c[jcol];
                 @(pre)@(mod_pre)_mult(&Aval[j], &Aval[j], temp);
 @precision !

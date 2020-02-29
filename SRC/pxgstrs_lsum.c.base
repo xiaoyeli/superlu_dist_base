@@ -71,15 +71,15 @@ void @(pre)lsum_fmod
  int_t luptr,     /* Starting position in lusup[*].                     */
  int_t *xsup,
  gridinfo_t *grid,
- LocalLU_t *Llu,
+ @(pre)LocalLU_t *Llu,
  MPI_Request send_req[], /* input/output */
  SuperLUStat_t *stat
 )
 {
-@precision DOUBLE
-    double alpha = 1.0, beta = 0.0;
-@precision DCOMPLEX
-    doublecomplex alpha = {1.0, 0.0}, beta = {0.0, 0.0};
+@precision SINGLE DOUBLE
+    @(type) alpha = 1.0, beta = 0.0;
+@precision SCOMPLEX DCOMPLEX
+    @(type) alpha = {1.0, 0.0}, beta = {0.0, 0.0};
 @precision !
     @(type) *lusup, *lusup1;
     @(type) *dest;
@@ -123,9 +123,9 @@ void @(pre)lsum_fmod
 	       &alpha, &lusup[luptr], &nsupr, xk,
 	       &knsupc, &beta, rtemp, &nbrow );
 #endif
-@precision DOUBLE
+@precision SINGLE DOUBLE
 	stat->ops[SOLVE] += 2 * nbrow * nrhs * knsupc + nbrow * nrhs;
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 	stat->ops[SOLVE] += 8 * nbrow * nrhs * knsupc + 2 * nbrow * nrhs;
 @precision !
 
@@ -138,10 +138,10 @@ void @(pre)lsum_fmod
 	for (i = 0; i < nbrow; ++i) {
 	    irow = lsub[lptr++] - rel; /* Relative row. */
 	    RHS_ITERATE(j)
-@precision DOUBLE
+@precision SINGLE DOUBLE
 		dest[irow + j*iknsupc] -= rtemp[i + j*nbrow];
-@precision DCOMPLEX
-		z_sub(&dest[irow + j*iknsupc],
+@precision SCOMPLEX DCOMPLEX
+		@(pre)_sub(&dest[irow + j*iknsupc],
 		      &dest[irow + j*iknsupc],
 		      &rtemp[i + j*nbrow]);
 @precision !
@@ -178,10 +178,10 @@ void @(pre)lsum_fmod
 		ii = X_BLK( lk );
 		RHS_ITERATE(j)
 		    for (i = 0; i < iknsupc; ++i)
-@precision DOUBLE
+@precision SINGLE DOUBLE
 			x[i + ii + j*iknsupc] += lsum[i + il + j*iknsupc];
-@precision DCOMPLEX
-			z_add(&x[i + ii + j*iknsupc],
+@precision SCOMPLEX DCOMPLEX
+			@(pre)_add(&x[i + ii + j*iknsupc],
 			      &x[i + ii + j*iknsupc],
 			      &lsum[i + il + j*iknsupc]);
 @precision !
@@ -209,9 +209,9 @@ void @(pre)lsum_fmod
 			stat->utime[SOL_TRSM] += t2;
 #endif
 
-@precision DOUBLE
+@precision SINGLE DOUBLE
 		    stat->ops[SOLVE] += iknsupc * (iknsupc - 1) * nrhs;
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 		    stat->ops[SOLVE] += 4 * iknsupc * (iknsupc - 1) * nrhs
 			+ 10 * knsupc * nrhs; /* complex division */
 @precision !
@@ -278,7 +278,7 @@ void @(pre)lsum_bmod
  int_t  **Ucb_valptr, /* Vertical linked list pointing to Unzval[].     */
  int_t  *xsup,
  gridinfo_t *grid,
- LocalLU_t *Llu,
+ @(pre)LocalLU_t *Llu,
  MPI_Request send_req[], /* input/output */
  SuperLUStat_t *stat
  )
@@ -288,17 +288,17 @@ void @(pre)lsum_bmod
  * =======
  *   Perform local block modifications: lsum[i] -= U_i,k * X[k].
  */
-@precision DOUBLE
-    double alpha = 1.0, beta = 0.0;
-@precision DCOMPLEX
-    doublecomplex alpha = {1.0, 0.0}, beta = {0.0, 0.0};
+@precision SINGLE DOUBLE
+    @(type) alpha = 1.0, beta = 0.0;
+@precision SCOMPLEX DCOMPLEX
+    @(type) alpha = {1.0, 0.0}, beta = {0.0, 0.0};
 @precision !
     int    iam, iknsupc, knsupc, myrow, nsupr, p, pi;
     int_t  fnz, gik, gikcol, i, ii, ik, ikfrow, iklrow, il, irow,
            j, jj, lk, lk1, nub, ub, uptr;
     int_t  *usub;
     @(type) *uval, *dest, *y;
-@precision DCOMPLEX
+@precision SCOMPEX DCOMPLEX
     @(type) temp;
 @precision !
     int_t  *lsub;
@@ -335,14 +335,14 @@ void @(pre)lsum_bmod
 		fnz = usub[i + jj];
 		if ( fnz < iklrow ) { /* Nonzero segment. */
 		    /* AXPY */
-@precision DOUBLE
+@precision SINGLE DOUBLE
 		    for (irow = fnz; irow < iklrow; ++irow)
 			dest[irow - ikfrow] -= uval[uptr++] * y[jj];
 		    stat->ops[SOLVE] += 2 * (iklrow - fnz);
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 		    for (irow = fnz; irow < iklrow; ++irow) {
-			zz_mult(&temp, &uval[uptr], &y[jj]);
-			z_sub(&dest[irow - ikfrow], &dest[irow - ikfrow],
+			@(pre)@(pre)_mult(&temp, &uval[uptr], &y[jj]);
+			@(pre)_sub(&dest[irow - ikfrow], &dest[irow - ikfrow],
 			      &temp);
 			++uptr;
 		    }
@@ -378,10 +378,10 @@ void @(pre)lsum_bmod
 		dest = &x[ii];
 		RHS_ITERATE(j)
 		    for (i = 0; i < iknsupc; ++i)
-@precision DOUBLE
+@precision SINGLE DOUBLE
 			dest[i + j*iknsupc] += lsum[i + il + j*iknsupc];
-@precision DCOMPLEX
-			z_add(&dest[i + j*iknsupc], &dest[i + j*iknsupc],
+@precision SCOMPLEX DCOMPLEX
+			@(pre)_add(&dest[i + j*iknsupc], &dest[i + j*iknsupc],
 			      &lsum[i + il + j*iknsupc]);
 @precision !
 		if ( !brecv[ik] ) { /* Becomes a leaf node. */
@@ -400,9 +400,9 @@ void @(pre)lsum_bmod
 		    @(pre)trsm_("L", "U", "N", "N", &iknsupc, &nrhs, &alpha,
 			   lusup, &nsupr, &x[ii], &iknsupc);
 #endif
-@precision DOUBLE
+@precision SINGLE DOUBLE
 		    stat->ops[SOLVE] += iknsupc * (iknsupc + 1) * nrhs;
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 		    stat->ops[SOLVE] += 4 * iknsupc * (iknsupc + 1) * nrhs
 			+ 10 * iknsupc * nrhs; /* complex division */
 @precision !
@@ -473,7 +473,7 @@ void @(pre)lsum_fmod_inv
  int_t *fmod,     /* Modification count for L-solve.                    */
  int_t *xsup,
  gridinfo_t *grid,
- LocalLU_t *Llu,
+ @(pre)LocalLU_t *Llu,
  SuperLUStat_t **stat,
  int_t *leaf_send,
  int_t *nleaf_send,
@@ -485,10 +485,10 @@ void @(pre)lsum_fmod_inv
  int num_thread
 )
 {
-@precision DOUBLE
-    double alpha = 1.0, beta = 0.0,malpha=-1.0;
-@precision DCOMPLEX
-    doublecomplex alpha = {1.0, 0.0}, beta = {0.0, 0.0},malpha={-1.0, 0.0};
+@precision SINGLE DOUBLE
+    @(type) alpha = 1.0, beta = 0.0,malpha=-1.0;
+@precision SCOMPLEX DCOMPLEX
+    @(type) alpha = {1.0, 0.0}, beta = {0.0, 0.0},malpha={-1.0, 0.0};
 @precision !
     @(type) *lusup, *lusup1;
     @(type) *dest;
@@ -642,13 +642,13 @@ void @(pre)lsum_fmod_inv
 							#endif
 							for (i = 0; i < nbrow1; ++i) {
 								irow = lsub[lptr+i] - rel; /* Relative row. */
-						@precision DOUBLE
+@precision SINGLE DOUBLE
 								lsum[il+irow + j*iknsupc+sizelsum*thread_id1] -= rtemp_loc[nbrow_ref+i + j*nbrow];
-						@precision DCOMPLEX
-								z_sub(&lsum[il+irow + j*iknsupc+sizelsum*thread_id1],
+@precision SCOMPLEX DCOMPLEX
+								@(pre)_sub(&lsum[il+irow + j*iknsupc+sizelsum*thread_id1],
 									  &lsum[il+irow + j*iknsupc+sizelsum*thread_id1],
 									  &rtemp_loc[nbrow_ref+i + j*nbrow]);
-						@precision !
+@precision !
 							}
 						nbrow_ref+=nbrow1;
 					}
@@ -683,13 +683,13 @@ void @(pre)lsum_fmod_inv
 									#pragma omp simd
 									#endif
 									for (jj=0;jj<iknsupc*nrhs;jj++)
-							@precision DOUBLE
+@precision SINGLE DOUBLE
 										lsum[il + jj ] += lsum[il + jj + ii*sizelsum];
-							@precision DCOMPLEX
-										z_add(&lsum[il + jj ],
+@precision SCOMPLEX DCOMPLEX
+										@(pre)_add(&lsum[il + jj ],
 											  &lsum[il + jj ],
 											  &lsum[il + jj + ii*sizelsum]);
-							@precision !
+@precision !
 
 #ifdef _OPENMP
 #pragma omp atomic capture
@@ -708,13 +708,13 @@ void @(pre)lsum_fmod_inv
 									#pragma omp simd
 									#endif
 									for (jj=0;jj<iknsupc*nrhs;jj++)
-							@precision DOUBLE
+@precision SINGLE DOUBLE
 										lsum[il + jj ] += lsum[il + jj + ii*sizelsum];
-							@precision DCOMPLEX
-										z_add(&lsum[il + jj ],
+@precision SCOMPLEX DCOMPLEX
+										@(pre)_add(&lsum[il + jj ],
 											  &lsum[il + jj ],
 											  &lsum[il + jj + ii*sizelsum]);
-							@precision !
+@precision !
 
 								ii = X_BLK( lk );
 								RHS_ITERATE(j)
@@ -722,13 +722,13 @@ void @(pre)lsum_fmod_inv
 									#pragma omp simd
 									#endif
 									for (i = 0; i < iknsupc; ++i)
-							@precision DOUBLE
+@precision SINGLE DOUBLE
 										x[i + ii + j*iknsupc] += lsum[i + il + j*iknsupc ];
-							@precision DCOMPLEX
-										z_add(&x[i + ii + j*iknsupc],
+@precision SCOMPLEX DCOMPLEX
+										@(pre)_add(&x[i + ii + j*iknsupc],
 											  &x[i + ii + j*iknsupc],
 											  &lsum[i + il + j*iknsupc] );
-							@precision !
+@precision !
 
 
 								// fmod[lk] = -1; /* Do not solve X[k] in the future. */
@@ -758,11 +758,11 @@ void @(pre)lsum_fmod_inv
 									#pragma omp simd
 									#endif
 									for (i=0 ; i<iknsupc*nrhs ; i++){
-							@precision DOUBLE
+@precision SINGLE DOUBLE
 										x[ii+i] = rtemp_loc[i];
-							@precision DCOMPLEX
-										z_copy(&x[ii+i],&rtemp_loc[i]);
-							@precision !
+@precision SCOMPLEX DCOMPLEX
+										@(pre)_copy(&x[ii+i],&rtemp_loc[i]);
+@precision !
 									}
 
 								}else{
@@ -778,17 +778,6 @@ void @(pre)lsum_fmod_inv
 
 #endif
 								}
-					@precision DOUBLE
-								// for (i=0 ; i<iknsupc*nrhs ; i++){
-								// printf("x_lsum: %f\n",x[ii+i]);
-								// fflush(stdout);
-								// }
-					@precision DCOMPLEX
-								// for (i=0 ; i<iknsupc*nrhs ; i++){
-								// printf("x_lsum: %f %f\n",x[ii+i].r,x[ii+i].i);
-								// fflush(stdout);
-								// }
-					@precision !
 
 #if ( PROFlevel>=1 )
 								TOC(t2, t1);
@@ -796,12 +785,12 @@ void @(pre)lsum_fmod_inv
 
 #endif
 
-					@precision DOUBLE
+@precision SINGLE DOUBLE
 								stat[thread_id1]->ops[SOLVE] += iknsupc * (iknsupc - 1) * nrhs;
-					@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 								stat[thread_id1]->ops[SOLVE] += 4 * iknsupc * (iknsupc - 1) * nrhs
 								+ 10 * knsupc * nrhs; /* complex division */
-					@precision !
+@precision !
 
 #if ( DEBUGlevel>=2 )
 								printf("(%2d) Solve X[%2d]\n", iam, ik);
@@ -887,13 +876,13 @@ void @(pre)lsum_fmod_inv
 					for (i = 0; i < nbrow1; ++i) {
 						irow = lsub[lptr+i] - rel; /* Relative row. */
 
-						@precision DOUBLE
+@precision SINGLE DOUBLE
 								lsum[il+irow + j*iknsupc+sizelsum*thread_id] -= rtemp_loc[nbrow_ref+i + j*nbrow];
-						@precision DCOMPLEX
-								z_sub(&lsum[il+irow + j*iknsupc+sizelsum*thread_id],
+@precision SCOMPEX DCOMPLEX
+								@(pre)_sub(&lsum[il+irow + j*iknsupc+sizelsum*thread_id],
 									  &lsum[il+irow + j*iknsupc+sizelsum*thread_id],
 									  &rtemp_loc[nbrow_ref+i + j*nbrow]);
-						@precision !
+@precision !
 					}
 				nbrow_ref+=nbrow1;
 			}
@@ -931,13 +920,13 @@ void @(pre)lsum_fmod_inv
 							#pragma omp simd
 							#endif
 							for (jj=0;jj<iknsupc*nrhs;jj++)
-					@precision DOUBLE
+@precision SINGLE DOUBLE
 								lsum[il + jj ] += lsum[il + jj + ii*sizelsum];
-					@precision DCOMPLEX
-								z_add(&lsum[il + jj ],
+@precision SCOMPLEX DCOMPLEX
+								@(pre)_add(&lsum[il + jj ],
 									  &lsum[il + jj ],
 									  &lsum[il + jj + ii*sizelsum]);
-					@precision !
+@precision !
 
 #ifdef _OPENMP
 #pragma omp atomic capture
@@ -955,13 +944,13 @@ void @(pre)lsum_fmod_inv
 							#pragma omp simd
 							#endif
 							for (jj=0;jj<iknsupc*nrhs;jj++)
-					@precision DOUBLE
+@precision SINGLE DOUBLE
 								lsum[il + jj ] += lsum[il + jj + ii*sizelsum];
-					@precision DCOMPLEX
-								z_add(&lsum[il + jj ],
+@precision SCOMPLEX DCOMPLEX
+								@(pre)_add(&lsum[il + jj ],
 									  &lsum[il + jj ],
 									  &lsum[il + jj + ii*sizelsum]);
-					@precision !
+@precision !
 
 						ii = X_BLK( lk );
 						RHS_ITERATE(j)
@@ -969,13 +958,13 @@ void @(pre)lsum_fmod_inv
 							#pragma omp simd
 							#endif
 							for (i = 0; i < iknsupc; ++i)
-					@precision DOUBLE
-								x[i + ii + j*iknsupc] += lsum[i + il + j*iknsupc ];
-					@precision DCOMPLEX
-								z_add(&x[i + ii + j*iknsupc],
+@precision SINGLE DOUBLE
+							    x[i + ii + j*iknsupc] += lsum[i + il + j*iknsupc];
+@precision SCOMPLEX DCOMPLEX
+								@(pre)_add(&x[i + ii + j*iknsupc],
 									  &x[i + ii + j*iknsupc],
 									  &lsum[i + il + j*iknsupc] );
-					@precision !
+@precision !
 
 
 						lk = LBj( ik, grid );/* Local block number, column-wise. */
@@ -1002,11 +991,11 @@ void @(pre)lsum_fmod_inv
 							#pragma omp simd
 							#endif
 							for (i=0 ; i<iknsupc*nrhs ; i++){
-					@precision DOUBLE
+@precision SINGLE DOUBLE
 								x[ii+i] = rtemp_loc[i];
-					@precision DCOMPLEX
-								z_copy(&x[ii+i],&rtemp_loc[i]);
-					@precision !
+@precision SCOMPLEX DCOMPLEX
+								@(pre)_copy(&x[ii+i],&rtemp_loc[i]);
+@precision !
 							}
 						}else{
 #ifdef _CRAY
@@ -1021,30 +1010,17 @@ void @(pre)lsum_fmod_inv
 #endif
 						}
 
-				@precision DOUBLE
-							// for (i=0 ; i<iknsupc*nrhs ; i++){
-							// printf("x_lsum: %f\n",x[ii+i]);
-							// fflush(stdout);
-							// }
-				@precision DCOMPLEX
-							// for (i=0 ; i<iknsupc*nrhs ; i++){
-							// printf("x_lsum: %f %f\n",x[ii+i].r,x[ii+i].i);
-							// fflush(stdout);
-							// }
-				@precision !
-
-
 #if ( PROFlevel>=1 )
 						TOC(t2, t1);
 						stat[thread_id]->utime[SOL_TRSM] += t2;
 #endif
 
-			@precision DOUBLE
+@precision SINGLE DOUBLE
 						stat[thread_id]->ops[SOLVE] += iknsupc * (iknsupc - 1) * nrhs;
-			@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 						stat[thread_id]->ops[SOLVE] += 4 * iknsupc * (iknsupc - 1) * nrhs
 						+ 10 * knsupc * nrhs; /* complex division */
-			@precision !
+@precision !
 
 #if ( DEBUGlevel>=2 )
 						printf("(%2d) Solve X[%2d]\n", iam, ik);
@@ -1086,9 +1062,9 @@ void @(pre)lsum_fmod_inv
 		// }
 }
 
-@precision DOUBLE
+@precision SINGLE DOUBLE
 	stat[thread_id]->ops[SOLVE] += 2 * m * nrhs * knsupc;
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 	stat[thread_id]->ops[SOLVE] += 8 * m * nrhs * knsupc;
 @precision !
 
@@ -1120,7 +1096,7 @@ void @(pre)lsum_fmod_inv_master
  int_t nlb,       /* Number of L blocks.                                */
  int_t *xsup,
  gridinfo_t *grid,
- LocalLU_t *Llu,
+ @(pre)LocalLU_t *Llu,
  SuperLUStat_t **stat,
  int_t sizelsum,
  int_t sizertemp,
@@ -1130,10 +1106,10 @@ void @(pre)lsum_fmod_inv_master
  int num_thread
 )
 {
-@precision DOUBLE
-    double alpha = 1.0, beta = 0.0,malpha=-1.0;
-@precision DCOMPLEX
-    doublecomplex alpha = {1.0, 0.0}, beta = {0.0, 0.0},malpha={-1.0, 0.0};
+@precision SINGLE DOUBLE
+    @(type) alpha = 1.0, beta = 0.0, malpha=-1.0;
+@precision SCOMPLEX DCOMPLEX
+    @(type) alpha = {1.0, 0.0}, beta = {0.0, 0.0},malpha={-1.0, 0.0};
 @precision !
     @(type) *lusup, *lusup1;
     @(type) *dest;
@@ -1286,13 +1262,13 @@ void @(pre)lsum_fmod_inv_master
 							#endif
 							for (i = 0; i < nbrow1; ++i) {
 								irow = lsub[lptr+i] - rel; /* Relative row. */
-						@precision DOUBLE
+@precision SINGLE DOUBLE
 								lsum[il+irow + j*iknsupc] -= rtemp_loc[nbrow_ref+i + j*nbrow];
-						@precision DCOMPLEX
-								z_sub(&lsum[il+irow + j*iknsupc],
+@precision SCOMPLEX DCOMPLEX
+								@(pre)_sub(&lsum[il+irow + j*iknsupc],
 									  &lsum[il+irow + j*iknsupc],
 									  &rtemp_loc[nbrow_ref+i + j*nbrow]);
-						@precision !
+@precision !
 							}
 						nbrow_ref+=nbrow1;
 					}
@@ -1349,13 +1325,13 @@ void @(pre)lsum_fmod_inv_master
 					for (i = 0; i < nbrow1; ++i) {
 						irow = lsub[lptr+i] - rel; /* Relative row. */
 
-						@precision DOUBLE
+@precision SINGLE DOUBLE
 								lsum[il+irow + j*iknsupc+sizelsum*thread_id] -= rtemp_loc[nbrow_ref+i + j*nbrow];
-						@precision DCOMPLEX
-								z_sub(&lsum[il+irow + j*iknsupc+sizelsum*thread_id],
+@precision SCOMPLEX DCOMPLEX
+								@(pre)_sub(&lsum[il+irow + j*iknsupc+sizelsum*thread_id],
 									  &lsum[il+irow + j*iknsupc+sizelsum*thread_id],
 									  &rtemp_loc[nbrow_ref+i + j*nbrow]);
-						@precision !
+@precision !
 					}
 				nbrow_ref+=nbrow1;
 			}
@@ -1403,13 +1379,13 @@ void @(pre)lsum_fmod_inv_master
 							#pragma omp simd
 						#endif
 						for (jj=0;jj<iknsupc*nrhs;jj++)
-				@precision DOUBLE
+@precision SINGLE DOUBLE
 							lsum[il + jj ] += lsum[il + jj + ii*sizelsum];
-				@precision DCOMPLEX
-							z_add(&lsum[il + jj ],
+@precision SCOMPLEX DCOMPLEX
+							@(pre)_add(&lsum[il + jj ],
 								  &lsum[il + jj ],
 								  &lsum[il + jj + ii*sizelsum]);
-				@precision !
+@precision !
 
 					RdTree_forwardMessageSimple(LRtree_ptr[lk],&lsum[il - LSUM_H ],RdTree_GetMsgSize(LRtree_ptr[lk],'@(pre)')*nrhs+LSUM_H,'@(pre)');
 					// }
@@ -1430,13 +1406,13 @@ void @(pre)lsum_fmod_inv_master
 							#pragma omp simd
 						#endif
 						for (jj=0;jj<iknsupc*nrhs;jj++)
-				@precision DOUBLE
+@precision SINGLE DOUBLE
 							lsum[il + jj ] += lsum[il + jj + ii*sizelsum];
-				@precision DCOMPLEX
-							z_add(&lsum[il + jj ],
+@precision SCOMPLEX DCOMPLEX
+							@(pre)_add(&lsum[il + jj ],
 								  &lsum[il + jj ],
 								  &lsum[il + jj + ii*sizelsum]);
-				@precision !
+@precision !
 
 					ii = X_BLK( lk );
 					// for (jj=0;jj<num_thread;jj++)
@@ -1445,13 +1421,13 @@ void @(pre)lsum_fmod_inv_master
 							#pragma omp simd
 						#endif
 						for (i = 0; i < iknsupc; ++i)
-				@precision DOUBLE
+@precision SINGLE DOUBLE
 							x[i + ii + j*iknsupc] += lsum[i + il + j*iknsupc ];
-				@precision DCOMPLEX
-							z_add(&x[i + ii + j*iknsupc],
+@precision SCOMPLEX DCOMPLEX
+							@(pre)_add(&x[i + ii + j*iknsupc],
 								  &x[i + ii + j*iknsupc],
 								  &lsum[i + il + j*iknsupc] );
-				@precision !
+@precision !
 
 					// fmod[lk] = -1; /* Do not solve X[k] in the future. */
 					lk = LBj( ik, grid );/* Local block number, column-wise. */
@@ -1478,11 +1454,11 @@ void @(pre)lsum_fmod_inv_master
 							#pragma omp simd
 						#endif
 						for (i=0 ; i<iknsupc*nrhs ; i++){
-							@precision DOUBLE
-										x[ii+i] = rtemp_loc[i];
-							@precision DCOMPLEX
-										z_copy(&x[ii+i],&rtemp_loc[i]);
-							@precision !
+@precision SINGLE DOUBLE
+							x[ii+i] = rtemp_loc[i];
+@precision SCOMPLEX DCOMPLEX
+							@(pre)_copy(&x[ii+i],&rtemp_loc[i]);
+@precision !
 						}
 					}else{
 #ifdef _CRAY
@@ -1496,17 +1472,6 @@ void @(pre)lsum_fmod_inv_master
 								lusup1, &nsupr1, &x[ii], &iknsupc);
 #endif
 					}
-		@precision DOUBLE
-					// for (i=0 ; i<iknsupc*nrhs ; i++){
-					// printf("x_usum: %f\n",x[ii+i]);
-					// fflush(stdout);
-					// }
-		@precision DCOMPLEX
-					// for (i=0 ; i<iknsupc*nrhs ; i++){
-					// printf("x_usum: %f %f\n",x[ii+i].r,x[ii+i].i);
-					// fflush(stdout);
-					// }
-		@precision !
 
 #if ( PROFlevel>=1 )
 					TOC(t2, t1);
@@ -1514,12 +1479,12 @@ void @(pre)lsum_fmod_inv_master
 
 #endif
 
-		@precision DOUBLE
+@precision SINGLE DOUBLE
 					stat[thread_id]->ops[SOLVE] += iknsupc * (iknsupc - 1) * nrhs;
-		@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 					stat[thread_id]->ops[SOLVE] += 4 * iknsupc * (iknsupc - 1) * nrhs
 					+ 10 * knsupc * nrhs; /* complex division */
-		@precision !
+@precision !
 
 #if ( DEBUGlevel>=2 )
 					printf("(%2d) Solve X[%2d]\n", iam, ik);
@@ -1553,11 +1518,11 @@ void @(pre)lsum_fmod_inv_master
 			} /* if fmod[lk] == 0 */
 		}
 		// }
-	@precision DOUBLE
+@precision SINGLE DOUBLE
 		stat[thread_id]->ops[SOLVE] += 2 * m * nrhs * knsupc;
-	@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 		stat[thread_id]->ops[SOLVE] += 8 * m * nrhs * knsupc;
-	@precision !
+@precision !
 	} /* if nlb>0*/
 } /* @(pre)LSUM_FMOD_INV */
 
@@ -1579,7 +1544,7 @@ void @(pre)lsum_bmod_inv
  int_t  **Ucb_valptr, /* Vertical linked list pointing to Unzval[].     */
  int_t  *xsup,
  gridinfo_t *grid,
- LocalLU_t *Llu,
+ @(pre)LocalLU_t *Llu,
  SuperLUStat_t **stat,
  int_t* root_send,
  int_t* nroot_send,
@@ -1594,10 +1559,10 @@ void @(pre)lsum_bmod_inv
 	 * =======
 	 *   Perform local block modifications: lsum[i] -= U_i,k * X[k].
 	 */
-@precision DOUBLE
-    double alpha = 1.0, beta = 0.0;
-@precision DCOMPLEX
-    doublecomplex alpha = {1.0, 0.0}, beta = {0.0, 0.0};
+@precision SINGLE DOUBLE
+    @(type) alpha = 1.0, beta = 0.0;
+@precision SCOMPLEX DCOMPLEX
+    @(type) alpha = {1.0, 0.0}, beta = {0.0, 0.0};
 @precision !
 	int    iam, iknsupc, knsupc, myrow, nsupr, p, pi;
 	int_t  fnz, gik, gikcol, i, ii, ik, ikfrow, iklrow, il, irow,
@@ -1691,18 +1656,18 @@ void @(pre)lsum_bmod_inv
 							#pragma omp simd
 							#endif
 							for (irow = fnz; irow < iklrow; ++irow)
-						@precision DOUBLE
+@precision SINGLE DOUBLE
 								dest[irow - ikfrow] -= uval[uptr++] * y[jj];
 								stat[thread_id1]->ops[SOLVE] += 2 * (iklrow - fnz);
-						@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 								{
-								zz_mult(&temp, &uval[uptr], &y[jj]);
-								z_sub(&dest[irow - ikfrow], &dest[irow - ikfrow],
+								@(pre)@(pre)_mult(&temp, &uval[uptr], &y[jj]);
+								@(pre)_sub(&dest[irow - ikfrow], &dest[irow - ikfrow],
 									  &temp);
 								++uptr;
 								}
 								stat[thread_id1]->ops[SOLVE] += 8 * (iklrow - fnz);
-						@precision !
+@precision !
 
 						}
 					} /* for jj ... */
@@ -1729,13 +1694,13 @@ void @(pre)lsum_bmod_inv
 							#pragma omp simd
 							#endif
 							for (jj=0;jj<iknsupc*nrhs;jj++)
-					@precision DOUBLE
+@precision SINGLE DOUBLE
 								lsum[il + jj ] += lsum[il + jj + ii*sizelsum];
-					@precision DCOMPLEX
-								z_add(&lsum[il + jj ],
+@precision SCOMPLEX DCOMPLEX
+								@(pre)_add(&lsum[il + jj ],
 									  &lsum[il + jj ],
 									  &lsum[il + jj + ii*sizelsum]);
-					@precision !
+@precision !
 
 #ifdef _OPENMP
 #pragma omp atomic capture
@@ -1760,13 +1725,13 @@ void @(pre)lsum_bmod_inv
 							#pragma omp simd
 							#endif
 							for (jj=0;jj<iknsupc*nrhs;jj++)
-					@precision DOUBLE
+@precision SINGLE DOUBLE
 								lsum[il + jj ] += lsum[il + jj + ii*sizelsum];
-					@precision DCOMPLEX
-								z_add(&lsum[il + jj ],
+@precision SCOMPLEX DCOMPLEX
+								@(pre)_add(&lsum[il + jj ],
 									  &lsum[il + jj ],
 									  &lsum[il + jj + ii*sizelsum]);
-					@precision !
+@precision !
 
 						ii = X_BLK( ik );
 						dest = &x[ii];
@@ -1776,13 +1741,13 @@ void @(pre)lsum_bmod_inv
 							#pragma omp simd
 							#endif
 							for (i = 0; i < iknsupc; ++i)
-					@precision DOUBLE
-								dest[i + j*iknsupc] += lsum[i + il + j*iknsupc];
-					@precision DCOMPLEX
-								z_add(&dest[i + j*iknsupc],
+@precision SINGLE DOUBLE
+							    dest[i + j*iknsupc] += lsum[i + il + j*iknsupc];
+@precision SCOMPLEX DCOMPLEX
+							    @(pre)_add(&dest[i + j*iknsupc],
 									  &dest[i + j*iknsupc],
 									  &lsum[i + il + j*iknsupc]);
-					@precision !
+@precision !
 
 						// if ( !brecv[ik] ) { /* Becomes a leaf node. */
 							// bmod[ik] = -1; /* Do not solve X[k] in the future. */
@@ -1810,11 +1775,11 @@ void @(pre)lsum_bmod_inv
 								#pragma omp simd
 								#endif
 								for (i=0 ; i<iknsupc*nrhs ; i++){
-						@precision DOUBLE
+@precision SINGLE DOUBLE
 									x[ii+i] = rtemp_loc[i];
-						@precision DCOMPLEX
-									z_copy(&x[ii+i],&rtemp_loc[i]);
-						@precision !
+@precision SCOMPLEX DCOMPLEX
+									@(pre)_copy(&x[ii+i],&rtemp_loc[i]);
+@precision !
 								}
 							}else{
 		#ifdef _CRAY
@@ -1828,28 +1793,17 @@ void @(pre)lsum_bmod_inv
 										lusup, &nsupr, &x[ii], &iknsupc);
 		#endif
 							}
-					@precision DOUBLE
-								// for (i=0 ; i<iknsupc*nrhs ; i++){
-								// printf("x_usum: %f\n",x[ii+i]);
-								// fflush(stdout);
-								// }
-					@precision DCOMPLEX
-								// for (i=0 ; i<iknsupc*nrhs ; i++){
-								// printf("x_usum: %f %f\n",x[ii+i].r,x[ii+i].i);
-								// fflush(stdout);
-								// }
-					@precision !
 
 		#if ( PROFlevel>=1 )
 							TOC(t2, t1);
 							stat[thread_id1]->utime[SOL_TRSM] += t2;
 		#endif
-				@precision DOUBLE
+@precision SINGLE DOUBLE
 							stat[thread_id1]->ops[SOLVE] += iknsupc * (iknsupc + 1) * nrhs;
-				@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 							stat[thread_id1]->ops[SOLVE] += 4 * iknsupc * (iknsupc + 1) * nrhs
 							+ 10 * knsupc * nrhs; /* complex division */
-				@precision !
+@precision !
 
 		#if ( DEBUGlevel>=2 )
 							printf("(%2d) Solve X[%2d]\n", iam, gik);
@@ -1923,18 +1877,18 @@ void @(pre)lsum_bmod_inv
 						#endif
 						for (irow = fnz; irow < iklrow; ++irow)
 
-						@precision DOUBLE
+@precision SINGLE DOUBLE
 								dest[irow - ikfrow] -= uval[uptr++] * y[jj];
 								stat[thread_id]->ops[SOLVE] += 2 * (iklrow - fnz);
-						@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 								{
-								zz_mult(&temp, &uval[uptr], &y[jj]);
-								z_sub(&dest[irow - ikfrow], &dest[irow - ikfrow],
+								@(pre)@(pre)_mult(&temp, &uval[uptr], &y[jj]);
+								@(pre)_sub(&dest[irow - ikfrow], &dest[irow - ikfrow],
 									  &temp);
 								++uptr;
 								}
 								stat[thread_id]->ops[SOLVE] += 8 * (iklrow - fnz);
-						@precision !
+@precision !
 					}
 				} /* for jj ... */
 			}
@@ -1959,13 +1913,13 @@ void @(pre)lsum_bmod_inv
 						#pragma omp simd
 						#endif
 						for (jj=0;jj<iknsupc*nrhs;jj++)
-				@precision DOUBLE
+@precision SINGLE DOUBLE
 							lsum[il + jj ] += lsum[il + jj + ii*sizelsum];
-				@precision DCOMPLEX
-							z_add(&lsum[il + jj ],
+@precision SCOMPLEX DCOMPLEX
+							@(pre)_add(&lsum[il + jj ],
 								  &lsum[il + jj ],
 								  &lsum[il + jj + ii*sizelsum]);
-				@precision !
+@precision !
 #ifdef _OPENMP
 #pragma omp atomic capture
 #endif
@@ -1989,13 +1943,13 @@ void @(pre)lsum_bmod_inv
 						#pragma omp simd
 						#endif
 						for (jj=0;jj<iknsupc*nrhs;jj++)
-					@precision DOUBLE
+@precision SINGLE DOUBLE
 								lsum[il + jj ] += lsum[il + jj + ii*sizelsum];
-					@precision DCOMPLEX
-								z_add(&lsum[il + jj ],
+@precision SCOMPLEX DCOMPLEX
+								@(pre)_add(&lsum[il + jj ],
 									  &lsum[il + jj ],
 									  &lsum[il + jj + ii*sizelsum]);
-					@precision !
+@precision !
 
 					ii = X_BLK( ik );
 					dest = &x[ii];
@@ -2005,13 +1959,13 @@ void @(pre)lsum_bmod_inv
 						#pragma omp simd
 						#endif
 						for (i = 0; i < iknsupc; ++i)
-				@precision DOUBLE
+@precision SINGLE DOUBLE
 							dest[i + j*iknsupc] += lsum[i + il + j*iknsupc];
-				@precision DCOMPLEX
-							z_add(&dest[i + j*iknsupc],
+@precision SCOMPLEX DCOMPLEX
+							@(pre)_add(&dest[i + j*iknsupc],
 								  &dest[i + j*iknsupc],
 								  &lsum[i + il + j*iknsupc]);
-				@precision !
+@precision !
 
 					// if ( !brecv[ik] ) { /* Becomes a leaf node. */
 						// bmod[ik] = -1; /* Do not solve X[k] in the future. */
@@ -2039,11 +1993,11 @@ void @(pre)lsum_bmod_inv
 							#pragma omp simd
 							#endif
 							for (i=0 ; i<iknsupc*nrhs ; i++){
-					@precision DOUBLE
+@precision SINGLE DOUBLE
 								x[ii+i] = rtemp_loc[i];
-					@precision DCOMPLEX
-								z_copy(&x[ii+i],&rtemp_loc[i]);
-					@precision !
+@precision SCOMPLEX DCOMPLEX
+								@(pre)_copy(&x[ii+i],&rtemp_loc[i]);
+@precision !
 							}
 						}else{
 	#ifdef _CRAY
@@ -2062,12 +2016,12 @@ void @(pre)lsum_bmod_inv
 						TOC(t2, t1);
 						stat[thread_id]->utime[SOL_TRSM] += t2;
 	#endif
-			@precision DOUBLE
+@precision SINGLE DOUBLE
 						stat[thread_id]->ops[SOLVE] += iknsupc * (iknsupc + 1) * nrhs;
-			@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 						stat[thread_id]->ops[SOLVE] += 4 * iknsupc * (iknsupc + 1) * nrhs
 						+ 10 * knsupc * nrhs; /* complex division */
-			@precision !
+@precision !
 	#if ( DEBUGlevel>=2 )
 						printf("(%2d) Solve X[%2d]\n", iam, gik);
 	#endif
@@ -2134,7 +2088,7 @@ void @(pre)lsum_bmod_inv_master
  int_t  **Ucb_valptr, /* Vertical linked list pointing to Unzval[].     */
  int_t  *xsup,
  gridinfo_t *grid,
- LocalLU_t *Llu,
+ @(pre)LocalLU_t *Llu,
  SuperLUStat_t **stat,
  int_t sizelsum,
  int_t sizertemp,
@@ -2147,10 +2101,10 @@ void @(pre)lsum_bmod_inv_master
 	 * =======
 	 *   Perform local block modifications: lsum[i] -= U_i,k * X[k].
 	 */
-@precision DOUBLE
-    double alpha = 1.0, beta = 0.0;
-@precision DCOMPLEX
-    doublecomplex alpha = {1.0, 0.0}, beta = {0.0, 0.0};
+@precision SINGLE DOUBLE
+    @(type) alpha = 1.0, beta = 0.0;
+@precision SCOMPLEX DCOMPLEX
+    @(type) alpha = {1.0, 0.0}, beta = {0.0, 0.0};
 @precision !
 	int    iam, iknsupc, knsupc, myrow, nsupr, p, pi;
 	int_t  fnz, gik, gikcol, i, ii, ik, ikfrow, iklrow, il, irow,
@@ -2247,18 +2201,18 @@ void @(pre)lsum_bmod_inv_master
 							#pragma omp simd
 							#endif
 							for (irow = fnz; irow < iklrow; ++irow)
-						@precision DOUBLE
+@precision SINGLE DOUBLE
 								dest[irow - ikfrow] -= uval[uptr++] * y[jj];
 							stat[thread_id1]->ops[SOLVE] += 2 * (iklrow - fnz);
-						@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 								{
-								zz_mult(&temp, &uval[uptr], &y[jj]);
-								z_sub(&dest[irow - ikfrow], &dest[irow - ikfrow],
+								@(pre)@(pre)_mult(&temp, &uval[uptr], &y[jj]);
+								@(pre)_sub(&dest[irow - ikfrow], &dest[irow - ikfrow],
 									  &temp);
 								++uptr;
 								}
 							stat[thread_id1]->ops[SOLVE] += 8 * (iklrow - fnz);
-						@precision !
+@precision !
 
 						}
 					} /* for jj ... */
@@ -2299,18 +2253,18 @@ void @(pre)lsum_bmod_inv_master
 						#pragma omp simd
 						#endif
 						for (irow = fnz; irow < iklrow; ++irow)
-					@precision DOUBLE
+@precision SINGLE DOUBLE
 							dest[irow - ikfrow] -= uval[uptr++] * y[jj];
 						stat[thread_id]->ops[SOLVE] += 2 * (iklrow - fnz);
-					@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 							{
-							zz_mult(&temp, &uval[uptr], &y[jj]);
-							z_sub(&dest[irow - ikfrow], &dest[irow - ikfrow],
+							@(pre)@(pre)_mult(&temp, &uval[uptr], &y[jj]);
+							@(pre)_sub(&dest[irow - ikfrow], &dest[irow - ikfrow],
 								  &temp);
 							++uptr;
 							}
 						stat[thread_id]->ops[SOLVE] += 8 * (iklrow - fnz);
-					@precision !
+@precision !
 
 					}
 				} /* for jj ... */
@@ -2345,13 +2299,13 @@ void @(pre)lsum_bmod_inv_master
 					#pragma omp simd
 					#endif
 					for (jj=0;jj<iknsupc*nrhs;jj++)
-			@precision DOUBLE
+@precision SINGLE DOUBLE
 						lsum[il + jj ] += lsum[il + jj + ii*sizelsum];
-			@precision DCOMPLEX
-						z_add(&lsum[il + jj ],
+@precision SCOMPLEX DCOMPLEX
+						@(pre)_add(&lsum[il + jj ],
 							  &lsum[il + jj ],
 							  &lsum[il + jj + ii*sizelsum]);
-			@precision !
+@precision !
 				RdTree_forwardMessageSimple(URtree_ptr[ik],&lsum[il - LSUM_H ],RdTree_GetMsgSize(URtree_ptr[ik],'@(pre)')*nrhs+LSUM_H,'@(pre)');
 
 #if ( DEBUGlevel>=2 )
@@ -2369,13 +2323,13 @@ void @(pre)lsum_bmod_inv_master
 					#pragma omp simd
 					#endif
 					for (jj=0;jj<iknsupc*nrhs;jj++)
-			@precision DOUBLE
+@precision SINGLE DOUBLE
 						lsum[il + jj ] += lsum[il + jj + ii*sizelsum];
-			@precision DCOMPLEX
-						z_add(&lsum[il + jj ],
+@precision SCOMPLEX DCOMPLEX
+						@(pre)_add(&lsum[il + jj ],
 							  &lsum[il + jj ],
 							  &lsum[il + jj + ii*sizelsum]);
-			@precision !
+@precision !
 
 				ii = X_BLK( ik );
 				dest = &x[ii];
@@ -2385,13 +2339,13 @@ void @(pre)lsum_bmod_inv_master
 					#pragma omp simd
 					#endif
 					for (i = 0; i < iknsupc; ++i)
-			@precision DOUBLE
+@precision SINGLE DOUBLE
 						dest[i + j*iknsupc] += lsum[i + il + j*iknsupc];
-			@precision DCOMPLEX
-						z_add(&dest[i + j*iknsupc],
+@precision SCOMPLEX DCOMPLEX
+						@(pre)_add(&dest[i + j*iknsupc],
 							  &dest[i + j*iknsupc],
 							  &lsum[i + il + j*iknsupc]);
-			@precision !
+@precision !
 
 				// if ( !brecv[ik] ) { /* Becomes a leaf node. */
 					// bmod[ik] = -1; /* Do not solve X[k] in the future. */
@@ -2419,11 +2373,11 @@ void @(pre)lsum_bmod_inv_master
 						#pragma omp simd
 						#endif
 						for (i=0 ; i<iknsupc*nrhs ; i++){
-				@precision DOUBLE
+@precision SINGLE DOUBLE
 							x[ii+i] = rtemp_loc[i];
-				@precision DCOMPLEX
-							z_copy(&x[ii+i],&rtemp_loc[i]);
-				@precision !
+@precision SCOMPLEX DCOMPLEX
+							@(pre)_copy(&x[ii+i],&rtemp_loc[i]);
+@precision !
 						}
 					}else{
 #ifdef _CRAY
@@ -2442,12 +2396,12 @@ void @(pre)lsum_bmod_inv_master
 					TOC(t2, t1);
 					stat[thread_id]->utime[SOL_TRSM] += t2;
 #endif
-		@precision DOUBLE
+@precision SINGLE DOUBLE
 					stat[thread_id]->ops[SOLVE] += iknsupc * (iknsupc + 1) * nrhs;
-		@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 					stat[thread_id]->ops[SOLVE] += 4 * iknsupc * (iknsupc + 1) * nrhs
 					+ 10 * knsupc * nrhs; /* complex division */
-		@precision !
+@precision !
 #if ( DEBUGlevel>=2 )
 					printf("(%2d) Solve X[%2d]\n", iam, gik);
 #endif

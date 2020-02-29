@@ -142,7 +142,7 @@ if ( msg0 && msg2 ) { /* L(:,k) and U(k,:) are not empty. */
 	 /* jj0 contains the look-ahead window that was updated in
 	    dlook_ahead_update.c. Now the search can continue from that point,
 	    not to start from block 0. */
-#if 0 // Sherry comment out 5/21/208
+#if 0 // Sherry comment out 5/21/2018
 	 /* Save pointers at location right after look-ahead window
 	    for later restart. */
 	 iukp0 = iukp;
@@ -394,10 +394,10 @@ if ( msg0 && msg2 ) { /* L(:,k) and U(k,:) are not empty. */
 
 	 /* Count flops for total GEMM calls */
 	 ncols = Ublock_info[nub-1].full_u_cols;
-@precision DOUBLE
+@precision SINGLE DOUBLE
  	 flops_t flps = 2.0 * (flops_t)Lnbrow * ldu * ncols;
 	 LookAheadScatterMOP += 3 * Lnbrow * ncols; /* scatter-add */
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 	 flops_t flps = 8.0 * (flops_t)Lnbrow * ldu * ncols;
 	 LookAheadScatterMOP += 3 * Lnbrow * ncols; /* scatter-add */
 @precision !
@@ -548,9 +548,9 @@ if ( msg0 && msg2 ) { /* L(:,k) and U(k,:) are not empty. */
     ncols = jj_cpu==0 ? 0 : Ublock_info[jj_cpu-1].full_u_cols;
 
     if ( Rnbrow>0 && ldu>0 ) { /* There are still blocks remaining ... */
-@precision DOUBLE
+@precision SINGLE DOUBLE
 	double flps = 2.0 * (double)Rnbrow * ldu * ncols;
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
 	double flps = 8.0 * (double)Rnbrow * ldu * ncols;
 @precision !
 	schur_flop_counter  += flps;
