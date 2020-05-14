@@ -315,7 +315,11 @@ int_t @(pre)UPanelTrSolve( int_t k,
         {
             #pragma omp task
             {
+#ifdef _OPENMP	    
                 int_t thread_id = omp_get_thread_num();
+#else		
+                int_t thread_id = 0;
+#endif		
                 @(type) *tempv = bigV +  thread_id * ldt * ldt;
                 @(pre)Trs2_GatherTrsmScatter(klst, Ublock_info[b].iukp, Ublock_info[b].rukp,
 				       usub, uval, tempv, nsupc, nsupc, lusup, Glu_persist);
@@ -362,7 +366,11 @@ int_t @(pre)UPanelTrSolve( int_t k,
             {
                 #pragma omp task
                 {
+#ifdef _OPENMP		
                     int_t thread_id = omp_get_thread_num();
+#else		    
+                    int_t thread_id = 0;
+#endif		    
                     @(type) *tempv = bigV +  thread_id * ldt * ldt;
                     @(pre)Trs2_GatherTrsmScatter(klst, Ublock_info[b].iukp, Ublock_info[b].rukp,
 					   usub, uval, tempv, nsupc, nsupr, lusup, Glu_persist);
