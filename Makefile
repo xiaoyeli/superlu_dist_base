@@ -5,11 +5,11 @@ EXM = ./EXAMPLE
 F90 = ./FORTRAN
 BLS = ./CBLAS
 
-TGTSRC 	= ../superlu_dist.git/SRC
-TGTTST 	= ../superlu_dist.git/TEST
-TGTEXM 	= ../superlu_dist.git/EXAMPLE
-TGTF90 	= ../superlu_dist.git/FORTRAN
-#TGTSRC 	= ../Mixed-Prec-slud.git/SRC
+#TGTSRC 	= ../superlu_dist.git/SRC
+#TGTTST 	= ../superlu_dist.git/TEST
+#TGTEXM 	= ../superlu_dist.git/EXAMPLE
+#TGTF90 	= ../superlu_dist.git/FORTRAN
+#GTSRC	= ../Mixed-Prec-slud.git/SRC
 #TGTTST 	= ../Mixed-Prec-slud.git/TEST
 #TGTEXM 	= ../Mixed-Prec-slud.git/EXAMPLE
 #TGTF90 	= ../Mixed-Prec-slud.git/FORTRAN
@@ -17,14 +17,18 @@ TGTF90 	= ../superlu_dist.git/FORTRAN
 #TGTTST 	= ../ssg1-superlu_dist.git/TEST
 #TGTEXM 	= ../ssg1-superlu_dist.git/EXAMPLE
 #TGTF90 	= ../ssg1-superlu_dist.git/FORTRAN
-#TGTSRC 	= ../Version-7-slud.git/SRC
-#TGTTST 	= ../Version-7-slud.git/TEST
-#TGTEXM 	= ../Version-7-slud.git/EXAMPLE
-#TGTF90 	= ../Version-7-slud.git/FORTRAN
+#TGTSRC 	= ../Version-7.git/SRC
+#TGTTST 	= ../Version-7.git/TEST
+#TGTEXM 	= ../Version-7.git/EXAMPLE
+#TGTF90 	= ../Version-7.git/FORTRAN
 
+TGTSRC 	= ../Next.git/SRC
+TGTTST 	= ../Next.git/TEST
+TGTEXM 	= ../Next.git/EXAMPLE
+TGTF90 	= ../Next.git/FORTRAN
 
 #all: single
-all: double dcomplex
+all: single double dcomplex
 
 single:	\
 	$(TGTSRC)/superlu_sdefs.h \
@@ -71,6 +75,7 @@ single:	\
 	$(TGTSRC)/streeFactorization.c \
 	$(TGTSRC)/psgstrf3d.c \
 	$(TGTSRC)/psgssvx3d.c \
+	$(TGTSRC)/ssuperlu_blas.c \
 	$(TGTEXM)/psdrive_ABglobal.c \
 	$(TGTEXM)/psdrive1_ABglobal.c \
 	$(TGTEXM)/psdrive2_ABglobal.c \
@@ -83,12 +88,13 @@ single:	\
 	$(TGTEXM)/psdrive4.c \
 	$(TGTEXM)/psdrive3d.c \
 	$(TGTEXM)/screate_matrix.c \
+	$(TGTEXM)/screate_matrix3d.c \
 	$(TGTEXM)/screate_matrix_perturbed.c \
 	$(TGTF90)/f_psdrive.f90 \
 	$(TGTF90)/superlu_c2f_swrap.c \
-	$(TGTF90)/screate_dist_matrix.c \
+	$(TGTF90)/c2f_screate_matrix_x_b.c \
 	$(TGTTST)/pstest.c \
-	$(TGTTST)/pscompute_resid.c
+	$(TGTTST)/pscompute_resid.c \
 
 $(TGTSRC)/superlu_sdefs.h:	$(SRC)/superlu_xdefs.h.base
 	extract -b $? -o $@ precision=single
@@ -178,6 +184,8 @@ $(TGTSRC)/psgstrf3d.c:	$(SRC)/pxgstrf3d.c.base
 	extract -b $? -o $@ precision=single
 $(TGTSRC)/psgssvx3d.c:	$(SRC)/pxgssvx3d.c.base
 	extract -b $? -o $@ precision=single
+$(TGTSRC)/ssuperlu_blas.c: $(SRC)/xsuperlu_blas.c.base
+	extract -b $? -o $@ precision=single
 $(TGTEXM)/psdrive_ABglobal.c:	$(EXM)/pxdrive_ABglobal.c.base
 	extract -b $? -o $@ precision=single
 $(TGTEXM)/psdrive1_ABglobal.c:	$(EXM)/pxdrive1_ABglobal.c.base
@@ -202,13 +210,15 @@ $(TGTEXM)/psdrive3d.c:	$(EXM)/pxdrive3d.c.base
 	extract -b $? -o $@ precision=single
 $(TGTEXM)/screate_matrix.c:	$(EXM)/xcreate_matrix.c.base
 	extract -b $? -o $@ precision=single
+$(TGTEXM)/screate_matrix3d.c:	$(EXM)/xcreate_matrix3d.c.base
+	extract -b $? -o $@ precision=single
 $(TGTEXM)/screate_matrix_perturbed.c:	$(EXM)/xcreate_matrix_perturbed.c.base
 	extract -b $? -o $@ precision=single
 $(TGTF90)/f_psdrive.f90:	$(F90)/f_pxdrive.f90.base
 	extract -b $? -o $@ precision=single
 $(TGTF90)/superlu_c2f_swrap.c:	$(F90)/superlu_c2f_xwrap.c.base
 	extract -b $? -o $@ precision=single
-$(TGTF90)/screate_dist_matrix.c:	$(F90)/xcreate_dist_matrix.c.base
+$(TGTF90)/c2f_screate_matrix_x_b.c:	$(F90)/c2f_xcreate_matrix_x_b.c.base
 	extract -b $? -o $@ precision=single
 $(TGTTST)/pstest.c:	$(TST)/pxtest.c.base
 	extract -b $? -o $@ precision=single
@@ -262,22 +272,26 @@ double:	\
 	$(TGTEXM)/pddrive3.c \
 	$(TGTEXM)/pddrive4.c \
 	$(TGTEXM)/dcreate_matrix.c \
+	$(TGTEXM)/dcreate_matrix3d.c \
 	$(TGTEXM)/dcreate_matrix_perturbed.c \
 	$(TGTF90)/f_pddrive.f90 \
+	$(TGTF90)/f_pddrive3d.f90 \
 	$(TGTF90)/superlu_c2f_dwrap.c \
-	$(TGTF90)/dcreate_dist_matrix.c \
+	$(TGTF90)/c2f_dcreate_matrix_x_b.c \
 	$(TGTTST)/pdtest.c \
-	$(TGTTST)/pdcompute_resid.c
-#	$(TGTEXM)/pddrive3d.c \
-#	$(TGTSRC)/dscatter3d.c \
-#	$(TGTSRC)/dgather.c \
-#	$(TGTSRC)/pd3dcomm.c \
-#	$(TGTSRC)/dtrfAux.c \
-#	$(TGTSRC)/dcommunication_aux.c \
-#	$(TGTSRC)/dtrfCommWrapper.c \
-#	$(TGTSRC)/dtreeFactorization.c \
-#	$(TGTSRC)/pdgstrf3d.c \
-#	$(TGTSRC)/pdgssvx3d.c \
+	$(TGTTST)/pdcompute_resid.c \
+	$(TGTEXM)/pddrive3d.c \
+	$(TGTSRC)/dscatter3d.c \
+	$(TGTSRC)/dgather.c \
+	$(TGTSRC)/pd3dcomm.c \
+	$(TGTSRC)/dtrfAux.c \
+	$(TGTSRC)/dcommunication_aux.c \
+	$(TGTSRC)/dtrfCommWrapper.c \
+	$(TGTSRC)/dtreeFactorization.c \
+	$(TGTSRC)/pdgstrf3d.c \
+	$(TGTSRC)/pdgssvx3d.c \
+	$(TGTSRC)/dnrformat_loc3d.c \
+	$(TGTSRC)/dsuperlu_blas.c \
 
 
 $(TGTSRC)/superlu_ddefs.h:	$(SRC)/superlu_xdefs.h.base
@@ -368,6 +382,10 @@ $(TGTSRC)/pdgstrf3d.c:	$(SRC)/pxgstrf3d.c.base
 	extract -b $? -o $@ precision=double
 $(TGTSRC)/pdgssvx3d.c:	$(SRC)/pxgssvx3d.c.base
 	extract -b $? -o $@ precision=double
+$(TGTSRC)/dnrformat_loc3d.c:	$(SRC)/xnrformat_loc3d.c.base
+	extract -b $? -o $@ precision=double
+$(TGTSRC)/dsuperlu_blas.c:	$(SRC)/xsuperlu_blas.c.base
+	extract -b $? -o $@ precision=double
 $(TGTEXM)/pddrive_ABglobal.c:	$(EXM)/pxdrive_ABglobal.c.base
 	extract -b $? -o $@ precision=double
 $(TGTEXM)/pddrive1_ABglobal.c:	$(EXM)/pxdrive1_ABglobal.c.base
@@ -392,13 +410,17 @@ $(TGTEXM)/pddrive3d.c:	$(EXM)/pxdrive3d.c.base
 	extract -b $? -o $@ precision=double
 $(TGTEXM)/dcreate_matrix.c:	$(EXM)/xcreate_matrix.c.base
 	extract -b $? -o $@ precision=double
+$(TGTEXM)/dcreate_matrix3d.c:	$(EXM)/xcreate_matrix3d.c.base
+	extract -b $? -o $@ precision=double
 $(TGTEXM)/dcreate_matrix_perturbed.c:	$(EXM)/xcreate_matrix_perturbed.c.base
 	extract -b $? -o $@ precision=double
 $(TGTF90)/f_pddrive.f90:	$(F90)/f_pxdrive.f90.base
 	extract -b $? -o $@ precision=double
+$(TGTF90)/f_pddrive3d.f90:	$(F90)/f_pxdrive3d.f90.base
+	extract -b $? -o $@ precision=double
 $(TGTF90)/superlu_c2f_dwrap.c:	$(F90)/superlu_c2f_xwrap.c.base
 	extract -b $? -o $@ precision=double
-$(TGTF90)/dcreate_dist_matrix.c:	$(F90)/xcreate_dist_matrix.c.base
+$(TGTF90)/c2f_dcreate_matrix_x_b.c:	$(F90)/c2f_xcreate_matrix_x_b.c.base
 	extract -b $? -o $@ precision=double
 $(TGTTST)/pdtest.c:	$(TST)/pxtest.c.base
 	extract -b $? -o $@ precision=double
@@ -452,22 +474,26 @@ dcomplex: \
 	$(TGTEXM)/pzdrive3.c \
 	$(TGTEXM)/pzdrive4.c \
 	$(TGTEXM)/zcreate_matrix.c \
+	$(TGTEXM)/zcreate_matrix3d.c \
 	$(TGTEXM)/zcreate_matrix_perturbed.c \
 	$(TGTF90)/f_pzdrive.f90 \
+	$(TGTF90)/f_pzdrive3d.f90 \
 	$(TGTF90)/superlu_c2f_zwrap.c \
-	$(TGTF90)/zcreate_dist_matrix.c \
+	$(TGTF90)/c2f_zcreate_matrix_x_b.c \
 	$(TGTTST)/pztest.c \
-	$(TGTTST)/pzcompute_resid.c
-#	$(TGTEXM)/pzdrive3d.c \
-#	$(TGTSRC)/zscatter3d.c \
-#	$(TGTSRC)/zgather.c \
-#	$(TGTSRC)/pz3dcomm.c \
-#	$(TGTSRC)/ztrfAux.c \
-#	$(TGTSRC)/zcommunication_aux.c \
-#	$(TGTSRC)/ztrfCommWrapper.c \
-#	$(TGTSRC)/ztreeFactorization.c \
-#	$(TGTSRC)/pzgstrf3d.c \
-#	$(TGTSRC)/pzgssvx3d.c \
+	$(TGTTST)/pzcompute_resid.c \
+	$(TGTEXM)/pzdrive3d.c \
+	$(TGTSRC)/zscatter3d.c \
+	$(TGTSRC)/zgather.c \
+	$(TGTSRC)/pz3dcomm.c \
+	$(TGTSRC)/ztrfAux.c \
+	$(TGTSRC)/zcommunication_aux.c \
+	$(TGTSRC)/ztrfCommWrapper.c \
+	$(TGTSRC)/ztreeFactorization.c \
+	$(TGTSRC)/pzgstrf3d.c \
+	$(TGTSRC)/pzgssvx3d.c \
+	$(TGTSRC)/znrformat_loc3d.c \
+	$(TGTSRC)/zsuperlu_blas.c \
 
 $(TGTSRC)/superlu_zdefs.h:	$(SRC)/superlu_xdefs.h.base
 	extract -b $? -o $@ precision=dcomplex
@@ -555,7 +581,11 @@ $(TGTSRC)/ztreeFactorization.c: $(SRC)/xtreeFactorization.c.base
 	extract -b $? -o $@ precision=dcomplex
 $(TGTSRC)/pzgstrf3d.c: $(SRC)/pxgstrf3d.c.base
 	extract -b $? -o $@ precision=dcomplex
+$(TGTSRC)/znrformat_loc3d.c: $(SRC)/xnrformat_loc3d.c.base
+	extract -b $? -o $@ precision=dcomplex
 $(TGTSRC)/pzgssvx3d.c: $(SRC)/pxgssvx3d.c.base
+	extract -b $? -o $@ precision=dcomplex
+$(TGTSRC)/zsuperlu_blas.c:	$(SRC)/xsuperlu_blas.c.base
 	extract -b $? -o $@ precision=dcomplex
 $(TGTEXM)/pzdrive_ABglobal.c:	$(EXM)/pxdrive_ABglobal.c.base
 	extract -b $? -o $@ precision=dcomplex
@@ -581,13 +611,17 @@ $(TGTEXM)/pzdrive3d.c:	$(EXM)/pxdrive3d.c.base
 	extract -b $? -o $@ precision=dcomplex
 $(TGTEXM)/zcreate_matrix.c: $(EXM)/xcreate_matrix.c.base
 	extract -b $? -o $@ precision=dcomplex
+$(TGTEXM)/zcreate_matrix3d.c: $(EXM)/xcreate_matrix3d.c.base
+	extract -b $? -o $@ precision=dcomplex
 $(TGTEXM)/zcreate_matrix_perturbed.c: $(EXM)/xcreate_matrix_perturbed.c.base
 	extract -b $? -o $@ precision=dcomplex
 $(TGTF90)/f_pzdrive.f90: $(F90)/f_pxdrive.f90.base
 	extract -b $? -o $@ precision=dcomplex
+$(TGTF90)/f_pzdrive3d.f90: $(F90)/f_pxdrive3d.f90.base
+	extract -b $? -o $@ precision=dcomplex
 $(TGTF90)/superlu_c2f_zwrap.c: $(F90)/superlu_c2f_xwrap.c.base
 	extract -b $? -o $@ precision=dcomplex
-$(TGTF90)/zcreate_dist_matrix.c: $(F90)/xcreate_dist_matrix.c.base
+$(TGTF90)/c2f_zcreate_matrix_x_b.c: $(F90)/c2f_xcreate_matrix_x_b.c.base
 	extract -b $? -o $@ precision=dcomplex
 $(TGTTST)/pztest.c:	$(TST)/pxtest.c.base
 	extract -b $? -o $@ precision=dcomplex

@@ -45,13 +45,13 @@ at the top-level directory.
     C       (input) @(mod_type)*, dimension (A->ncol)
             The column scale factors for A.
 
-    ROWCND  (input) double
+    ROWCND  (input) @(mod_type)
             Ratio of the smallest R(i) to the largest R(i).
 
-    COLCND  (input) double
+    COLCND  (input) @(mod_type)
             Ratio of the smallest C(i) to the largest C(i).
 
-    AMAX    (input) double
+    AMAX    (input) @(mod_type)
             Absolute value of largest matrix entry.
 
     EQUED   (output) char*
@@ -91,7 +91,7 @@ p@(pre)laqgs(SuperMatrix *A, @(mod_type) *r, @(mod_type) *c,
     NRformat_loc *Astore;
     @(type) *Aval;
     int_t i, j, irow, jcol, m_loc;
-    double large, small;
+    @(mod_type) large, small;
 @precision SCOMPLEX DCOMPLEX
     @(mod_type) temp;
 @precision !
@@ -107,7 +107,7 @@ p@(pre)laqgs(SuperMatrix *A, @(mod_type) *r, @(mod_type) *c,
     m_loc = Astore->m_loc;
 
     /* Initialize LARGE and SMALL. */
-    small = dmach_dist("Safe minimum") / dmach_dist("Precision");
+    small = @(mod_pre)mach_dist("Safe minimum") / @(mod_pre)mach_dist("Precision");
     large = 1. / small;
 
     if (rowcnd >= THRESH && amax >= small && amax <= large) {

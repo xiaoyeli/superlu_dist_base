@@ -478,7 +478,7 @@ at the top-level directory.
  *         If options->SolveInitialized = NO and nrhs != 0, it is an output
  *         argument. See superlu_@(pre)defs.h for the definition of '@(pre)SOLVEstruct_t'.
  *
- * berr    (output) double*, dimension (nrhs) (global)
+ * berr    (output) @(mod_type)*, dimension (nrhs) (global)
  *         The componentwise relative backward error of each solution
  *         vector X(j) (i.e., the smallest relative change in
  *         any element of A or B that makes X(j) an exact solution).
@@ -489,6 +489,7 @@ at the top-level directory.
  *
  * info    (output) int*
  *         = 0: successful exit
+ *         < 0: if info = -i, the i-th argument had an illegal value  
  *         > 0: if info = i, and i is
  *             <= A->ncol: U(i,i) is exactly zero. The factorization has
  *                been completed, but the factor U is exactly singular,
@@ -600,7 +601,7 @@ p@(pre)gssvx(superlu_dist_options_t *options, SuperMatrix *A,
     } else if ( A->nrow != A->ncol || A->nrow < 0 || A->Stype != SLU_NR_loc
 		|| A->Dtype != @(Dtype_PRE) || A->Mtype != SLU_GE )
 	*info = -2;
-    else if ( ldb < m_loc )
+    else if ( ldb < A->m_loc )
 	*info = -5;
     else if ( nrhs < 0 )
 	*info = -6;
@@ -663,6 +664,7 @@ p@(pre)gssvx(superlu_dist_options_t *options, SuperMatrix *A,
 		    ABORT("Malloc fails for R[].");
 		ScalePermstruct->R = R;
 		break;
+	    default: break;
 	}
     }
 
@@ -848,7 +850,7 @@ p@(pre)gssvx(superlu_dist_options_t *options, SuperMatrix *A,
 	        	SUPERLU_FREE(C1);
    	            }
 #if ( PRNTlevel>=2 )
-	            dmin = dmach_dist("Overflow");
+	            dmin = @(mod_pre)mach_dist("Overflow");
 	            dsum = 0.0;
 	            dprod = 1.0;
 #endif
@@ -1286,11 +1288,6 @@ p@(pre)gssvx(superlu_dist_options_t *options, SuperMatrix *A,
 
 	MPI_Comm_rank( MPI_COMM_WORLD, &iam_g );
 
-    if (!iam_g) {
-	print_options_dist(options);
-	fflush(stdout);
-    }
-
 @precision SINGLE DOUBLE
     printf(".. Ainfo mygid %5d   mysid %5d   nnz_loc " IFMT "  sum_loc  %e lsum_loc   %e nnz " IFMT " nnzLU %ld sum %e  lsum %e  N " IFMT "\n", iam_g,iam,Astore->rowptr[Astore->m_loc],asum, lsum, nnz_tot,nnzLU,asum_tot,lsum_tot,A->ncol);
 @precision SCOMPLEX DCOMPLEX
@@ -1385,7 +1382,8 @@ p@(pre)gssvx(superlu_dist_options_t *options, SuperMatrix *A,
 		       avg * 1e-6,
 		       avg / grid->nprow / grid->npcol * 1e-6,
 		       max * 1e-6);
-		printf("**************************************************\n");
+		printf("**************************************************\n\n");
+		printf("** number of Tiny Pivots: %8d\n\n", stat->TinyPivots);
 		fflush(stdout);
             }
 	} /* end printing stats */
@@ -1649,6 +1647,7 @@ p@(pre)gssvx(superlu_dist_options_t *options, SuperMatrix *A,
 	    case COL:
 		SUPERLU_FREE(R);
 		break;
+	    default: break;
 	}
     }
 

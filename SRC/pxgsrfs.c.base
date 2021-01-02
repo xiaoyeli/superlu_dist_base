@@ -130,8 +130,8 @@ p@(pre)gsrfs(int_t n, SuperMatrix *A, @(mod_type) anorm, @(pre)LUstruct_t *LUstr
 @precision !
     int_t count, i, j, lwork, nz;
     int   iam;
-    double eps, lstres;
-    double s, safmin, safe1, safe2;
+    @(mod_type) eps, lstres;
+    @(mod_type) s, safmin, safe1, safe2;
 
     /* Data structures used by matrix-vector multiply routine. */
     p@(pre)gsmv_comm_t *gsmv_comm = SOLVEstruct->gsmv_comm;
@@ -181,8 +181,8 @@ p@(pre)gsrfs(int_t n, SuperMatrix *A, @(mod_type) anorm, @(pre)LUstruct_t *LUstr
 
     /* NZ = maximum number of nonzero elements in each row of A, plus 1 */
     nz     = A->ncol + 1;
-    eps    = dmach_dist("Epsilon");
-    safmin = dmach_dist("Safe minimum");
+    eps    = @(mod_pre)mach_dist("Epsilon");
+    safmin = @(mod_pre)mach_dist("Safe minimum");
 
     /* Set SAFE1 essentially to be the underflow threshold times the
        number of additions in each row. */
@@ -245,7 +245,7 @@ p@(pre)gsrfs(int_t n, SuperMatrix *A, @(mod_type) anorm, @(pre)LUstruct_t *LUstr
                 /* If temp[i] is exactly 0.0 (computed by PxGSMV), then
                    we know the true residual also must be exactly 0.0. */
 	    }
-	    MPI_Allreduce( &s, &berr[j], 1, MPI_DOUBLE, MPI_MAX, grid->comm );
+	    MPI_Allreduce( &s, &berr[j], 1, @(MPI_MOD_TYPE), MPI_MAX, grid->comm );
 
 #if ( PRNTlevel>= 1 )
 	    if ( !iam )

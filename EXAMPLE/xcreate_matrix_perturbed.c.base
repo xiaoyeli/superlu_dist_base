@@ -113,10 +113,10 @@ int @(pre)create_matrix_perturbed(SuperMatrix *A, int nrhs, @(type) **rhs,
 
     /* Perturbed the 1st and last diagonal of the matrix to lower
        values. Intention is to change perm_r[].   */
-@precision DOUBLE
+@precision DOUBLE SINGLE
     nzval[0] *= 0.01;
     nzval[nnz-1] *= 0.0001; 
-@precision DCOMPLEX
+@precision DCOMPLEX SCOMPLEX
     nzval[0].r *= 0.01; nzval[0].i *= 0.01;
     nzval[nnz-1].r *= 0.0001; nzval[nnz-1].i *= 0.0001;
 @precision !
@@ -262,7 +262,7 @@ int @(pre)create_matrix_perturbed_postfix(SuperMatrix *A, int nrhs, @(type) **rh
 
     if ( !iam ) {
     double t = SuperLU_timer_();       
-@precision DOUBLE
+@precision DOUBLE SINGLE
     if(!strcmp(postfix,"rua")){
 @precision DCOMPLEX
     if(!strcmp(postfix,"cua")){
@@ -311,10 +311,10 @@ int @(pre)create_matrix_perturbed_postfix(SuperMatrix *A, int nrhs, @(type) **rh
 
     /* Perturbed the 1st and last diagonal of the matrix to lower
        values. Intention is to change perm_r[].   */
-@precision DOUBLE
+@precision DOUBLE SINGLE
     nzval[0] *= 0.01;
     nzval[nnz-1] *= 0.0001; 
-@precision DCOMPLEX
+@precision DCOMPLEX SCOMPLEX
     nzval[0].r *= 0.01; nzval[0].i *= 0.01;
     nzval[nnz-1].r *= 0.0001; nzval[nnz-1].i *= 0.0001;
 @precision !

@@ -263,8 +263,8 @@ p@(pre)gsrfs_ABXglobal(int_t n, SuperMatrix *A, @(mod_type) anorm, @(pre)LUstruc
 
     /* NZ = maximum number of nonzero elements in each row of A, plus 1 */
     nz     = A->ncol + 1;
-    eps    = dmach_dist("Epsilon");
-    safmin = dmach_dist("Safe minimum");
+    eps    = @(mod_pre)mach_dist("Epsilon");
+    safmin = @(mod_pre)mach_dist("Safe minimum");
 
     /* Set SAFE1 essentially to be the underflow threshold times the
        number of additions in each row. */

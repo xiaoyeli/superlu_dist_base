@@ -514,7 +514,7 @@ void @(pre)lsum_fmod_inv
 	int_t lptr;      /* Starting position in lsub[*].                      */
 	int_t luptr;     /* Starting position in lusup[*].                     */
 	int_t iword = sizeof(int_t);
-	int_t dword = sizeof (double);
+	int_t dword = sizeof (@(mod_type));
 	int_t aln_d,aln_i;
 	aln_d = ceil(CACHELINE/(double)dword);
 	aln_i = ceil(CACHELINE/(double)iword);
@@ -1136,7 +1136,7 @@ void @(pre)lsum_fmod_inv_master
 	int_t lptr;      /* Starting position in lsub[*].                      */
 	int_t luptr;     /* Starting position in lusup[*].                     */
 	int_t iword = sizeof(int_t);
-	int_t dword = sizeof (double);
+	int_t dword = sizeof (@(mod_type));
 	int_t aln_d,aln_i;
 	aln_d = ceil(CACHELINE/(double)dword);
 	aln_i = ceil(CACHELINE/(double)iword);
@@ -1588,7 +1588,7 @@ void @(pre)lsum_bmod_inv
 	float msg_vol = 0, msg_cnt = 0;
 	int_t Nchunk, nub_loc,remainder,nn,lbstart,lbend;
 	int_t iword = sizeof(int_t);
-	int_t dword = sizeof (double);
+	int_t dword = sizeof(@(mod_type));
 	int_t aln_d,aln_i;
 	aln_d = ceil(CACHELINE/(double)dword);
 	aln_i = ceil(CACHELINE/(double)iword);
@@ -2130,7 +2130,7 @@ void @(pre)lsum_bmod_inv_master
 	float msg_vol = 0, msg_cnt = 0;
 	int_t Nchunk, nub_loc,remainder,nn,lbstart,lbend;
 	int_t iword = sizeof(int_t);
-	int_t dword = sizeof (double);
+	int_t dword = sizeof (@(mod_type));
 	int_t aln_d,aln_i;
 	aln_d = ceil(CACHELINE/(double)dword);
 	aln_i = ceil(CACHELINE/(double)iword);

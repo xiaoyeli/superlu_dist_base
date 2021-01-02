@@ -52,7 +52,7 @@ int main(int argc, char *argv[])
     @(pre)LUstruct_t LUstruct;
     @(pre)SOLVEstruct_t SOLVEstruct;
     gridinfo_t grid;
-    double   *berr;
+    @(mod_type)   *berr;
     @(type)   *b, *xtrue, *b1;
     int    i, j, m, n;
     int    nprow, npcol;
@@ -103,7 +103,7 @@ int main(int argc, char *argv[])
 
     /* Bail out if I do not belong in the grid. */
     iam = grid.iam;
-    if ( iam >= nprow * npcol )	goto out;
+    if ( iam == -1 )	goto out;
     if ( !iam ) {
 	int v_major, v_minor, v_bugfix;
 #ifdef __INTEL_COMPILER
@@ -143,7 +143,7 @@ int main(int argc, char *argv[])
     for (j = 0; j < nrhs; ++j)
         for (i = 0; i < ldb; ++i) b1[i+j*ldb] = b[i+j*ldb];
 
-    if ( !(berr = doubleMalloc_dist(nrhs)) )
+    if ( !(berr = @(mod_type)Malloc_dist(nrhs)) )
 	ABORT("Malloc fails for berr[].");
 
     /* ------------------------------------------------------------
@@ -188,7 +188,7 @@ int main(int argc, char *argv[])
     /* Check the accuracy of the solution. */
     if ( !iam ) printf("\tSolve the first system:\n");
     p@(pre)inf_norm_error(iam, ((NRformat_loc *)A.Store)->m_loc,
-		     nrhs, b, ldb, xtrue, ldx, &grid);
+		     nrhs, b, ldb, xtrue, ldx, grid.comm);
 
     PStatPrint(&options, &stat, &grid);        /* Print the statistics. */
     PStatFree(&stat);
@@ -207,7 +207,7 @@ int main(int argc, char *argv[])
     /* Check the accuracy of the solution. */
     if ( !iam ) printf("\tSolve the system with a different B:\n");
     p@(pre)inf_norm_error(iam, ((NRformat_loc *)A.Store)->m_loc,
-		     nrhs, b1, ldb, xtrue, ldx, &grid);
+		     nrhs, b1, ldb, xtrue, ldx, grid.comm);
 
     PStatPrint(&options, &stat, &grid);        /* Print the statistics. */
 

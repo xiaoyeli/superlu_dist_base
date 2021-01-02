@@ -33,7 +33,7 @@ at the top-level directory.
 static void ReadVector(FILE *, int_t, int_t *, int_t, int_t);
 static void @(pre)ReadValues(FILE *, int_t, @(type) *, int_t, int_t);
 @precision SINGLE DOUBLE
-extern void FormFullA(int_t, int_t *, @(type) **, int_t **, int_t **);
+static void FormFullA(int_t, int_t *, @(type) **, int_t **, int_t **);
 @precision !
 static int DumpLine(FILE *);
 static int ParseIntFormat(char *, int_t *, int_t *);
@@ -329,7 +329,7 @@ void
  * matrix. On exit, it represents the full matrix with lower and upper parts.
  * </pre>
  */
-extern void
+static void
 FormFullA(int_t n, int_t *nonz, @(type) **nzval, int_t **rowind, int_t **colptr)
 {
     register int_t i, j, k, col, new_nnz;

@@ -52,6 +52,11 @@ void f_create_gridinfo_handle(fptr *handle)
    *handle = (fptr) SUPERLU_MALLOC(sizeof(gridinfo_t));
 }
 
+void f_create_gridinfo3d_handle(fptr *handle)
+{
+   *handle = (fptr) SUPERLU_MALLOC(sizeof(gridinfo3d_t));
+}
+
 void f_create_options_handle(fptr *handle)
 {
    *handle = (fptr) SUPERLU_MALLOC(sizeof(superlu_dist_options_t));
@@ -128,6 +133,15 @@ void f_get_gridinfo(fptr *grid, int *iam, int_t *nprow, int_t *npcol)
   *iam=((gridinfo_t *) *grid)->iam;
   *npcol=((gridinfo_t *) *grid)->npcol;
   *nprow=((gridinfo_t *) *grid)->nprow;
+}
+
+void f_get_gridinfo3d(fptr *grid, int *iam,
+         	      int_t *nprow, int_t *npcol, int_t *npdep)
+{
+  *iam=((gridinfo3d_t *) *grid)->iam;
+  *npcol=((gridinfo3d_t *) *grid)->npcol;
+  *nprow=((gridinfo3d_t *) *grid)->nprow;
+  *npdep=((gridinfo3d_t *) *grid)->npdep;
 }
 
 void f_get_SuperMatrix(fptr *A, int_t *nrow, int_t *ncol)
@@ -210,13 +224,17 @@ void f_set_default_options(fptr *options)
 
 void f_superlu_gridinit(int *Bcomm, int_t *nprow, int_t *npcol, fptr *grid)
 {
-  
    superlu_gridinit(f2c_comm(Bcomm), *nprow, *npcol, (gridinfo_t *) *grid);
 }
 
+void f_superlu_gridinit3d(int *Bcomm, int_t *nprow, int_t *npcol,
+   			  int_t *npdep, fptr *grid)
+{
+    superlu_gridinit3d(f2c_comm(Bcomm), *nprow, *npcol, *npdep, (gridinfo3d_t *) *grid);
+}
+
 void f_superlu_gridmap(int *Bcomm, int_t *nprow, int_t *npcol, 
-                       int_t *usermap, int_t *ldumap,
-	 fptr *grid)
+                       int_t *usermap, int_t *ldumap, fptr *grid)
 {
    superlu_gridmap(f2c_comm(Bcomm), *nprow, *npcol, usermap, *ldumap, (gridinfo_t *) *grid);
 }
@@ -260,9 +278,35 @@ void f_LUstructFree(fptr *LUstruct)
    @(pre)LUstructFree((@(pre)LUstruct_t *) *LUstruct);
 }
 
-void f_Destroy_LU(int_t *n, fptr *grid, fptr *LUstruct)
+void f_Destroy_LU_SOLVE_struct(fptr *options, int_t *n, fptr *grid,
+                               fptr *LUstruct, fptr *SOLVEstruct)
 {
-   @(pre)Destroy_LU(*n, (gridinfo_t *) *grid, (@(pre)LUstruct_t *) *LUstruct);
+    superlu_dist_options_t *opt = (superlu_dist_options_t *) *options;
+    @(pre)Destroy_LU(*n, (gridinfo_t *) *grid, (@(pre)LUstruct_t *) *LUstruct);
+    @(pre)LUstructFree((@(pre)LUstruct_t *) *LUstruct);
+    if ( opt->SolveInitialized ) {
+        @(pre)SolveFinalize(opt, (@(pre)SOLVEstruct_t *) *SOLVEstruct);
+    }
+}
+
+void f_Destroy_LU_SOLVE_struct_3d(fptr *options, int_t *n, fptr *grid,
+		                  fptr *LUstruct, fptr *SOLVEstruct)
+{
+    gridinfo3d_t *grid3d = (gridinfo3d_t *) *grid;
+    superlu_dist_options_t *opt = (superlu_dist_options_t *) *options;
+    @(pre)LUstruct_t *LUstruct_ptr = (@(pre)LUstruct_t *) *LUstruct;
+    
+    if ( grid3d->zscp.Iam == 0 ) { // process layer 0
+	@(pre)Destroy_LU(*n, &(grid3d->grid2d), LUstruct_ptr);
+	if ( opt->SolveInitialized ) {
+	    @(pre)SolveFinalize(opt, (@(pre)SOLVEstruct_t *) *SOLVEstruct);
+	}
+    } else { // process layers not equal 0
+        @(pre)DeAllocLlu_3d(*n, LUstruct_ptr, grid3d);
+        @(pre)DeAllocGlu_3d(LUstruct_ptr);
+    }
+    
+    @(pre)LUstructFree(LUstruct_ptr);
 }
 
 void f_@(pre)Create_CompRowLoc_Mat_dist(fptr *A, int_t *m, int_t *n, int_t *nnz_loc,
@@ -294,7 +338,7 @@ void f_@(pre)SolveFinalize(fptr *options, fptr *SOLVEstruct)
 
 void f_p@(pre)gssvx(fptr *options, fptr *A, fptr *ScalePermstruct, @(type) *B,
                int *ldb, int *nrhs, fptr *grid, fptr *LUstruct,
-               fptr *SOLVEstruct, double *berr, fptr *stat, int *info)
+               fptr *SOLVEstruct, @(mod_type) *berr, fptr *stat, int *info)
 {
     p@(pre)gssvx((superlu_dist_options_t *) *options, (SuperMatrix *) *A,
 	    (@(pre)ScalePermstruct_t *) *ScalePermstruct, B, *ldb, *nrhs,
@@ -306,19 +350,62 @@ void f_p@(pre)gssvx(fptr *options, fptr *A, fptr *ScalePermstruct, @(type) *B,
 	       (gridinfo_t *) *grid);
 }
 
+void f_p@(pre)gssvx3d(fptr *options, fptr *A, fptr *ScalePermstruct,
+                 @(type) *B, int *ldb, int *nrhs,
+                 fptr *grid, fptr *LUstruct, fptr *SOLVEstruct,
+                 @(mod_type) *berr, fptr *stat, int *info)
+{
+    gridinfo3d_t *grid3d = (gridinfo3d_t *) *grid;
+    p@(pre)gssvx3d((superlu_dist_options_t *) *options, (SuperMatrix *) *A,
+	      (@(pre)ScalePermstruct_t *) *ScalePermstruct, B, *ldb, *nrhs,
+	      grid3d, (@(pre)LUstruct_t *) *LUstruct,
+	      (@(pre)SOLVEstruct_t *) *SOLVEstruct, berr,
+	      (SuperLUStat_t *) *stat, info);
+
+    if ( grid3d->zscp.Iam == 0 ) {
+	PStatPrint((superlu_dist_options_t *) *options,
+		   (SuperLUStat_t *) *stat, &(grid3d->grid2d));
+    }
+}
+
 /* Create the distributed matrix */
 
-void f_@(pre)create_dist_matrix(fptr *A, int_t *m, int_t *n, int_t *nnz,
-			   @(type) *nzval, int_t *rowind, int_t *colptr,
-			   fptr *grid)
+void f_@(pre)create_matrix_x_b(char *fname, fptr *A, int *m, int *n, int_t *nnz,
+		           int *nrhs, @(type) *b, int *ldb,
+		           @(type) *xtrue, int *ldx, fptr *grid)
 {
-   int @(pre)create_dist_matrix(SuperMatrix *, int_t, int_t, int_t, @(type) *,
-			   int_t * , int_t *, gridinfo_t *);
+    extern int c2f_@(pre)create_matrix_x_b(char *fname, int nrhs, int nprocs,
+    	                   MPI_Comm, SuperMatrix *A, int *m_g, int *n_g,
+			   int_t *nnz_g, @(type) *rhs, int *ldb,
+			   @(type) *x, int *ldx);
 
-   @(pre)create_dist_matrix((SuperMatrix *) *A, (int_t) *m, *n, *nnz, 
-		       (@(type) *) nzval, (int_t *) rowind, (int_t *) colptr,
-		       (gridinfo_t *) *grid);
+    int iam, nprocs;
+    int_t nprow, npcol;
+    MPI_Comm slucomm = ((gridinfo_t *) *grid)->comm;
+    f_get_gridinfo(grid, &iam, &nprow, &npcol);
+    nprocs = nprow * npcol;
+			   
+    c2f_@(pre)create_matrix_x_b(fname, *nrhs, nprocs, slucomm,
+    	                   (SuperMatrix *) *A, m, n, nnz, b, ldb, xtrue, ldx);
+}
 
+void f_@(pre)create_matrix_x_b_3d(char *fname, fptr *A, int *m, int *n, int_t *nnz,
+		           int *nrhs, @(type) *b, int *ldb,
+		           @(type) *xtrue, int *ldx, fptr *grid)
+{
+    extern int c2f_@(pre)create_matrix_x_b(char *fname, int nrhs, int nprocs,
+    	                   MPI_Comm, SuperMatrix *A, int *m_g, int *n_g,
+			   int_t *nnz_g, @(type) *rhs, int *ldb,
+			   @(type) *x, int *ldx);
+
+    int iam, nprocs;
+    int_t nprow, npcol, npdep;
+    MPI_Comm slucomm = ((gridinfo3d_t *) *grid)->comm;
+    f_get_gridinfo3d(grid, &iam, &nprow, &npcol, &npdep);
+    nprocs = nprow * npcol * npdep;
+			   
+    c2f_@(pre)create_matrix_x_b(fname, *nrhs, nprocs, slucomm,
+    	                   (SuperMatrix *) *A, m, n, nnz, b, ldb, xtrue, ldx);
 }
 
 /* Check malloc */

@@ -587,6 +587,7 @@ p@(pre)gssvx_ABglobal(superlu_dist_options_t *options, SuperMatrix *A,
 		    ABORT("Malloc fails for R[].");
 		ScalePermstruct->R = R;
 		break;
+	    default: break;
 	}
     }
 
@@ -767,7 +768,7 @@ p@(pre)gssvx_ABglobal(superlu_dist_options_t *options, SuperMatrix *A,
    	    }
 
 #if ( PRNTlevel>=2 )
-	    dmin = dmach_dist("Overflow");
+	    dmin = @(mod_pre)mach_dist("Overflow");
 	    dsum = 0.0;
 	    dprod = 1.0;
 #endif
@@ -1169,6 +1170,7 @@ p@(pre)gssvx_ABglobal(superlu_dist_options_t *options, SuperMatrix *A,
 	    case COL:
 		SUPERLU_FREE(R);
 		break;
+	    default:  break;
 	}
     }
     if ( !factored || (factored && options->IterRefine) )

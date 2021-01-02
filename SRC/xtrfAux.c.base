@@ -120,7 +120,7 @@ int_t @(pre)SchurComplementSetup(
     @(pre)LocalLU_t *Llu = LUstruct->Llu;
     int_t* xsup = Glu_persist->xsup;
 
-    int_t* ToRecv = Llu->ToRecv;
+    int* ToRecv = Llu->ToRecv;
     int_t iam = grid->iam;
 
     int_t myrow = MYROW (iam, grid);
@@ -355,7 +355,7 @@ int_t @(pre)SchurComplementSetupGPU(
     @(pre)LocalLU_t *Llu = LUstruct->Llu;
     int_t* xsup = Glu_persist->xsup;
 
-    int_t* ToRecv = Llu->ToRecv;
+    int* ToRecv = Llu->ToRecv;
     int_t iam = grid->iam;
 
     int_t myrow = MYROW (iam, grid);
@@ -496,8 +496,7 @@ int_t @(pre)SchurComplementSetupGPU(
     return bigV;
 }
 
-@(type)* @(pre)getBigU(int_t nsupers, gridinfo_t *grid,
-                    @(pre)LUstruct_t *LUstruct)
+@(type)* @(pre)getBigU(int_t nsupers, gridinfo_t *grid, @(pre)LUstruct_t *LUstruct)
 {
     int_t Pr = grid->nprow;
     int_t Pc = grid->npcol;
@@ -541,6 +540,7 @@ int_t @(pre)SchurComplementSetupGPU(
     return bigU;
 } /* @(pre)getBigU */
 
+
 trf3Dpartition_t* @(pre)initTrf3Dpartition(int_t nsupers,
 				      superlu_dist_options_t *options,
 				      @(pre)LUstruct_t *LUstruct, gridinfo3d_t * grid3d
@@ -552,7 +552,10 @@ trf3Dpartition_t* @(pre)initTrf3Dpartition(int_t nsupers,
     int iam = grid3d->iam;
     CHECK_MALLOC (iam, "Enter @(pre)initTrf3Dpartition()");
 #endif
-    int_t* perm_c_supno = getPerm_c_supno(nsupers, options, LUstruct, grid);
+    int_t* perm_c_supno = getPerm_c_supno(nsupers, options,
+    	   		                 LUstruct->Glu_persist,
+		                         LUstruct->Llu->Lrowind_bc_ptr,
+					 LUstruct->Llu->Ufstnz_br_ptr, grid);
     int_t* iperm_c_supno = getFactIperm(perm_c_supno, nsupers);
 
     // calculating tree factorization
@@ -560,7 +563,9 @@ trf3Dpartition_t* @(pre)initTrf3Dpartition(int_t nsupers,
     treeList_t* treeList = setree2list(nsupers, setree );
 
     /*update treelist with weight and depth*/
-    getSCUweight(nsupers, treeList, LUstruct, grid3d);
+    getSCUweight(nsupers, treeList, LUstruct->Glu_persist->xsup,
+		  LUstruct->Llu->Lrowind_bc_ptr, LUstruct->Llu->Ufstnz_br_ptr,
+		  grid3d);
 
     calcTreeWeight(nsupers, setree, treeList, LUstruct->Glu_persist->xsup);
 

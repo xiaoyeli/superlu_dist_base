@@ -52,7 +52,7 @@ int main(int argc, char *argv[])
     @(pre)ScalePermstruct_t ScalePermstruct;
     @(pre)LUstruct_t LUstruct;
     gridinfo_t grid;
-    double   *berr;
+    @(mod_type)   *berr;
     @(type)   *a, *b, *b1, *xtrue;
     int_t    *asub, *xa;
     int_t    i, j, m, n, nnz;
@@ -104,7 +104,7 @@ int main(int argc, char *argv[])
 
     /* Bail out if I do not belong in the grid. */
     iam = grid.iam;
-    if ( iam >= nprow * npcol )
+    if ( iam == -1 )
 	goto out;
     
 #if ( DEBUGlevel>=1 )
@@ -163,7 +163,7 @@ int main(int argc, char *argv[])
     for (j = 0; j < nrhs; ++j)
 	for (i = 0; i < m; ++i) b1[i+j*ldb] = b[i+j*ldb];
 
-    if ( !(berr = doubleMalloc_dist(nrhs)) )
+    if ( !(berr = @(mod_type)Malloc_dist(nrhs)) )
 	ABORT("Malloc fails for berr[].");
 
     /* ------------------------------------------------------------

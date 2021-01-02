@@ -31,9 +31,6 @@ at the top-level directory.
 #include "xtrf3Dpartition.h"
 #endif
 
-#define INT_T_ALLOC(x)  ((int_t *) SUPERLU_MALLOC ( (x) * sizeof (int_t)))
-#define DOUBLE_ALLOC(x)  ((double *) SUPERLU_MALLOC ( (x) * sizeof (double)))
-
 // #define MPI_MALLOC
 #define MPI_INT_ALLOC(a, b) (MPI_Alloc_mem( (b)*sizeof(int_t), MPI_INFO_NULL, &(a) ))
 #define MPI_DATATYPE_ALLOC(a, b) (MPI_Alloc_mem((b)*sizeof(@(type)), MPI_INFO_NULL, &(a)))
@@ -70,15 +67,22 @@ int_t @(pre)AllocLlu(int_t nsupers, @(pre)LUstruct_t * LUstruct, gridinfo3d_t* g
 	    Ufstnz_br_ptr[i] = NULL;
 	    Unzval_br_ptr[i] = NULL;
 	}
-    
-    int_t *ToRecv = intCalloc_dist(nsupers); /* Recv from no one (0), left (1), and up (2).*/
-    int_t *ToSendD = intCalloc_dist(nbr); /* Whether need to send down block row. */
-    int_t **ToSendR = (int_t **) SUPERLU_MALLOC(nbc * sizeof(int_t*)); /* List of processes to send right block col. */
+
+   // Sherry: use int type
+                  /* Recv from no one (0), left (1), and up (2).*/
+    int *ToRecv = SUPERLU_MALLOC(nsupers * sizeof(int));
+    for (i = 0; i < nsupers; ++i) ToRecv[i] = 0;
+                  /* Whether need to send down block row. */
+    int *ToSendD = SUPERLU_MALLOC(nbr * sizeof(int));
+    for (i = 0; i < nbr; ++i) ToSendD[i] = 0;
+                  /* List of processes to send right block col. */
+    int **ToSendR = (int **) SUPERLU_MALLOC(nbc * sizeof(int*));
 
     for (int_t i = 0; i < nbc; ++i)
 	{
 	    /* code */
-	    ToSendR[i] = INT_T_ALLOC(Pc);
+	    //ToSendR[i] = INT_T_ALLOC(Pc);
+	    ToSendR[i] = SUPERLU_MALLOC(Pc * sizeof(int));
 	}
     
     /*now setup the pointers*/
@@ -229,27 +233,16 @@ int_t @(pre)zRecvLPanel(int_t k, int_t sender, @(type) alpha, @(type) beta,
 	    
 	    if (lsub != NULL)
 		{
-		    
-		    int_t len   = lsub[1];       /* LDA of the nzval[] */
-		    int_t len2  = SuperSize(k) * len;	/*size of nzval of L panels*/
+		    int len   = lsub[1];       /* LDA of the nzval[] */
+		    int len2  = SuperSize(k) * len; /* size of nzval of L panels */
 		    
 		    MPI_Status status;
 		    MPI_Recv(Lval_buf , len2, @(MPI_TYPE), sender, k,
 			     grid3d->zscp.comm, &status);
 		    
 		    /*reduce the updates*/
-#if 1
-		    @(pre)scal_(&len2, &alpha, lnzval, &inc);
-		    @(pre)axpy_(&len2, &beta, Lval_buf, &inc, lnzval, &inc);
-#else
-@precision SINGLE DOUBLE
-		    cblas_@(pre)scal (len2, alpha, lnzval, 1);
-		    cblas_@(pre)axpy (len2, beta, Lval_buf, 1, lnzval, 1);
-@precision SCOMPLEX DCOMPLEX
-		    cblas_@(pre)scal (len2, (void*) &alpha, lnzval, 1);
-		    cblas_@(pre)axpy (len2, (void*) &beta, Lval_buf, 1, lnzval, 1);
-@precision !
-#endif
+		    superlu_@(pre)scal(len2, alpha, lnzval, 1);
+		    superlu_@(pre)axpy(len2, beta, Lval_buf, 1, lnzval, 1);
 		}
 	}
 
@@ -318,18 +311,8 @@ int_t @(pre)zRecvUPanel(int_t k, int_t sender, @(type) alpha, @(type) beta,
 			     grid3d->zscp.comm, &status);
 		    
 		    /*reduce the updates*/
-#if 1
-		    @(pre)scal_(&lenv, &alpha, unzval, &inc);
-		    @(pre)axpy_(&lenv, &beta, Uval_buf, &inc, unzval, &inc);
-#else
-@precision SINGLE DOUBLE
-		    cblas_@(pre)scal (lenv, alpha, unzval, 1);
-		    cblas_@(pre)axpy (lenv, beta, Uval_buf, 1, unzval, 1);
-@precision SCOMPLEX DCOMPLEX
-		    cblas_@(pre)scal (lenv, (void*) &alpha, unzval, 1);
-		    cblas_@(pre)axpy (lenv, (void*) &beta, Uval_buf, 1, unzval, 1);
-@precision !
-#endif
+		    superlu_@(pre)scal(lenv, alpha, unzval, 1);
+		    superlu_@(pre)axpy(lenv, beta, Uval_buf, 1, unzval, 1);
 		}
 	}
     return 0;
@@ -350,7 +333,7 @@ int_t @(pre)p3dScatter(int_t n, @(pre)LUstruct_t * LUstruct, gridinfo3d_t* grid3
     int_t nsupers;
     
     if (!grid3d->zscp.Iam)
-	nsupers = getNsupers(n, LUstruct);
+	nsupers = getNsupers(n, LUstruct->Glu_persist);
     
     /* broadcast nsupers */
     MPI_Bcast( &nsupers, 1, mpi_int_t, 0,  grid3d->zscp.comm);
@@ -383,19 +366,20 @@ int_t @(pre)p3dScatter(int_t n, @(pre)LUstruct_t * LUstruct, gridinfo3d_t* grid3
     MPI_Bcast( bufmax, NBUFFERS, mpi_int_t, 0,  grid3d->zscp.comm);
     
     /* now sending tosendR etc */
-    int_t** ToSendR = Llu->ToSendR;
-    int_t* ToRecv = Llu->ToRecv;
-    int_t* ToSendD = Llu->ToSendD;
+    int** ToSendR = Llu->ToSendR;
+    int* ToRecv = Llu->ToRecv;
+    int* ToSendD = Llu->ToSendD;
     
     int_t nbr = CEILING(nsupers, Pr);
     int_t nbc = CEILING(nsupers, Pc);
-    MPI_Bcast( ToRecv, nsupers, mpi_int_t, 0,  grid3d->zscp.comm);
+    //    MPI_Bcast( ToRecv, nsupers, mpi_int_t, 0,  grid3d->zscp.comm);
+    MPI_Bcast( ToRecv, nsupers, MPI_INT, 0,  grid3d->zscp.comm);
     
-    MPI_Bcast( ToSendD, nbr, mpi_int_t, 0,  grid3d->zscp.comm);
+    MPI_Bcast( ToSendD, nbr, MPI_INT, 0,  grid3d->zscp.comm);
     for (int_t i = 0; i < nbc; ++i)
 	{
 	    /* code */
-	    MPI_Bcast( ToSendR[i], Pc, mpi_int_t, 0,  grid3d->zscp.comm);
+	    MPI_Bcast( ToSendR[i], Pc, MPI_INT, 0,  grid3d->zscp.comm);
 	}
     
     //
@@ -642,7 +626,7 @@ int_t @(pre)collect3dUpanels(int_t layer, int_t nsupers, @(pre)LUstruct_t * LUst
 /* Gather the LU factors on layer-0 */
 int_t @(pre)p3dCollect(int_t layer, int_t n, @(pre)LUstruct_t * LUstruct, gridinfo3d_t* grid3d)
 {
-    int_t nsupers = getNsupers(n, LUstruct);
+    int_t nsupers = getNsupers(n, LUstruct->Glu_persist);
     @(pre)collect3dLpanels(layer, nsupers,  LUstruct, grid3d);
     @(pre)collect3dUpanels(layer,  nsupers, LUstruct, grid3d);
     return 0;

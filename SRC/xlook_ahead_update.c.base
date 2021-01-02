@@ -42,7 +42,7 @@ while (j < nub && perm_u[2 * j] <= k0 + num_look_aheads)
 #endif
 {
 @precision SINGLE DOUBLE
-    double zero = 0.0;
+    @(type) zero = 0.0;
 @precision SCOMPLEX DCOMPLEX
     doublecomplex zero = {0.0, 0.0};
 @precision !

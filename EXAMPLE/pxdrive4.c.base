@@ -55,7 +55,7 @@ int main(int argc, char *argv[])
     @(pre)LUstruct_t LUstruct;
     @(pre)SOLVEstruct_t SOLVEstruct;
     gridinfo_t grid1, grid2;
-    double   *berr;
+    @(mod_type)   *berr;
     @(type)   *a, *b, *xtrue;
     int_t    *asub, *xa;
     int_t    i, j, m, n;
@@ -129,7 +129,7 @@ int main(int argc, char *argv[])
 
     /* Bail out if I do not belong in any of the 2 grids. */
     MPI_Comm_rank( MPI_COMM_WORLD, &iam );
-    if ( iam >= 10 ) goto out;
+    if ( iam == -1 ) goto out;
     
 #if ( DEBUGlevel>=1 )
     CHECK_MALLOC(iam, "Enter main()");
@@ -150,7 +150,7 @@ int main(int argc, char *argv[])
            ------------------------------------------------------------*/
         @(pre)create_matrix_postfix(&A, nrhs, &b, &ldb, &xtrue, &ldx, fp, postfix, &grid1);
 	
-	if ( !(berr = doubleMalloc_dist(nrhs)) )
+	if ( !(berr = @(mod_type)Malloc_dist(nrhs)) )
 	    ABORT("Malloc fails for berr[].");
 
 	/* ------------------------------------------------------------
@@ -192,7 +192,7 @@ int main(int argc, char *argv[])
 
         /* Check the accuracy of the solution. */
         p@(pre)inf_norm_error(iam, ((NRformat_loc *)A.Store)->m_loc,
-                         nrhs, b, ldb, xtrue, ldx, &grid1);
+                         nrhs, b, ldb, xtrue, ldx, grid1.comm);
     
 	/* Print the statistics. */
 	PStatPrint(&options, &stat, &grid1);
@@ -220,7 +220,7 @@ int main(int argc, char *argv[])
            ------------------------------------------------------------*/
         @(pre)create_matrix_postfix(&A, nrhs, &b, &ldb, &xtrue, &ldx, fp, postfix, &grid2);
 
-	if ( !(berr = doubleMalloc_dist(nrhs)) )
+	if ( !(berr = @(mod_type)Malloc_dist(nrhs)) )
 	    ABORT("Malloc fails for berr[].");
 
 	/* ------------------------------------------------------------
@@ -257,7 +257,7 @@ int main(int argc, char *argv[])
 
         /* Check the accuracy of the solution. */
         p@(pre)inf_norm_error(iam, ((NRformat_loc *)A.Store)->m_loc,
-                         nrhs, b, ldb, xtrue, ldx, &grid2);
+                         nrhs, b, ldb, xtrue, ldx, grid2.comm);
     
 	/* Print the statistics. */
 	PStatPrint(&options, &stat, &grid2);
