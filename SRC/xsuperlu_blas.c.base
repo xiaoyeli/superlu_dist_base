@@ -1,0 +1,130 @@
+/*! \file
+Copyright (c) 2003, The Regents of the University of California, through
+Lawrence Berkeley National Laboratory (subject to receipt of any required
+approvals from U.S. Dept. of Energy)
+
+All rights reserved.
+
+The source code is distributed under BSD license, see the file License.txt
+at the top-level directory.
+*/
+@extract -b Typedef.inc
+/*! @file
+ * \brief Wrapper functions to call BLAS.
+ *
+ * <pre>
+ * -- Distributed SuperLU routine (version 7.0) --
+ * Lawrence Berkeley National Lab, Oak Ridge National Lab
+ * December 6, 2020
+ */
+
+#include "superlu_@(pre)defs.h"
+
+#ifdef _CRAY
+_fcd ftcs = _cptofcd("N", strlen("N"));
+_fcd ftcs1 = _cptofcd("L", strlen("L"));
+_fcd ftcs2 = _cptofcd("N", strlen("N"));
+_fcd ftcs3 = _cptofcd("U", strlen("U"));
+#endif
+
+int superlu_@(pre)gemm(const char *transa, const char *transb,
+                  int m, int n, int k, @(type) alpha, @(type) *a,
+                  int lda, @(type) *b, int ldb, @(type) beta, @(type) *c, int ldc)
+{
+#ifdef _CRAY
+    _fcd ftcs = _cptofcd(transa, strlen(transa));
+    _fcd ftcs1 = _cptofcd(transb, strlen(transb));
+    return @(SC_PRE)GEMM(ftcs, ftcs1, &m, &n, &k,
+                 &alpha, a, &lda, b, &ldb, &beta, c, &ldc);
+#elif defined(USE_VENDOR_BLAS)
+    @(pre)gemm_(transa, transb, &m, &n, &k,
+           &alpha, a, &lda, b, &ldb, &beta, c, &ldc, 1, 1);
+    return 0;
+#else
+    return @(pre)gemm_(transa, transb, &m, &n, &k,
+                  &alpha, a, &lda, b, &ldb, &beta, c, &ldc);
+#endif
+}
+
+int superlu_@(pre)trsm(const char *sideRL, const char *uplo,
+                  const char *transa, const char *diag,
+                  const int m, const int n,
+                  const @(type) alpha, const @(type) *a,
+                  const int lda, @(type) *b, const int ldb)
+
+{
+#if defined(USE_VENDOR_BLAS)
+    @(pre)trsm_(sideRL, uplo, transa, diag,
+           &m, &n, &alpha, a, &lda, b, &ldb,
+           1, 1, 1, 1);
+    return 0;
+#else
+    return @(pre)trsm_(sideRL, uplo, transa, diag,
+                  &m, &n, &alpha, a, &lda, b, &ldb);
+#endif
+}
+
+int superlu_@(pre)ger(const int m, const int n, const @(type) alpha,
+                 const @(type) *x, const int incx, const @(type) *y,
+                 const int incy, @(type) *a, const int lda)
+{
+#ifdef _CRAY
+@precision SINGLE DOUBLE
+    @(SC_PRE)GER(&m, &n, &alpha, x, &incx, y, &incy, a, &lda);
+@precision SCOMPLEX DCOMPLEX
+    @(SC_PRE)GERU(&m, &n, &alpha, x, &incx, y, &incy, a, &lda);
+@precision !
+#else
+@precision SINGLE DOUBLE
+    @(pre)ger_(&m, &n, &alpha, x, &incx, y, &incy, a, &lda);
+@precision SCOMPLEX DCOMPLEX
+    @(pre)geru_(&m, &n, &alpha, x, &incx, y, &incy, a, &lda);
+@precision !
+#endif
+
+    return 0;
+}
+
+int superlu_@(pre)scal(const int n, const @(type) alpha, @(type) *x, const int incx)
+{
+    @(pre)scal_(&n, &alpha, x, &incx);
+    return 0;
+}
+
+int superlu_@(pre)axpy(const int n, const @(type) alpha,
+    const @(type) *x, const int incx, @(type) *y, const int incy)
+{
+    @(pre)axpy_(&n, &alpha, x, &incx, y, &incy);
+    return 0;
+}
+
+int superlu_@(pre)gemv(const char *trans, const int m,
+                  const int n, const @(type) alpha, const @(type) *a,
+                  const int lda, const @(type) *x, const int incx,
+                  const @(type) beta, @(type) *y, const int incy)
+{
+#ifdef USE_VENDOR_BLAS
+    @(pre)gemv_(trans, &m, &n, &alpha, a, &lda, x, &incx, &beta, y, &incy, 1);
+#else
+    @(pre)gemv_(trans, &m, &n, &alpha, a, &lda, x, &incx, &beta, y, &incy);
+#endif
+    
+    return 0;
+}
+
+int superlu_@(pre)trsv(char *uplo, char *trans, char *diag,
+                  int n, @(type) *a, int lda, @(type) *x, int incx)
+{
+#ifdef _CRAY
+    // _fcd ftcs = _cptofcd("N", strlen("N"));
+    @(SC_PRE)TRSV(_cptofcd(uplo, strlen(uplo)), _cptofcd(trans, strlen(trans)), _cptofcd(diag, strlen(diag)), 
+         &n, a, &lda, x, &incx);
+#elif defined (USE_VENDOR_BLAS)
+    @(pre)trsv_(uplo, trans, diag, &n, a, &lda, x, &incx, 1, 1, 1);
+#else
+    @(pre)trsv_(uplo, trans, diag, &n, a, &lda, x, &incx);
+#endif
+    
+    return 0;
+}
+
