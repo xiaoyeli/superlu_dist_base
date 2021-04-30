@@ -316,13 +316,13 @@ typedef struct
 {
     @(type) *bigU;
     @(type) *bigV;
-} scuBufs_t;
+} @(pre)scuBufs_t;
 
 typedef struct
 {   
     @(type)* BlockLFactor;
     @(type)* BlockUFactor;
-} diagFactBufs_t;
+} @(pre)diagFactBufs_t;
 
 typedef struct
 {
@@ -474,9 +474,16 @@ extern int_t p@(pre)gstrf(superlu_dist_options_t *, int, int, @(mod_type) anorm,
 
 /* Solve related */
 #ifdef onesided
-extern void p@(pre)gstrs_onesided(int_t, dLUstruct_t *, dScalePermstruct_t *, gridinfo_t *,
-		    double *, int_t, int_t, int_t, int, dSOLVEstruct_t *,
+extern void p@(pre)gstrs_onesided(int_t, @(pre)LUstruct_t *, @(pre)ScalePermstruct_t *, gridinfo_t *,
+		    @(type) *, int_t, int_t, int_t, int, @(pre)SOLVEstruct_t *,
 		    SuperLUStat_t *, int *);
+extern int_t
+p@(pre)ReDistribute_B_to_X(@(type) *, int_t , int , int_t ,
+                      int_t , int_t *, @(type) *, @(pre)ScalePermstruct_t *,
+		      Glu_persist_t *, gridinfo_t *, @(pre)SOLVEstruct_t *);
+extern int_t p@(pre)ReDistribute_X_to_B(int_t , @(type) *, int_t , int_t , int_t ,
+		      int_t , @(type) *, int_t *, @(pre)ScalePermstruct_t *,
+		      Glu_persist_t *, gridinfo_t *, @(pre)SOLVEstruct_t *);
 #endif
 extern void p@(pre)gstrs_Bglobal(int_t, @(pre)LUstruct_t *, gridinfo_t *,
 			     @(type) *, int_t, int, SuperLUStat_t *, int *);
@@ -1006,7 +1013,7 @@ extern int_t @(pre)SchurComplementSetup(int_t k, int *msgcnt, Ublock_info_t*,
 				   @(type)* Uval_buf, gridinfo_t *, @(pre)LUstruct_t *);
 extern int_t @(pre)SchurComplementSetupGPU(int_t k, msgs_t* msgs, packLUInfo_t*,
 				      int_t*, int_t*, int_t*, gEtreeInfo_t*,
-				      factNodelists_t*, scuBufs_t*,
+				      factNodelists_t*, @(pre)scuBufs_t*,
 				      @(pre)LUValSubBuf_t* LUvsb, gridinfo_t *,
 				      @(pre)LUstruct_t *, HyP_t*);
 extern @(type)* @(pre)getBigV(int_t, int_t);
@@ -1016,15 +1023,15 @@ extern @(type)* @(pre)getBigU(int_t, gridinfo_t *, @(pre)LUstruct_t *);
     /* from treeFactorization.h */
 extern int_t @(pre)LluBufInit(@(pre)LUValSubBuf_t*, @(pre)LUstruct_t *);
 extern int_t @(pre)initScuBufs(int_t ldt, int_t num_threads, int_t nsupers,
-			  scuBufs_t*, @(pre)LUstruct_t*, gridinfo_t *);
-extern int @(pre)freeScuBufs(scuBufs_t* scuBufs);
+			  @(pre)scuBufs_t*, @(pre)LUstruct_t*, gridinfo_t *);
+extern int @(pre)freeScuBufs(@(pre)scuBufs_t* scuBufs);
 
 // the generic tree factoring code 
 extern int_t treeFactor(
     int_t nnnodes,          // number of nodes in the tree
     int_t *perm_c_supno,    // list of nodes in the order of factorization
     commRequests_t *comReqs,    // lists of communication requests
-    scuBufs_t *scuBufs,          // contains buffers for schur complement update
+    @(pre)scuBufs_t *scuBufs,          // contains buffers for schur complement update
     packLUInfo_t*packLUInfo,
     msgs_t*msgs,
     @(pre)LUValSubBuf_t* LUvsb,
@@ -1044,7 +1051,7 @@ extern int_t @(pre)sparseTreeFactor(
     int_t *perm_c_supno,    // list of nodes in the order of factorization
     treeTopoInfo_t* treeTopoInfo,
     commRequests_t *comReqs,    // lists of communication requests
-    scuBufs_t *scuBufs,          // contains buffers for schur complement update
+    @(pre)scuBufs_t *scuBufs,          // contains buffers for schur complement update
     packLUInfo_t*packLUInfo,
     msgs_t*msgs,
     @(pre)LUValSubBuf_t* LUvsb,
@@ -1063,7 +1070,7 @@ extern int_t @(pre)denseTreeFactor(
     int_t nnnodes,          // number of nodes in the tree
     int_t *perm_c_supno,    // list of nodes in the order of factorization
     commRequests_t *comReqs,    // lists of communication requests
-    scuBufs_t *scuBufs,          // contains buffers for schur complement update
+    @(pre)scuBufs_t *scuBufs,          // contains buffers for schur complement update
     packLUInfo_t*packLUInfo,
     msgs_t*msgs,
     @(pre)LUValSubBuf_t* LUvsb,
@@ -1081,7 +1088,7 @@ extern int_t @(pre)denseTreeFactor(
 extern int_t @(pre)sparseTreeFactor_ASYNC(
     sForest_t* sforest,
     commRequests_t **comReqss,    // lists of communication requests // size maxEtree level
-    scuBufs_t *scuBufs,          // contains buffers for schur complement update
+    @(pre)scuBufs_t *scuBufs,          // contains buffers for schur complement update
     packLUInfo_t*packLUInfo,
     msgs_t**msgss,                  // size=num Look ahead
     @(pre)LUValSubBuf_t** LUvsbs,          // size=num Look ahead
@@ -1111,7 +1118,7 @@ extern int_t ancestorFactor(
     int_t ilvl,             // level of factorization 
     sForest_t* sforest,
     commRequests_t **comReqss,    // lists of communication requests // size maxEtree level
-    scuBufs_t *scuBufs,          // contains buffers for schur complement update
+    @(pre)scuBufs_t *scuBufs,          // contains buffers for schur complement update
     packLUInfo_t*packLUInfo,
     msgs_t**msgss,                  // size=num Look ahead
     @(pre)LUValSubBuf_t** LUvsbs,          // size=num Look ahead
