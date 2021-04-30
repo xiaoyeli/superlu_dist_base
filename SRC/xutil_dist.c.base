@@ -475,7 +475,7 @@ int @(pre)AllocGlu_3d(int_t n, int_t nsupers, @(pre)LUstruct_t * LUstruct)
 }
 
 // Sherry added
-int @(pre)zDeAllocGlu_3d(@(pre)LUstruct_t * LUstruct)
+int @(pre)DeAllocGlu_3d(@(pre)LUstruct_t * LUstruct)
 {
     SUPERLU_FREE(LUstruct->Glu_persist->xsup);
     SUPERLU_FREE(LUstruct->Glu_persist->supno);
