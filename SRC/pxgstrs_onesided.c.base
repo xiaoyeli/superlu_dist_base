@@ -845,11 +845,11 @@ if(procs==1){
 			gb = mycol+lk*grid->npcol;  /* not sure */
 			lib = LBi( gb, grid ); /* Local block number, row-wise. */
 			ii = X_BLK( lib );
-			BcTree_forwardMessageSimpleOneSide(LBtree_ptr[lk],&x[ii - XK_H],BcTree_GetMsgSize(LBtree_ptr[lk],'@(pre)')*nrhs+XK_H,'@(pre)', &iam_col, BCcount, BCbase, &maxrecvsz,Pc);
+			BcTree_forwardMessageOneSide(LBtree_ptr[lk],&x[ii - XK_H],BcTree_GetMsgSize(LBtree_ptr[lk],'@(pre)')*nrhs+XK_H,'@(pre)', &iam_col, BCcount, BCbase, &maxrecvsz,Pc);
 		}else{ // this is a reduce forwarding
 			lk = -lk - 1;
 			il = LSUM_BLK( lk );
-			RdTree_forwardMessageSimpleOneSide(LRtree_ptr[lk],&lsum[il - LSUM_H ],RdTree_GetMsgSize(LRtree_ptr[lk],'@(pre)')*nrhs+LSUM_H,'@(pre)', &iam_row, RDcount, RDbase, &maxrecvsz, Pc);
+			RdTree_forwardMessageOneSide(LRtree_ptr[lk],&lsum[il - LSUM_H ],RdTree_GetMsgSize(LRtree_ptr[lk],'@(pre)')*nrhs+LSUM_H,'@(pre)', &iam_row, RDcount, RDbase, &maxrecvsz, Pc);
 		}
 	}
 
