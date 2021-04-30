@@ -2761,7 +2761,7 @@ void @(pre)lsum_fmod_inv_master_onesided
 								  &lsum[il + jj + ii*sizelsum]);
 @precision !
 
-					RdTree_forwardMessageSimpleOneSide(LRtree_ptr[lk],&lsum[il - LSUM_H ],RdTree_GetMsgSize(LRtree_ptr[lk],'@(pre)')*nrhs+LSUM_H,'@(pre)',iam_row, RDcount, RDbase, &maxrecvsz, Pc);
+					RdTree_forwardMessageOneSide(LRtree_ptr[lk],&lsum[il - LSUM_H ],RdTree_GetMsgSize(LRtree_ptr[lk],'@(pre)')*nrhs+LSUM_H,'@(pre)',iam_row, RDcount, RDbase, &maxrecvsz, Pc);
 					// }
 
 
@@ -2869,7 +2869,7 @@ void @(pre)lsum_fmod_inv_master_onesided
 					 */
 
 					if(LBtree_ptr[lk]!=NULL)
-						BcTree_forwardMessageSimpleOneSide(LBtree_ptr[lk],&x[ii - XK_H],BcTree_GetMsgSize(LBtree_ptr[lk],'@(pre)')*nrhs+XK_H,'@(pre)',iam_col, BCcount, BCbase, &maxrecvsz, Pc);
+						BcTree_forwardMessageOneSide(LBtree_ptr[lk],&x[ii - XK_H],BcTree_GetMsgSize(LBtree_ptr[lk],'@(pre)')*nrhs+XK_H,'@(pre)',iam_col, BCcount, BCbase, &maxrecvsz, Pc);
 
 					/*
 					 * Perform local block modifications.
@@ -3144,7 +3144,7 @@ void @(pre)lsum_bmod_inv_master_onesided
 							  &lsum[il + jj ],
 							  &lsum[il + jj + ii*sizelsum]);
 @precision !
-				RdTree_forwardMessageSimpleOneSide(URtree_ptr[ik],&lsum[il - LSUM_H ],RdTree_GetMsgSize(URtree_ptr[ik],'@(pre)')*nrhs+LSUM_H,'@(pre)',iam_row, RDcount, RDbase, &maxrecvsz, Pc);
+				RdTree_forwardMessageOneSide(URtree_ptr[ik],&lsum[il - LSUM_H ],RdTree_GetMsgSize(URtree_ptr[ik],'@(pre)')*nrhs+LSUM_H,'@(pre)',iam_row, RDcount, RDbase, &maxrecvsz, Pc);
 
 #if ( DEBUGlevel>=2 )
 				printf("(%2d) Sent LSUM[%2.0f], size %2d, to P %2d\n",
@@ -3253,7 +3253,7 @@ void @(pre)lsum_bmod_inv_master_onesided
 						// fflush(stdout);
 					// }
 					if(UBtree_ptr[lk1]!=NULL){
-					BcTree_forwardMessageSimpleOneSide(UBtree_ptr[lk1],&x[ii - XK_H],BcTree_GetMsgSize(UBtree_ptr[lk1],'@(pre)')*nrhs+XK_H,'@(pre)',iam_col, BCcount, BCbase, &maxrecvsz, Pc);
+					BcTree_forwardMessageOneSide(UBtree_ptr[lk1],&x[ii - XK_H],BcTree_GetMsgSize(UBtree_ptr[lk1],'@(pre)')*nrhs+XK_H,'@(pre)',iam_col, BCcount, BCbase, &maxrecvsz, Pc);
 					}
 
 					/*
