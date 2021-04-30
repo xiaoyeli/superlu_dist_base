@@ -466,7 +466,7 @@ void @(pre)ScalePermstructFree(@(pre)ScalePermstruct_t *ScalePermstruct)
  * The following are from 3D code p3dcomm.c
  */
 
-int @(pre)AllocGlu_3d(int_t n, int_t nsupers, @(pre)zLUstruct_t * LUstruct)
+int @(pre)AllocGlu_3d(int_t n, int_t nsupers, @(pre)LUstruct_t * LUstruct)
 {
     /*broadcasting Glu_persist*/
     LUstruct->Glu_persist->xsup  = intMalloc_dist(nsupers+1); //INT_T_ALLOC(nsupers+1);

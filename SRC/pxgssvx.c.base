@@ -601,7 +601,7 @@ p@(pre)gssvx(superlu_dist_options_t *options, SuperMatrix *A,
     } else if ( A->nrow != A->ncol || A->nrow < 0 || A->Stype != SLU_NR_loc
 		|| A->Dtype != @(Dtype_PRE) || A->Mtype != SLU_GE )
 	*info = -2;
-    else if ( ldb < A->m_loc )
+    else if ( ldb < m_loc )
 	*info = -5;
     else if ( nrhs < 0 )
 	*info = -6;
