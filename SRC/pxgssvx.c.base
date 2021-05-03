@@ -1175,7 +1175,7 @@ p@(pre)gssvx(superlu_dist_options_t *options, SuperMatrix *A,
 	       NOTE: the row permutation Pc*Pr is applied internally in the
   	       distribution routine. */
 	    t = SuperLU_timer_();
-#ifdef oneside
+#ifdef onesided
 	    dist_mem_use = p@(pre)distribute_onesided(Fact, n, A, ScalePermstruct,
                                       Glu_freeable, LUstruct, grid,nrhs);
 #else

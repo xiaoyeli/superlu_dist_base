@@ -99,6 +99,8 @@ at the top-level directory.
  * </pre>
  */
 
+#ifdef onesided
+
 void
 p@(pre)gstrs_onesided(int_t n, @(pre)LUstruct_t *LUstruct,
 	@(pre)ScalePermstruct_t *ScalePermstruct,
@@ -2114,3 +2116,4 @@ for (i=0;i<nroot_send;i++){
     return;
 } /* P@(PRE)GSTRS */
 
+#endif
