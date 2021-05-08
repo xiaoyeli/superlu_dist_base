@@ -466,7 +466,7 @@ void @(pre)ScalePermstructFree(@(pre)ScalePermstruct_t *ScalePermstruct)
  * The following are from 3D code p3dcomm.c
  */
 
-int @(pre)AllocGlu_3d(int_t n, int_t nsupers, @(pre)zLUstruct_t * LUstruct)
+int @(pre)AllocGlu_3d(int_t n, int_t nsupers, @(pre)LUstruct_t * LUstruct)
 {
     /*broadcasting Glu_persist*/
     LUstruct->Glu_persist->xsup  = intMalloc_dist(nsupers+1); //INT_T_ALLOC(nsupers+1);
@@ -475,7 +475,7 @@ int @(pre)AllocGlu_3d(int_t n, int_t nsupers, @(pre)zLUstruct_t * LUstruct)
 }
 
 // Sherry added
-int @(pre)zDeAllocGlu_3d(@(pre)LUstruct_t * LUstruct)
+int @(pre)DeAllocGlu_3d(@(pre)LUstruct_t * LUstruct)
 {
     SUPERLU_FREE(LUstruct->Glu_persist->xsup);
     SUPERLU_FREE(LUstruct->Glu_persist->supno);
@@ -528,12 +528,17 @@ void
     for (j = 0; j < nrhs; ++j)
 	for (i = 0; i < n; ++i) {
 @precision SINGLE DOUBLE
-	    if ( i % 2 ) x[i + j*ldx] = 1.0;/* + (double)(i+1.)/n;*/
-	    else x[i + j*ldx] = 1.0;
+	    if ( i % 2 ) x[i + j*ldx] = 1.0 + (double)(i+1.)/n;
+	    else x[i + j*ldx] = 1.0 - (double)(i+1.)/n;
 @precision SCOMPLEX DCOMPLEX
-	    if ( i % 2 ) x[i + j*ldx].r = 1.0;
-	    else x[i + j*ldx].r = 2.0;
-	    x[i + j*ldx].i = 0.0;
+	    if ( i % 2 ) {
+	        x[i + j*ldx].r = 1.0 + (double)(i+1.)/n;
+		x[i + j*ldx].i = 1.0;
+	    }
+	    else {
+	        x[i + j*ldx].r = 2.0 + (double)(i+1.)/n;
+	        x[i + j*ldx].i = 2.0;
+            }
 @precision !
 	}
 }
@@ -797,7 +802,7 @@ void @(pre)DumpLblocks(int iam, int_t nsupers, gridinfo_t *grid,
 		}
 
 	if(grid->iam==0){
-		fprintf(fp, "%d %d %d\n", n,n,nnzL);
+		fprintf(fp, "%d %d " IFMT "\n", n,n,nnzL);
 	}
 
      ncb = nsupers / grid->npcol;

@@ -434,7 +434,7 @@ int_t LpanelUpdate(int off0,  int nsupc, @(type)* ublk_ptr, int ld_ujrow,
         int_t off = i * GT;
         int len = SUPERLU_MIN(GT, l - i * GT);
 	
-        superlu_ztrsm("R", "U", "N", "N", len, nsupc, alpha,
+        superlu_@(pre)trsm("R", "U", "N", "N", len, nsupc, alpha,
 		      ublk_ptr, ld_ujrow, &lusup[off0 + off], nsupr);
 
     } /* for i = ... */

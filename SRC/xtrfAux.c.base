@@ -336,7 +336,7 @@ int_t @(pre)SchurComplementSetupGPU(
     int_t* myIperm, 
     int_t* iperm_c_supno, int_t*perm_c_supno,
     gEtreeInfo_t*   gEtreeInfo, factNodelists_t* fNlists,
-    scuBufs_t* scuBufs, @(pre)LUValSubBuf_t* LUvsb,
+    @(pre)scuBufs_t* scuBufs, @(pre)LUValSubBuf_t* LUvsb,
     gridinfo_t *grid, @(pre)LUstruct_t *LUstruct,
     HyP_t* HyP)
 {
@@ -485,7 +485,7 @@ int_t @(pre)SchurComplementSetupGPU(
     }
 
     return LU_nonempty;
-} /* dSchurComplementSetupGPU */
+} /* @(pre)SchurComplementSetupGPU */
 
 
 @(type)* @(pre)getBigV(int_t ldt, int_t num_threads)
@@ -553,6 +553,7 @@ trf3Dpartition_t* @(pre)initTrf3Dpartition(int_t nsupers,
     CHECK_MALLOC (iam, "Enter @(pre)initTrf3Dpartition()");
 #endif
     int_t* perm_c_supno = getPerm_c_supno(nsupers, options,
+                                         LUstruct->etree,
     	   		                 LUstruct->Glu_persist,
 		                         LUstruct->Llu->Lrowind_bc_ptr,
 					 LUstruct->Llu->Ufstnz_br_ptr, grid);

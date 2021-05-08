@@ -37,6 +37,7 @@ at the top-level directory.
 
 int_t @(pre)AllocLlu(int_t nsupers, @(pre)LUstruct_t * LUstruct, gridinfo3d_t* grid3d)
 {
+    int i;
     int_t Pc = grid3d->npcol;
     int_t Pr = grid3d->nprow;
     
@@ -49,7 +50,7 @@ int_t @(pre)AllocLlu(int_t nsupers, @(pre)LUstruct_t * LUstruct, gridinfo3d_t* g
     @(type)  **Lnzval_bc_ptr =
 	(@(type) **) SUPERLU_MALLOC(sizeof(@(type)*)*nbc);  /* size ceil(NSUPERS/Pc) */
 
-    for (int_t i = 0; i < nbc ; ++i)
+    for (i = 0; i < nbc ; ++i)
 	{
 	    /* code */
 	    Lrowind_bc_ptr[i] = NULL;
@@ -61,7 +62,7 @@ int_t @(pre)AllocLlu(int_t nsupers, @(pre)LUstruct_t * LUstruct, gridinfo3d_t* g
     @(type)  **Unzval_br_ptr =
 	(@(type) **) SUPERLU_MALLOC(sizeof(@(type)*)*nbr); /* size ceil(NSUPERS/Pr) */
     
-    for (int_t i = 0; i < nbr ; ++i)
+    for (i = 0; i < nbr ; ++i)
 	{
 	    /* code */
 	    Ufstnz_br_ptr[i] = NULL;
@@ -340,7 +341,7 @@ int_t @(pre)p3dScatter(int_t n, @(pre)LUstruct_t * LUstruct, gridinfo3d_t* grid3
     
     /* Scatter and alloc Glu_persist */
     if ( grid3d->zscp.Iam ) // all other process layers not equal 0
-	AllocGlu_3d(n, nsupers, LUstruct);
+	@(pre)AllocGlu_3d(n, nsupers, LUstruct);
     
     /* broadcast Glu_persist */
     int_t *xsup = LUstruct->Glu_persist->xsup;
@@ -789,7 +790,7 @@ int_t @(pre)init3DLUstruct( int_t* myTreeIdxs, int_t* myZeroTrIdxs,
 }
 
 
-int_t @(pre)reduceAllAncestors3d(int_t ilvl, int_t* myNodeCount, int_t** treePerm,
+int @(pre)reduceAllAncestors3d(int_t ilvl, int_t* myNodeCount, int_t** treePerm,
                              @(pre)LUValSubBuf_t* LUvsb, @(pre)LUstruct_t* LUstruct,
                              gridinfo3d_t* grid3d, SCT_t* SCT )
 {

@@ -16,7 +16,7 @@ at the top-level directory.
 #ifdef __INTEL_COMPILER
 #include "mkl.h"
 #else
-#include "cblas.h"
+//#include "cblas.h"
 #endif
 #include "omp.h"
 
@@ -27,7 +27,7 @@ static void scatter_u (int_t ib, int_t jb, int_t nsupc, int_t iukp, int_t *xsup,
                  int_t klst, int_t nbrow, int_t lptr, int_t temp_nbrow,
  		 int_t *lsub, int_t *usub, @(type) *tempv,
 		 int *indirect,
-           	 int **Ufstnz_br_ptr, @(type) **Unzval_br_ptr, gridinfo_t *grid);
+           	 int_t **Ufstnz_br_ptr, @(type) **Unzval_br_ptr, gridinfo_t *grid);
 
 
 #if 0 /**** Sherry: this routine is moved to util.c ****/
@@ -130,10 +130,9 @@ void
     lptr += LB_DESCRIPTOR;
     int cum_nrow = (lb == 0 ? 0 : Remain_info[lb - 1].FullRow);
 @precision SINGLE DOUBLE
-    double alpha = 1.0;
-    double beta = 0.0;
+    @(type) alpha = 1.0, beta = 0.0;
 @precision SCOMPLEX DCOMPLEX
-    doublecomplex alpha = {1.0, 0.0}, beta = {0.0, 0.0};
+    @(type) alpha = {1.0, 0.0}, beta = {0.0, 0.0};
 @precision !    
 
     /* calling @(PRE)GEMM */
@@ -145,7 +144,6 @@ void
     
     // printf("SCU update: (%d, %d)\n",ib,jb );
 #ifdef SCATTER_PROFILE
-    //double ttx = _SuperLU_timer_();
     double ttx = SuperLU_timer_();
 #endif
     /*Now scattering the block*/
@@ -179,7 +177,6 @@ void
     // stat->ops[FACT] += 2*temp_nbrow*ncols*ldu + temp_nbrow*ncols;
 
 #ifdef SCATTER_PROFILE
-    //double t_s = (double) SuperLU_timer_() - ttx;
     double t_s = SuperLU_timer_() - ttx;
     Host_TheadScatterMOP[thread_id * ((192 / 8) * (192 / 8)) + ((CEILING(temp_nbrow, 8) - 1)   +  (192 / 8) * (CEILING(ncols, 8) - 1))]
     += 3.0 * (double ) temp_nbrow * (double ) ncols;

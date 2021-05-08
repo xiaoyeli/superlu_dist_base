@@ -89,8 +89,7 @@ int c2f_@(pre)create_matrix_x_b(char *fname, int nrhs, int nprocs,
     @(type)   *nzval_loc;         /* local */
     int_t    *colind, *rowptr;	 /* local */
     int_t     *marker;
-    int_t  nnz, nnz_loc;
-    int    m, n;
+    int_t  nnz, nnz_loc, m, n;
     int    m_loc, fst_row; 
     int    m_loc_fst; /* Record m_loc of the first p-1 processors,
 			   when mod(m, p) is not zero. */ 

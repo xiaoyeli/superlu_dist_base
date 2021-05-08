@@ -49,9 +49,9 @@ void
 
 #ifdef _LONGINT
   @precision SINGLE
-    ret_val = fscanf(fp, "%ld%ld%f%\n", &i, &j, &vali);
+    ret_val = fscanf(fp, "%ld%ld%f\n", &i, &j, &vali);
   @precision DOUBLE
-    ret_val = fscanf(fp, "%ld%ld%lf%\n", &i, &j, &vali);
+    ret_val = fscanf(fp, "%ld%ld%lf\n", &i, &j, &vali);
   @precision SCOMPLEX
     ret_val = fscanf(fp, "%ld%ld%f%f\n", &i, &j, &vali.r, &vali.i);
   @precision DCOMPLEX
@@ -59,9 +59,9 @@ void
   @precision !
 #else  // int
   @precision SINGLE
-    ret_val = fscanf(fp, "%d%d%f%\n", &i, &j, &vali);
+    ret_val = fscanf(fp, "%d%d%f\n", &i, &j, &vali);
   @precision DOUBLE
-    ret_val = fscanf(fp, "%d%d%lf%\n", &i, &j, &vali);
+    ret_val = fscanf(fp, "%d%d%lf\n", &i, &j, &vali);
   @precision SCOMPLEX
     ret_val = fscanf(fp, "%d%d%f%f\n", &i, &j, &vali.r, &vali.i);
   @precision DCOMPLEX
@@ -78,9 +78,9 @@ void
 
 #ifdef _LONGINT
   @precision SINGLE
-    	ret_val = fscanf(fp, "%ld%ld%f%\n", &i, &j, &vali);
+    	ret_val = fscanf(fp, "%ld%ld%f\n", &i, &j, &vali);
   @precision DOUBLE
-        ret_val = fscanf(fp, "%ld%ld%lf%\n", &i, &j, &vali);
+        ret_val = fscanf(fp, "%ld%ld%lf\n", &i, &j, &vali);
   @precision SCOMPLEX
         ret_val = fscanf(fp, "%ld%ld%f%f\n", &i, &j, &vali.r, &vali.i);
   @precision DCOMPLEX
@@ -88,9 +88,9 @@ void
   @precision !
 #else  // int
   @precision SINGLE
-        ret_val = fscanf(fp, "%d%d%f%\n", &i, &j, &vali);
+        ret_val = fscanf(fp, "%d%d%f\n", &i, &j, &vali);
   @precision DOUBLE
-        ret_val = fscanf(fp, "%d%d%lf%\n", &i, &j, &vali);
+        ret_val = fscanf(fp, "%d%d%lf\n", &i, &j, &vali);
   @precision SCOMPLEX
         ret_val = fscanf(fp, "%d%d%f%f\n", &i, &j, &vali.r, &vali.i);
   @precision DCOMPLEX

@@ -551,7 +551,7 @@ p@(pre)gssvx3d (superlu_dist_options_t * options, SuperMatrix * A,
     /* Save the inputs: ldb -> ldb3d, and B -> B3d, Astore -> Astore3d 
        B3d and Astore3d will be restored on return  */
     int ldb3d = ldb;
-    @(type) *B3d = B;
+    // @(type) *B3d = B;
     NRformat_loc *Astore3d = (NRformat_loc *)A->Store;
     @(type) *B2d;
     NRformat_loc3d *A3d = @(pre)GatherNRformat_loc3d((NRformat_loc *)A->Store,
@@ -579,7 +579,7 @@ p@(pre)gssvx3d (superlu_dist_options_t * options, SuperMatrix * A,
 	*info = -1;
         fprintf (stderr,
 	         "Extra precise iterative refinement yet to support.");
-    else if (A->nrow != A->ncol || A->nrow < 0 || A->Stype != SLU_NR_loc
+    } else if (A->nrow != A->ncol || A->nrow < 0 || A->Stype != SLU_NR_loc
 	     || A->Dtype != @(Dtype_PRE) || A->Mtype != SLU_GE)
 	 *info = -2;
     else if (ldb < Astore3d->m_loc)
@@ -1108,14 +1108,13 @@ p@(pre)gssvx3d (superlu_dist_options_t * options, SuperMatrix * A,
 			}
 		    }
 		    
-		    
 		    /* Perform a symbolic factorization on Pc*Pr*A*Pc' and set up
 		       the nonzero data structures for L & U. */
 #if ( PRNTlevel>=1 )
 		    if (!iam)
 			printf
 			    (".. symbfact(): relax %4d, maxsuper %4d, fill %4d\n",
-			     sp_ienv_dist (2), sp_ienv_dist (3), sp_ienv_dist (6));
+			     sp_ienv_dist(2), sp_ienv_dist(3), sp_ienv_dist(6));
 #endif
 		    t = SuperLU_timer_ ();
 		    if (!(Glu_freeable = (Glu_freeable_t *)
@@ -1134,14 +1133,12 @@ p@(pre)gssvx3d (superlu_dist_options_t * options, SuperMatrix * A,
 #if ( PRNTlevel>=1 )
 			if (!iam) {
 			    printf ("\tNo of supers %ld\n",
-				    Glu_persist->supno[n - 1] + 1);
-			    printf ("\tSize of G(L) %ld\n",
-				    Glu_freeable->xlsub[n]);
-			    printf ("\tSize of G(U) %ld\n",
-				    Glu_freeable->xusub[n]);
-			    printf ("\tint %d, short %d, float %d, double %d\n",
-				    sizeof (int_t), sizeof (short),
-				    sizeof (float), sizeof (double));
+				    (long) Glu_persist->supno[n - 1] + 1);
+			    printf ("\tSize of G(L) %ld\n", (long) Glu_freeable->xlsub[n]);
+			    printf ("\tSize of G(U) %ld\n", (long) Glu_freeable->xusub[n]);
+			    printf ("\tint %lu, short %lu, float %lu, double %lu\n",
+				    sizeof(int_t), sizeof (short),
+				    sizeof(float), sizeof (double));
 			    printf
 				("\tSYMBfact (MB):\tL\\U %.2f\ttotal %.2f\texpansions %d\n",
 				 symb_mem_usage.for_lu * 1e-6,
@@ -1246,7 +1243,7 @@ p@(pre)gssvx3d (superlu_dist_options_t * options, SuperMatrix * A,
 	SCT_init(SCT);
 	
 #if ( PRNTlevel>=1 )
-	if (iam==0) {
+	if (grid3d->iam == 0) {
 	    printf("after 3D initialization.\n"); fflush(stdout);
 	}
 #endif
@@ -1607,6 +1604,7 @@ p@(pre)gssvx3d (superlu_dist_options_t * options, SuperMatrix * A,
     /* Scatter the solution from 2D grid_0 to 3D grid */
     @(pre)Scatter_B3d(A3d, grid3d);
 
+    B = A3d->B3d; // B is now assigned back to B3d on return
     A->Store = Astore3d; // restore Astore to 3D
     
     /* free A2d and B2d, which are allocated only in 2D layer Grid_0 */
