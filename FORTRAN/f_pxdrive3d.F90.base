@@ -40,13 +40,12 @@
 ! The program may be run by typing
 !    mpiexec -np 8 f_p@(pre)drive3d 
 !
-      #include "superlu_dist_config.fh"
+#include "superlu_dist_config.fh"
       use superlu_mod
 !      implicit none
       include 'mpif.h'
       integer maxn, maxnz, maxnrhs
       parameter ( maxn = 10000, maxnz = 100000, maxnrhs = 10 )
-      integer rowind(maxnz), colptr(maxn)
 @precision DOUBLE
       real*8  values(maxnz), b(maxn), berr(maxnrhs), xtrue(maxn)
 @precision DCOMPLEX
