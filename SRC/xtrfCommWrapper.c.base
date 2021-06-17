@@ -26,11 +26,7 @@ at the top-level directory.
 #include "trfCommWrapper.h"
 #endif
 
-#ifdef __INTEL_COMPILER
-#include "mkl.h"
-#else
-#include "cblas.h"
-#endif 
+//#include "cblas.h"
 
 int_t @(pre)DiagFactIBCast(int_t k,  int_t k0,      // supernode to be factored
                      @(type) *BlockUFactor,

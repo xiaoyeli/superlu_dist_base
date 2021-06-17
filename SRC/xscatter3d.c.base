@@ -23,11 +23,7 @@ at the top-level directory.
 //#include "scatter.h"
 //#include "compiler.h"
 
-#ifdef __INTEL_COMPILER
-#include "mkl.h"
-#else
 //#include "cblas.h"
-#endif
 
 
 #define ISORT
