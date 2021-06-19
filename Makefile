@@ -53,6 +53,9 @@ single:	\
 	$(TGTSRC)/sdistribute.c \
 	$(TGTSRC)/psdistribute.c \
 	$(TGTSRC)/pssymbfact_distdata.c \
+	$(TGTSRC)/slangs_dist.c \
+	$(TGTSRC)/sgsequ_dist.c \
+	$(TGTSRC)/slaqgs_dist.c \
 	$(TGTSRC)/pslangs.c \
 	$(TGTSRC)/psgsequ.c \
 	$(TGTSRC)/pslaqgs.c \
@@ -62,6 +65,8 @@ single:	\
 	$(TGTSRC)/sldperm_dist.c \
 	$(TGTSRC)/sutil_dist.c \
 	$(TGTSRC)/smyblas2_dist.c \
+	$(TGTSRC)/ssp_blas2_dist.c \
+	$(TGTSRC)/ssp_blas3_dist.c \
 	$(TGTSRC)/psGetDiagU.c \
 	$(TGTSRC)/sreadhb.c \
 	$(TGTSRC)/sreadrb.c \
@@ -143,6 +148,12 @@ $(TGTSRC)/psdistribute.c:	$(SRC)/pxdistribute.c.base
 	extract -b $? -o $@ precision=single
 $(TGTSRC)/pssymbfact_distdata.c: $(SRC)/pxsymbfact_distdata.c.base
 	extract -b $? -o $@ precision=single
+$(TGTSRC)/slangs_dist.c:	$(SRC)/xlangs_dist.c.base
+	extract -b $? -o $@ precision=single
+$(TGTSRC)/sgsequ_dist.c:	$(SRC)/xgsequ_dist.c.base
+	extract -b $? -o $@ precision=single
+$(TGTSRC)/slaqgs_dist.c:	$(SRC)/xlaqgs_dist.c.base
+	extract -b $? -o $@ precision=single
 $(TGTSRC)/pslangs.c:	$(SRC)/pxlangs.c.base
 	extract -b $? -o $@ precision=single
 $(TGTSRC)/psgsequ.c:	$(SRC)/pxgsequ.c.base
@@ -162,6 +173,10 @@ $(TGTSRC)/sutil_dist.c:	$(SRC)/xutil_dist.c.base
 $(TGTSRC)/psGetDiagU.c:	$(SRC)/pxGetDiagU.c.base
 	extract -b $? -o $@ precision=single
 $(TGTSRC)/smyblas2_dist.c:	$(SRC)/xmyblas2_dist.c.base
+	extract -b $? -o $@ precision=single
+$(TGTSRC)/ssp_blas2_dist.c:	$(SRC)/xsp_blas2_dist.c.base
+	extract -b $? -o $@ precision=single
+$(TGTSRC)/ssp_blas3_dist.c:	$(SRC)/xsp_blas3_dist.c.base
 	extract -b $? -o $@ precision=single
 $(TGTSRC)/sreadhb.c:	$(SRC)/xreadhb.c.base
 	extract -b $? -o $@ precision=single
@@ -256,6 +271,9 @@ double:	\
 	$(TGTSRC)/ddistribute.c \
 	$(TGTSRC)/pddistribute.c \
 	$(TGTSRC)/pdsymbfact_distdata.c \
+	$(TGTSRC)/dlangs_dist.c \
+	$(TGTSRC)/dgsequ_dist.c \
+	$(TGTSRC)/dlaqgs_dist.c \
 	$(TGTSRC)/pdlangs.c \
 	$(TGTSRC)/pdgsequ.c \
 	$(TGTSRC)/pdlaqgs.c \
@@ -265,6 +283,8 @@ double:	\
 	$(TGTSRC)/dldperm_dist.c \
 	$(TGTSRC)/dutil_dist.c \
 	$(TGTSRC)/dmyblas2_dist.c \
+	$(TGTSRC)/dsp_blas2_dist.c \
+	$(TGTSRC)/dsp_blas3_dist.c \
 	$(TGTSRC)/pdGetDiagU.c \
 	$(TGTSRC)/dreadhb.c \
 	$(TGTSRC)/dreadrb.c \
@@ -350,6 +370,12 @@ $(TGTSRC)/pddistribute.c:	$(SRC)/pxdistribute.c.base
 	extract -b $? -o $@ precision=double
 $(TGTSRC)/pdsymbfact_distdata.c: $(SRC)/pxsymbfact_distdata.c.base
 	extract -b $? -o $@ precision=double
+$(TGTSRC)/dlangs_dist.c:	$(SRC)/xlangs_dist.c.base
+	extract -b $? -o $@ precision=double
+$(TGTSRC)/dgsequ_dist.c:	$(SRC)/xgsequ_dist.c.base
+	extract -b $? -o $@ precision=double
+$(TGTSRC)/dlaqgs_dist.c:	$(SRC)/xlaqgs_dist.c.base
+	extract -b $? -o $@ precision=double
 $(TGTSRC)/pdlangs.c:	$(SRC)/pxlangs.c.base
 	extract -b $? -o $@ precision=double
 $(TGTSRC)/pdgsequ.c:	$(SRC)/pxgsequ.c.base
@@ -369,6 +395,10 @@ $(TGTSRC)/dutil_dist.c:	$(SRC)/xutil_dist.c.base
 $(TGTSRC)/pdGetDiagU.c:	$(SRC)/pxGetDiagU.c.base
 	extract -b $? -o $@ precision=double
 $(TGTSRC)/dmyblas2_dist.c:	$(SRC)/xmyblas2_dist.c.base
+	extract -b $? -o $@ precision=double
+$(TGTSRC)/dsp_blas2_dist.c:	$(SRC)/xsp_blas2_dist.c.base
+	extract -b $? -o $@ precision=double
+$(TGTSRC)/dsp_blas3_dist.c:	$(SRC)/xsp_blas3_dist.c.base
 	extract -b $? -o $@ precision=double
 $(TGTSRC)/dreadhb.c:	$(SRC)/xreadhb.c.base
 	extract -b $? -o $@ precision=double
@@ -467,6 +497,9 @@ dcomplex: \
 	$(TGTSRC)/zdistribute.c \
 	$(TGTSRC)/pzdistribute.c \
 	$(TGTSRC)/pzsymbfact_distdata.c \
+	$(TGTSRC)/zlangs_dist.c \
+	$(TGTSRC)/zgsequ_dist.c \
+	$(TGTSRC)/zlaqgs_dist.c \
 	$(TGTSRC)/pzlangs.c \
 	$(TGTSRC)/pzgsequ.c \
 	$(TGTSRC)/pzlaqgs.c \
@@ -477,6 +510,8 @@ dcomplex: \
 	$(TGTSRC)/zutil_dist.c \
 	$(TGTSRC)/pzGetDiagU.c \
 	$(TGTSRC)/zmyblas2_dist.c \
+	$(TGTSRC)/zsp_blas2_dist.c \
+	$(TGTSRC)/zsp_blas3_dist.c \
 	$(TGTSRC)/zreadhb.c \
 	$(TGTSRC)/zreadrb.c \
 	$(TGTSRC)/zreadtriple.c \
@@ -560,6 +595,12 @@ $(TGTSRC)/pzdistribute.c:	$(SRC)/pxdistribute.c.base
 	extract -b $? -o $@ precision=dcomplex
 $(TGTSRC)/pzsymbfact_distdata.c: $(SRC)/pxsymbfact_distdata.c.base
 	extract -b $? -o $@ precision=dcomplex
+$(TGTSRC)/zlangs_dist.c:	$(SRC)/xlangs_dist.c.base
+	extract -b $? -o $@ precision=dcomplex
+$(TGTSRC)/zgsequ_dist.c:	$(SRC)/xgsequ_dist.c.base
+	extract -b $? -o $@ precision=dcomplex
+$(TGTSRC)/zlaqgs_dist.c:	$(SRC)/xlaqgs_dist.c.base
+	extract -b $? -o $@ precision=dcomplex
 $(TGTSRC)/pzlangs.c:	$(SRC)/pxlangs.c.base
 	extract -b $? -o $@ precision=dcomplex
 $(TGTSRC)/pzgsequ.c:	$(SRC)/pxgsequ.c.base
@@ -577,6 +618,10 @@ $(TGTSRC)/zutil_dist.c:	$(SRC)/xutil_dist.c.base
 $(TGTSRC)/zldperm_dist.c: $(SRC)/xldperm_dist.c.base
 	extract -b $? -o $@ precision=dcomplex
 $(TGTSRC)/zmyblas2_dist.c:	$(SRC)/xmyblas2_dist.c.base
+	extract -b $? -o $@ precision=dcomplex
+$(TGTSRC)/zsp_blas2_dist.c:	$(SRC)/xsp_blas2_dist.c.base
+	extract -b $? -o $@ precision=dcomplex
+$(TGTSRC)/zsp_blas3_dist.c:	$(SRC)/xsp_blas3_dist.c.base
 	extract -b $? -o $@ precision=dcomplex
 $(TGTSRC)/zreadhb.c:	$(SRC)/xreadhb.c.base
 	extract -b $? -o $@ precision=dcomplex
