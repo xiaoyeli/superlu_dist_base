@@ -70,7 +70,7 @@ at the top-level directory.
  * n      (input) int
  *        Number of columns in the matrix.
  *
- * anorm  (input) double
+ * anorm  (input) @(mod_type)
  *        The norm of the original matrix A, or the scaled A if
  *        equilibration was done.
  *
@@ -116,7 +116,7 @@ at the top-level directory.
  *             system of equations.
  * </pre>
  */
-int_t p@(pre)gstrf3d(superlu_dist_options_t *options, int m, int n, double anorm,
+int_t p@(pre)gstrf3d(superlu_dist_options_t *options, int m, int n, @(mod_type) anorm,
 		trf3Dpartition_t*  trf3Dpartition, SCT_t *SCT,
 		@(pre)LUstruct_t *LUstruct, gridinfo3d_t * grid3d,
 		SuperLUStat_t *stat, int *info)

@@ -74,16 +74,6 @@ single:	\
 	$(TGTSRC)/sreadtriple_noheader.c \
 	$(TGTSRC)/sreadMM.c \
 	$(TGTSRC)/smemory_dist.c \
-	$(TGTSRC)/sgather.c \
-	$(TGTSRC)/ps3dcomm.c \
-	$(TGTSRC)/strfAux.c \
-	$(TGTSRC)/scommunication_aux.c \
-	$(TGTSRC)/strfCommWrapper.c \
-	$(TGTSRC)/streeFactorization.c \
-	$(TGTSRC)/streeFactorizationGPU.c \
-	$(TGTSRC)/psgstrf3d.c \
-	$(TGTSRC)/psgssvx3d.c \
-	$(TGTSRC)/ssuperlu_blas.c \
 	$(TGTEXM)/psdrive_ABglobal.c \
 	$(TGTEXM)/psdrive1_ABglobal.c \
 	$(TGTEXM)/psdrive2_ABglobal.c \
@@ -94,7 +84,6 @@ single:	\
 	$(TGTEXM)/psdrive2.c \
 	$(TGTEXM)/psdrive3.c \
 	$(TGTEXM)/psdrive4.c \
-	$(TGTEXM)/psdrive3d.c \
 	$(TGTEXM)/screate_matrix.c \
 	$(TGTEXM)/screate_matrix3d.c \
 	$(TGTEXM)/screate_matrix_perturbed.c \
@@ -103,6 +92,20 @@ single:	\
 	$(TGTF90)/c2f_screate_matrix_x_b.c \
 	$(TGTTST)/pstest.c \
 	$(TGTTST)/pscompute_resid.c \
+	$(TGTEXM)/psdrive3d.c \
+	$(TGTSRC)/sscatter3d.c \
+	$(TGTSRC)/sgather.c \
+	$(TGTSRC)/ps3dcomm.c \
+	$(TGTSRC)/strfAux.c \
+	$(TGTSRC)/scommunication_aux.c \
+	$(TGTSRC)/strfCommWrapper.c \
+	$(TGTSRC)/streeFactorization.c \
+	$(TGTSRC)/streeFactorizationGPU.c \
+	$(TGTSRC)/psgstrf3d.c \
+	$(TGTSRC)/psgstrf3d.c \
+	$(TGTSRC)/psgssvx3d.c \
+	$(TGTSRC)/snrformat_loc3d.c \
+	$(TGTSRC)/ssuperlu_blas.c \
 
 $(TGTSRC)/slustruct_gpu.h:	$(SRC)/xlustruct_gpu.h.base
 	extract -b $? -o $@ precision=single
@@ -207,6 +210,8 @@ $(TGTSRC)/streeFactorizationGPU.c: $(SRC)/xtreeFactorizationGPU.c.base
 $(TGTSRC)/psgstrf3d.c:	$(SRC)/pxgstrf3d.c.base
 	extract -b $? -o $@ precision=single
 $(TGTSRC)/psgssvx3d.c:	$(SRC)/pxgssvx3d.c.base
+	extract -b $? -o $@ precision=single
+$(TGTSRC)/snrformat_loc3d.c:	$(SRC)/xnrformat_loc3d.c.base
 	extract -b $? -o $@ precision=single
 $(TGTSRC)/ssuperlu_blas.c: $(SRC)/xsuperlu_blas.c.base
 	extract -b $? -o $@ precision=single

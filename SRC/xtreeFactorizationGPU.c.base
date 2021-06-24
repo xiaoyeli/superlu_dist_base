@@ -75,7 +75,7 @@ int @(pre)sparseTreeFactor_ASYNC_GPU(
     d2Hreduce_t *d2Hred,
     HyP_t *HyP,
     @(pre)LUstruct_t *LUstruct, gridinfo3d_t *grid3d, SuperLUStat_t *stat,
-    @(mod_type) thresh, SCT_t *SCT, int tag_ub,
+    double thresh, SCT_t *SCT, int tag_ub,
     int *info)
 {
     // sforest.nNodes, sforest.nodeList,

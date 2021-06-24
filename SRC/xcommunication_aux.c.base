@@ -112,7 +112,7 @@ int_t @(pre)Bcast_LPanel
 int_t @(pre)IBcast_UPanel
 /*asynchronously braodcasts U panel to my process row */
 (int_t k, int_t k0, int_t* usub, @(type)* uval, gridinfo_t *grid,
- int* msgcnt, MPI_Request *send_req_u, int_t *ToSendD, int tag_ub )
+ int* msgcnt, MPI_Request *send_req_u, int *ToSendD, int tag_ub )
 {
 
     int_t iam = grid->iam;
@@ -155,7 +155,7 @@ int_t @(pre)IBcast_UPanel
 /*Synchronously braodcasts U panel to my process row */
 int_t @(pre)Bcast_UPanel(int_t k, int_t k0, int_t* usub,
                      @(type)* uval, gridinfo_t *grid,
-		   int* msgcnt, int_t *ToSendD, SCT_t* SCT, int tag_ub)
+		   int* msgcnt, int *ToSendD, SCT_t* SCT, int tag_ub)
 
 {
     //unsigned long long t1 = _rdtsc();

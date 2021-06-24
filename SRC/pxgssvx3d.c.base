@@ -402,7 +402,7 @@ at the top-level directory.
  *           of Pc*A'*A*Pc'; perm_c is not changed if the elimination tree
  *           is already in postorder.
  *
- *         o R (double*) dimension (A->nrow)
+ *         o R (@(mod_type) *) dimension (A->nrow)
  *           The row scale factors for A.
  *           If DiagScale = ROW or BOTH, A is multiplied on the left by
  *                          diag(R).
@@ -410,7 +410,7 @@ at the top-level directory.
  *           If options->Fact = FACTORED or SamePattern_SameRowPerm, R is
  *           an input argument; otherwise, R is an output argument.
  *
- *         o C (double*) dimension (A->ncol)
+ *         o C (@(mod_type) *) dimension (A->ncol)
  *           The column scale factors for A.
  *           If DiagScale = COL or BOTH, A is multiplied on the right by
  *                          diag(C).
@@ -475,7 +475,7 @@ at the top-level directory.
  *         If options->SolveInitialized = NO and nrhs != 0, it is an output
  *         argument. See superlu_@(pre)defs.h for the definition of '@(pre)SOLVEstruct_t'.
  *
- * berr    (output) double*, dimension (nrhs) (global)
+ * berr    (output) @(mod_type)*, dimension (nrhs) (global)
  *         The componentwise relative backward error of each solution
  *         vector X(j) (i.e., the smallest relative change in
  *         any element of A or B that makes X(j) an exact solution).
@@ -503,7 +503,7 @@ p@(pre)gssvx3d (superlu_dist_options_t * options, SuperMatrix * A,
            @(pre)ScalePermstruct_t * ScalePermstruct,
            @(type) B[], int ldb, int nrhs, gridinfo3d_t * grid3d,
            @(pre)LUstruct_t * LUstruct, @(pre)SOLVEstruct_t * SOLVEstruct,
-           double *berr, SuperLUStat_t * stat, int *info)
+           @(mod_type) *berr, SuperLUStat_t * stat, int *info)
 {
     NRformat_loc *Astore;
     SuperMatrix GA;        /* Global A in NC format */
@@ -538,7 +538,7 @@ p@(pre)gssvx3d (superlu_dist_options_t * options, SuperMatrix * A,
     int iam;
     int ldx;                    /* LDA for matrix X (local). */
     char equed[1], norm[1];
-    double *C, *R, *C1, *R1, amax, anorm, colcnd, rowcnd;
+    @(mod_type) *C, *R, *C1, *R1, amax, anorm, colcnd, rowcnd;
     @(type) *X, *b_col, *b_work, *x_col;
     double t;
     float GA_mem_use;           /* memory usage by global A */
@@ -670,20 +670,20 @@ p@(pre)gssvx3d (superlu_dist_options_t * options, SuperMatrix * A,
 	    /* Allocate storage if not done so before. */
 	    switch (ScalePermstruct->DiagScale)	{
 		case NOEQUIL:
-		    if (!(R = (double *) doubleMalloc_dist (m)))
+		    if (!(R = (@(mod_type)  *) @(mod_type)Malloc_dist (m)))
 			ABORT ("Malloc fails for R[].");
-		    if (!(C = (double *) doubleMalloc_dist (n)))
+		    if (!(C = (@(mod_type)  *) @(mod_type)Malloc_dist (n)))
 			ABORT ("Malloc fails for C[].");
 		    ScalePermstruct->R = R;
 		    ScalePermstruct->C = C;
 		    break;
 		case ROW:
-		    if (!(C = (double *) doubleMalloc_dist (n)))
+		    if (!(C = (@(mod_type)  *) @(mod_type)Malloc_dist (n)))
 			ABORT ("Malloc fails for C[].");
 		    ScalePermstruct->C = C;
 		    break;
 		case COL:
-		    if (!(R = (double *) doubleMalloc_dist (m)))
+		    if (!(R = (@(mod_type) *) @(mod_type)Malloc_dist (m)))
 			ABORT ("Malloc fails for R[].");
 		    ScalePermstruct->R = R;
 		    break;
@@ -841,9 +841,9 @@ p@(pre)gssvx3d (superlu_dist_options_t * options, SuperMatrix * A,
 			/* Get a new perm_r[] */
 			if (job == 5) {
 			    /* Allocate storage for scaling factors. */
-			    if (!(R1 = doubleMalloc_dist (m)))
+			    if (!(R1 = @(mod_type)Malloc_dist (m)))
 				ABORT ("SUPERLU_MALLOC fails for R1[]");
-			    if (!(C1 = doubleMalloc_dist (n)))
+			    if (!(C1 = @(mod_type)Malloc_dist (n)))
 				ABORT ("SUPERLU_MALLOC fails for C1[]");
 			}
 			
@@ -855,8 +855,8 @@ p@(pre)gssvx3d (superlu_dist_options_t * options, SuperMatrix * A,
 			    if ( iinfo == 0 ) {
 				MPI_Bcast (perm_r, m, mpi_int_t, 0, grid->comm);
 				if (job == 5 && Equil) {
-				    MPI_Bcast (R1, m, MPI_DOUBLE, 0, grid->comm);
-				    MPI_Bcast (C1, n, MPI_DOUBLE, 0, grid->comm);
+				    MPI_Bcast (R1, m, @(MPI_MOD_TYPE), 0, grid->comm);
+				    MPI_Bcast (C1, n, @(MPI_MOD_TYPE), 0, grid->comm);
 				}
 			    }
 			} else {
@@ -864,8 +864,8 @@ p@(pre)gssvx3d (superlu_dist_options_t * options, SuperMatrix * A,
 			    if ( iinfo == 0 ) {
 				MPI_Bcast (perm_r, m, mpi_int_t, 0, grid->comm);
 				if (job == 5 && Equil) {
-				    MPI_Bcast (R1, m, MPI_DOUBLE, 0, grid->comm);
-				    MPI_Bcast (C1, n, MPI_DOUBLE, 0, grid->comm);
+				    MPI_Bcast (R1, m, @(MPI_MOD_TYPE), 0, grid->comm);
+				    MPI_Bcast (C1, n, @(MPI_MOD_TYPE), 0, grid->comm);
 				}
 			    }
 			}
@@ -1236,7 +1236,7 @@ p@(pre)gssvx3d (superlu_dist_options_t * options, SuperMatrix * A,
 	/* send the data across all the layers */
 	MPI_Bcast( &m, 1, mpi_int_t, 0,  grid3d->zscp.comm);
 	MPI_Bcast( &n, 1, mpi_int_t, 0,  grid3d->zscp.comm);
-	MPI_Bcast( &anorm, 1, MPI_DOUBLE, 0,  grid3d->zscp.comm);
+	MPI_Bcast( &anorm, 1, @(MPI_MOD_TYPE), 0,  grid3d->zscp.comm);
 	
 	/* send the LU structure to all the grids */
 	@(pre)p3dScatter(n, LUstruct, grid3d);

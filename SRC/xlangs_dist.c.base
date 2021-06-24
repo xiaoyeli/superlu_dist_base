@@ -68,7 +68,7 @@ at the top-level directory.
  * </pre>
  */
 
-@(mod_type) @(pre)langs_ddist(char *norm, SuperMatrix *A)
+@(mod_type) @(pre)langs_dist(char *norm, SuperMatrix *A)
 {
     
     /* Local variables */

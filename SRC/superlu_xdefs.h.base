@@ -464,7 +464,7 @@ extern void p@(pre)gstrs(int_t, @(pre)LUstruct_t *, @(pre)ScalePermstruct_t *, g
 		    @(type) *, int_t, int_t, int_t, int, @(pre)SOLVEstruct_t *,
 		    SuperLUStat_t *, int *);
 extern void p@(pre)gstrf2_trsm(superlu_dist_options_t * options, int_t k0, int_t k,
-			  @(mod_type) thresh, Glu_persist_t *, gridinfo_t *,
+			  double thresh, Glu_persist_t *, gridinfo_t *,
 			  @(pre)LocalLU_t *, MPI_Request *, int tag_ub,
 			  SuperLUStat_t *, int *info);
 extern void p@(pre)gstrs2_omp(int_t k0, int_t k, Glu_persist_t *, gridinfo_t *,

@@ -118,7 +118,7 @@ main (int argc, char *argv[])
     @(pre)LUstruct_t LUstruct;
     @(pre)SOLVEstruct_t SOLVEstruct;
     gridinfo3d_t grid;
-    double *berr;
+    @(mod_type) *berr;
     @(type) *b, *xtrue;
     int_t m, n;
     int nprow, npcol, npdep;
@@ -289,7 +289,7 @@ main (int argc, char *argv[])
     #endif
 #endif
 
-    if (!(berr = doubleMalloc_dist (nrhs)))
+    if (!(berr = @(mod_type)Malloc_dist (nrhs)))
         ABORT ("Malloc fails for berr[].");
 
     /* ------------------------------------------------------------
