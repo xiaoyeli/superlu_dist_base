@@ -85,9 +85,7 @@ void f_@(pre)Destroy_LU_SOLVE_struct_3d(fptr *options, int *n, fptr *grid,
     
     if ( grid3d->zscp.Iam == 0 ) { // process layer 0
 	@(pre)Destroy_LU(*n, &(grid3d->grid2d), LUstruct_ptr);
-	if ( opt->SolveInitialized ) {
-	    @(pre)SolveFinalize(opt, (@(pre)SOLVEstruct_t *) *SOLVEstruct);
-	}
+    	@(pre)SolveFinalize(opt, (@(pre)SOLVEstruct_t *) *SOLVEstruct);
     } else { // process layers not equal 0
         @(pre)DeAllocLlu_3d(*n, LUstruct_ptr, grid3d);
         @(pre)DeAllocGlu_3d(LUstruct_ptr);
@@ -95,6 +93,13 @@ void f_@(pre)Destroy_LU_SOLVE_struct_3d(fptr *options, int *n, fptr *grid,
     
     @(pre)LUstructFree(LUstruct_ptr);
 }
+
+void f_@(pre)Destroy_A3d_gathered_on_2d(fptr *SOLVEstruct, fptr *grid3d)
+{
+    @(pre)Destroy_A3d_gathered_on_2d((@(pre)SOLVEstruct_t *) *SOLVEstruct,
+                                      (gridinfo3d_t *) *grid3d);
+}
+
 
 void f_@(pre)Create_CompRowLoc_Mat_dist(fptr *A, int *m, int *n, int *nnz_loc,
 				   int *m_loc, int *fst_row, @(type) *nzval,

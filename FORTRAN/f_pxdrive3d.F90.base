@@ -15,7 +15,7 @@
 !! <pre>
 !! -- Distributed SuperLU routine (version 7.0) --
 !! Lawrence Berkeley National Lab, Univ. of California Berkeley.
-!! May 12, 2021
+!! September 10, 2021
 !! </pre>
 !
       program f_p@(pre)drive3d
@@ -145,11 +145,8 @@
       call f_Destroy_CompRowLoc_Mat_dist(A)
       call f_@(pre)ScalePermstructFree(ScalePermstruct)
       call f_@(pre)Destroy_LU_SOLVE_struct_3d(options, n, grid, LUstruct, SOLVEstruct)
-!      call f_LUstructFree(LUstruct)
-!      call get_superlu_options(options, SolveInitialized=init)
-!      if (init == YES) then
-!         call f_dSolveFinalize(options, SOLVEstruct)
-!      endif
+      
+      call f_@(pre)Destroy_A3d_gathered_on_2d(SOLVEstruct, grid)
 
 ! Release the SuperLU process grid
 100   call f_superlu_gridexit(grid)

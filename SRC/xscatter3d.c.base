@@ -237,9 +237,9 @@ void
     int cum_nrow =  Remain_info[lb].StRow;
 
 @precision SINGLE DOUBLE
-    double alpha = 1.0;  double beta = 0.0;
+    @(type) alpha = 1.0;  double beta = 0.0;
 @precision SCOMPLEX DCOMPLEX
-    doublecomplex alpha = {1.0, 0.0}, beta = {0.0, 0.0};
+    @(type) alpha = {1.0, 0.0}, beta = {0.0, 0.0};
 @precision !    
 
     /* calling @(PRE)GEMM */

@@ -49,13 +49,13 @@ void
 
 #ifdef _LONGINT
   @precision SINGLE
-    ret_val = fscanf(fp, "%ld%ld%f\n", &i, &j, &vali);
+    ret_val = fscanf(fp, "%lld%lld%f\n", &i, &j, &vali);
   @precision DOUBLE
-    ret_val = fscanf(fp, "%ld%ld%lf\n", &i, &j, &vali);
+    ret_val = fscanf(fp, "%lld%lld%lf\n", &i, &j, &vali);
   @precision SCOMPLEX
-    ret_val = fscanf(fp, "%ld%ld%f%f\n", &i, &j, &vali.r, &vali.i);
+    ret_val = fscanf(fp, "%lld%lld%f%f\n", &i, &j, &vali.r, &vali.i);
   @precision DCOMPLEX
-    ret_val = fscanf(fp, "%ld%ld%lf%lf\n", &i, &j, &vali.r, &vali.i);
+    ret_val = fscanf(fp, "%lld%lld%lf%lf\n", &i, &j, &vali.r, &vali.i);
   @precision !
 #else  // int
   @precision SINGLE
@@ -78,13 +78,13 @@ void
 
 #ifdef _LONGINT
   @precision SINGLE
-    	ret_val = fscanf(fp, "%ld%ld%f\n", &i, &j, &vali);
+    	ret_val = fscanf(fp, "%lld%lld%f\n", &i, &j, &vali);
   @precision DOUBLE
-        ret_val = fscanf(fp, "%ld%ld%lf\n", &i, &j, &vali);
+        ret_val = fscanf(fp, "%lld%lld%lf\n", &i, &j, &vali);
   @precision SCOMPLEX
-        ret_val = fscanf(fp, "%ld%ld%f%f\n", &i, &j, &vali.r, &vali.i);
+        ret_val = fscanf(fp, "%lld%lld%f%f\n", &i, &j, &vali.r, &vali.i);
   @precision DCOMPLEX
-        ret_val = fscanf(fp, "%ld%ld%lf%lf\n", &i, &j, &vali.r, &vali.i);
+        ret_val = fscanf(fp, "%lld%lld%lf%lf\n", &i, &j, &vali.r, &vali.i);
   @precision !
 #else  // int
   @precision SINGLE
@@ -137,13 +137,13 @@ void
     for (nnz = 0, nz = 0; nnz < *nonz; ++nnz) {
 #ifdef _LONGINT
        @precision SINGLE
-	fscanf(fp, "%ld%ld%f\n", &row[nz], &col[nz], &val[nz]);
+	fscanf(fp, "%lld%lld%f\n", &row[nz], &col[nz], &val[nz]);
        @precision DOUBLE
-	fscanf(fp, "%ld%ld%lf\n", &row[nz], &col[nz], &val[nz]);
+	fscanf(fp, "%lld%lld%lf\n", &row[nz], &col[nz], &val[nz]);
        @precision SCOMPLEX
-	fscanf(fp, "%ld%ld%f%f\n", &row[nz], &col[nz], &val[nz].r, &val[nz].i);
+	fscanf(fp, "%lld%lld%f%f\n", &row[nz], &col[nz], &val[nz].r, &val[nz].i);
        @precision DCOMPLEX
-	fscanf(fp, "%ld%ld%lf%lf\n", &row[nz], &col[nz], &val[nz].r, &val[nz].i);
+	fscanf(fp, "%lld%lld%lf%lf\n", &row[nz], &col[nz], &val[nz].r, &val[nz].i);
        @precision !
 #else // int32
        @precision SINGLE

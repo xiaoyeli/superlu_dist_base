@@ -46,7 +46,7 @@ void
      */
 
 #ifdef _LONGINT
-    fscanf(fp, "%ld%ld%ld", m, n, nonz);
+    fscanf(fp, "%lld%lld%lld", m, n, nonz);
 #else
     fscanf(fp, "%d%d%d", m, n, nonz);
 #endif
@@ -77,13 +77,13 @@ void
 
 #ifdef _LONGINT
 @precision SINGLE
-        fscanf(fp, "%ld%ld%f\n", &row[nz], &col[nz], &val[nz]);
+        fscanf(fp, "%lld%lld%f\n", &row[nz], &col[nz], &val[nz]);
 @precision DOUBLE    
-        fscanf(fp, "%ld%ld%lf\n", &row[nz], &col[nz], &val[nz]);
+        fscanf(fp, "%lld%lld%lf\n", &row[nz], &col[nz], &val[nz]);
 @precision SCOMPLEX
-        fscanf(fp, "%ld%ld%f%f\n", &row[nz], &col[nz], &val[nz].r, &val[nz].i);
+        fscanf(fp, "%lld%lld%f%f\n", &row[nz], &col[nz], &val[nz].r, &val[nz].i);
 @precision DCOMPLEX
-        fscanf(fp, "%ld%ld%lf%lf\n", &row[nz], &col[nz], &val[nz].r, &val[nz].i);
+        fscanf(fp, "%lld%lld%lf%lf\n", &row[nz], &col[nz], &val[nz].r, &val[nz].i);
 @precision !
 #else // int 
 @precision SINGLE
@@ -101,8 +101,9 @@ void
 	    if ( row[0] == 0 || col[0] == 0 ) {
 		zero_base = 1;
 		printf("triplet file: row/col indices are zero-based.\n");
-	    } else
+	    } else {
 		printf("triplet file: row/col indices are one-based.\n");
+     	    }
 
 	if ( !zero_base ) {
 	    /* Change to 0-based indexing. */

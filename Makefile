@@ -93,6 +93,7 @@ single:	\
 	$(TGTTST)/pstest.c \
 	$(TGTTST)/pscompute_resid.c \
 	$(TGTEXM)/psdrive3d.c \
+	$(TGTEXM)/psdrive3d1.c \
 	$(TGTSRC)/sscatter3d.c \
 	$(TGTSRC)/sgather.c \
 	$(TGTSRC)/ps3dcomm.c \
@@ -237,6 +238,8 @@ $(TGTEXM)/psdrive4.c:	$(EXM)/pxdrive4.c.base
 	extract -b $? -o $@ precision=single
 $(TGTEXM)/psdrive3d.c:	$(EXM)/pxdrive3d.c.base
 	extract -b $? -o $@ precision=single
+$(TGTEXM)/psdrive3d1.c:	$(EXM)/pxdrive3d1.c.base
+	extract -b $? -o $@ precision=single
 $(TGTEXM)/screate_matrix.c:	$(EXM)/xcreate_matrix.c.base
 	extract -b $? -o $@ precision=single
 $(TGTEXM)/screate_matrix3d.c:	$(EXM)/xcreate_matrix3d.c.base
@@ -317,6 +320,7 @@ double:	\
 	$(TGTTST)/pdtest.c \
 	$(TGTTST)/pdcompute_resid.c \
 	$(TGTEXM)/pddrive3d.c \
+	$(TGTEXM)/pddrive3d1.c \
 	$(TGTSRC)/dscatter3d.c \
 	$(TGTSRC)/dgather.c \
 	$(TGTSRC)/pd3dcomm.c \
@@ -461,6 +465,8 @@ $(TGTEXM)/pddrive4.c:	$(EXM)/pxdrive4.c.base
 	extract -b $? -o $@ precision=double
 $(TGTEXM)/pddrive3d.c:	$(EXM)/pxdrive3d.c.base
 	extract -b $? -o $@ precision=double
+$(TGTEXM)/pddrive3d1.c:	$(EXM)/pxdrive3d1.c.base
+	extract -b $? -o $@ precision=double
 $(TGTEXM)/dcreate_matrix.c:	$(EXM)/xcreate_matrix.c.base
 	extract -b $? -o $@ precision=double
 $(TGTEXM)/dcreate_matrix3d.c:	$(EXM)/xcreate_matrix3d.c.base
@@ -543,6 +549,7 @@ dcomplex: \
 	$(TGTTST)/pztest.c \
 	$(TGTTST)/pzcompute_resid.c \
 	$(TGTEXM)/pzdrive3d.c \
+	$(TGTEXM)/pzdrive3d1.c \
 	$(TGTSRC)/zscatter3d.c \
 	$(TGTSRC)/zgather.c \
 	$(TGTSRC)/pz3dcomm.c \
@@ -685,6 +692,8 @@ $(TGTEXM)/pzdrive3.c:	$(EXM)/pxdrive3.c.base
 $(TGTEXM)/pzdrive4.c:	$(EXM)/pxdrive4.c.base
 	extract -b $? -o $@ precision=dcomplex
 $(TGTEXM)/pzdrive3d.c:	$(EXM)/pxdrive3d.c.base
+	extract -b $? -o $@ precision=dcomplex
+$(TGTEXM)/pzdrive3d1.c:	$(EXM)/pxdrive3d1.c.base
 	extract -b $? -o $@ precision=dcomplex
 $(TGTEXM)/zcreate_matrix.c: $(EXM)/xcreate_matrix.c.base
 	extract -b $? -o $@ precision=dcomplex

@@ -227,6 +227,9 @@ typedef struct {
                              positions in the gathered x-vector.
                              This is re-used in repeated calls to p@(pre)gsmv() */
     int_t *xrow_to_proc; /* used by PDSLin */
+    NRformat_loc3d* A3d; /* Point to 3D {A, B} gathered on 2D layer 0.
+                            This needs to be peresistent between
+			    3D factorization and solve.  */
 } @(pre)SOLVEstruct_t;
 
 
@@ -427,6 +430,7 @@ extern void  p@(pre)Compute_Diag_Inv(int_t, @(pre)LUstruct_t *,gridinfo_t *, Sup
 extern int  @(pre)SolveInit(superlu_dist_options_t *, SuperMatrix *, int_t [], int_t [],
 		       int_t, @(pre)LUstruct_t *, gridinfo_t *, @(pre)SOLVEstruct_t *);
 extern void @(pre)SolveFinalize(superlu_dist_options_t *, @(pre)SOLVEstruct_t *);
+extern void @(pre)Destroy_A3d_gathered_on_2d(@(pre)SOLVEstruct_t *, gridinfo3d_t *);
 extern int_t p@(pre)gstrs_init(int_t, int_t, int_t, int_t,
                           int_t [], int_t [], gridinfo_t *grid,
 	                  Glu_persist_t *, @(pre)SOLVEstruct_t *);
@@ -647,10 +651,9 @@ extern int superlu_@(pre)gemv(const char *trans, const int m,
 extern int superlu_@(pre)trsv(char *uplo, char *trans, char *diag,
                   int n, @(type) *a, int lda, @(type) *x, int incx);
 
-
-// LAPACK routine
+#ifdef SLU_HAVE_LAPACK
 extern void @(pre)trtri_(char*, char*, int*, @(type)*, int*, int*);
-
+#endif
 
 /*==== For 3D code ====*/
 extern int @(pre)create_matrix3d(SuperMatrix *A, int nrhs, @(type) **rhs,
@@ -662,9 +665,9 @@ extern int @(pre)create_matrix_postfix3d(SuperMatrix *A, int nrhs, @(type) **rhs
     
 /* Matrix distributed in NRformat_loc in 3D process grid. It converts 
    it to a NRformat_loc distributed in 2D grid in grid-0 */
-extern NRformat_loc3d *@(pre)GatherNRformat_loc3d(NRformat_loc *A, @(type) *B,
-					     int ldb, int nrhs,
-					     gridinfo3d_t *grid3d);
+extern void @(pre)GatherNRformat_loc3d(fact_t Fact, NRformat_loc *A, @(type) *B,
+				   int ldb, int nrhs, gridinfo3d_t *grid3d,
+				   NRformat_loc3d **);
 extern int @(pre)Scatter_B3d(NRformat_loc3d *A3d, gridinfo3d_t *grid3d);
 
 extern void p@(pre)gssvx3d (superlu_dist_options_t *, SuperMatrix *,
