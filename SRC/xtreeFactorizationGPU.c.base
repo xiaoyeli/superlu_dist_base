@@ -25,6 +25,7 @@
                   ^          ^
                   0          jj_cpu
 */
+#if 0
 static int_t getAccUPartition(HyP_t *HyP)
 {
     /* Sherry: what if num_u_blks_phi == 0 ? Need to fix the bug */
@@ -55,6 +56,7 @@ static int_t getAccUPartition(HyP_t *HyP)
 
     return jj_cpu;
 }
+#endif
 
 int @(pre)sparseTreeFactor_ASYNC_GPU(
     sForest_t *sforest,
