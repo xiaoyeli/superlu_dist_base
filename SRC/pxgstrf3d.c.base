@@ -232,7 +232,7 @@ int_t p@(pre)gstrf3d(superlu_dist_options_t *options, int m, int n, @(mod_type) 
 #ifdef GPU_ACC
 
     /*Now initialize the GPU data structure*/
-    // @(pre)LUstruct_gpu_t *A_gpu, *dA_gpu; // not used
+    @(pre)LUstruct_gpu_t *A_gpu, *dA_gpu;
 
     d2Hreduce_t d2HredObj;
     d2Hreduce_t* d2Hred = &d2HredObj;
@@ -343,7 +343,9 @@ int_t p@(pre)gstrf3d(superlu_dist_options_t *options, int m, int n, @(mod_type) 
 
 #ifdef GPU_ACC
     /* This frees the GPU storage allocateed in initSluGPU3D_t() */
-    @(pre)free_LUstruct_gpu (sluGPU->A_gpu);
+    if (superlu_acc_offload) {
+         @(pre)free_LUstruct_gpu (sluGPU->A_gpu);
+    }
 #endif
     
     MPI_Barrier( grid3d->comm);

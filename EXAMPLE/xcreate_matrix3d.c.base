@@ -269,7 +269,7 @@ int @(pre)create_matrix_postfix3d(SuperMatrix *A, int nrhs, @(type) **rhs,
     iam = grid3d->iam;
 
 #if ( DEBUGlevel>=1 )
-    CHECK_MALLOC(iam, "Enter dcreate_matrix()");
+    CHECK_MALLOC(iam, "Enter @(pre)create_matrix_postfix3d()");
 #endif
 
     if ( !iam )
