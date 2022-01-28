@@ -497,7 +497,7 @@ sp_@(pre)gemv_dist(char *trans, @(type) alpha, SuperMatrix *A, @(type) *x,
 
     /* Quick return if possible. */
 @precision SINGLE DOUBLE
-    if (A->nrow == 0 || A->ncol == 0 || alpha == 0. && beta == 1.)
+    if (A->nrow == 0 || A->ncol == 0 || (alpha == 0. && beta == 1.))
 @precision SCOMPLEX DCOMPLEX
     if (A->nrow == 0 || A->ncol == 0 || 
 	(@(pre)_eq(&alpha, &zero) && @(pre)_eq(&beta, &one)) )
@@ -565,7 +565,7 @@ sp_@(pre)gemv_dist(char *trans, @(type) alpha, SuperMatrix *A, @(type) *x,
 @precision SINGLE DOUBLE
     if (alpha == 0.) return 0;
 @precision SCOMPLEX DCOMPLEX
-    if ( @(pre)_eq(&alpha, &comp_zero) ) return 0;
+    if ( @(pre)_eq(&alpha, &zero) ) return 0;
 @precision !
 
     if ( notran ) {

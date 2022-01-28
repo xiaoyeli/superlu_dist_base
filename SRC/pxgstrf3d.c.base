@@ -273,7 +273,7 @@ int_t p@(pre)gstrf3d(superlu_dist_options_t *options, int m, int n, @(mod_type) 
 
         HyP->first_u_block_acc = sluGPU->A_gpu->first_u_block_gpu;
         HyP->first_l_block_acc = sluGPU->A_gpu->first_l_block_gpu;
-        HyP->nCudaStreams = sluGPU->nCudaStreams;
+        HyP->nGPUStreams = sluGPU->nGPUStreams;
     }
 
 #endif  // end GPU_ACC
@@ -345,18 +345,11 @@ int_t p@(pre)gstrf3d(superlu_dist_options_t *options, int m, int n, @(mod_type) 
 	    : SCT->NetSchurUpTimer - SCT->tSchCompUdt3d[ilvl - 1];
     } /* end for (int ilvl = 0; ilvl < maxLvl; ++ilvl) */
 
-#ifdef GPU_ACC
-    /* This frees the GPU storage allocateed in initSluGPU3D_t() */
-    if (superlu_acc_offload) {
-         @(pre)free_LUstruct_gpu (sluGPU->A_gpu);
-    }
-#endif
-    
     /* Prepare error message - find the smallesr index i that U(i,i)==0 */
     int iinfo;
     if ( *info == 0 ) *info = n + 1;
     MPI_Allreduce (info, &iinfo, 1, MPI_INT, MPI_MIN, grid3d->comm);
-    if ( iinfo == n + 1 ) *info = 0;
+    if ( iinfo == (n + 1) ) *info = 0;
     else *info = iinfo;
     //printf("After factorization: INFO = %d\n", *info); fflush(stdout);
 
@@ -370,6 +363,12 @@ int_t p@(pre)gstrf3d(superlu_dist_options_t *options, int m, int n, @(mod_type) 
     allinea_stop_sampling();
 #endif
 
+#ifdef GPU_ACC
+    /* This frees the GPU storage allocateed in initSluGPU3D_t() */
+    if (superlu_acc_offload) {
+         @(pre)free_LUstruct_gpu (sluGPU->A_gpu);
+    }
+#endif
     reduceStat(FACT, stat, grid3d);
 
     // sherry added

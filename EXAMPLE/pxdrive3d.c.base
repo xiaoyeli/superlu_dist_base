@@ -212,6 +212,7 @@ main (int argc, char *argv[])
 	    fflush(stdout);
 	    break;
 	}
+        fflush(stdout);
     }
 	
     /* Bail out if I do not belong in the grid. */

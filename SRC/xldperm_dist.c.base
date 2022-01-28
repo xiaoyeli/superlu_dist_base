@@ -21,9 +21,10 @@ at the top-level directory.
 
 #include "superlu_@(pre)defs.h"
 
-extern void mc64ad_dist(int_t*, int_t*, int_t*, int_t [], int_t [], double [],
-		    int_t*, int_t [], int_t*, int_t[], int_t*, double [],
-		    int_t [], int_t []);
+extern int mc64ad_dist(int *job, int *n, int_t *ne, int_t *ip,
+       int_t *irn, double *a, int *num, int_t *cperm,
+       int_t *liw, int_t *iw, int_t *ldw, double *dw,
+       int * icntl, int *info);
 
 /*! \brief
  *
@@ -81,21 +82,22 @@ extern void mc64ad_dist(int_t*, int_t*, int_t*, int_t [], int_t [], double [],
  *        The permutation vector. perm[i] = j means row i in the
  *        original matrix is in row j of the permuted matrix.
  *
- * u      (output) double*, of size n
+ * u      (output) @(mod_type)*, of size n
  *        If job = 5, the natural logarithms of the row scaling factors.
  *
- * v      (output) double*, of size n
+ * v      (output) @(mod_type)*, of size n
  *        If job = 5, the natural logarithms of the column scaling factors.
  *        The scaled matrix B has entries b_ij = a_ij * exp(u_i + v_j).
  * </pre>
  */
 
 int
-@(pre)ldperm_dist(int_t job, int_t n, int_t nnz, int_t colptr[], int_t adjncy[],
+@(pre)ldperm_dist(int job, int n, int_t nnz, int_t colptr[], int_t adjncy[],
 	@(type) nzval[], int_t *perm, @(mod_type) u[], @(mod_type) v[])
 {
-    int_t i, liw, ldw, num;
-    int_t *iw, icntl[10], info[10];
+    int i, num, icntl[10], info[10]; 
+    int_t liw, ldw;
+    int_t *iw;
     double *dw;
     extern double *doubleMalloc_dist(int_t);
 @precision SINGLE
@@ -161,7 +163,7 @@ int
     printf(".. After MC64AD info %d\tsize of matching %d\n", info[0], num);
 #endif
     if ( info[0] == 1 ) { /* Structurally singular */
-        printf(".. The last " IFMT " permutations:\n", n-num);
+        printf(".. The last %d permutations:\n", n-num);
 	PrintInt10("perm", n-num, &perm[num]);
     }
 
@@ -178,6 +180,8 @@ int
 
     SUPERLU_FREE(iw);
     SUPERLU_FREE(dw);
+@precision SINGLE
+    SUPERLU_FREE(nzval_d);
 @precision SCOMPLEX DCOMPLEX
     SUPERLU_FREE(nzval_abs);
 @precision !
