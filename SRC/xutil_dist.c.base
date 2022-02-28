@@ -918,7 +918,7 @@ void @(pre)ZeroUblocks(int iam, int n, gridinfo_t *grid, @(pre)LUstruct_t *LUstr
 	    }
 	}
     }
-} /* end @(pre)ZeroUlocks */
+} /* end @(pre)ZeroUblocks */
 
 int
 @(pre)print_gsmv_comm(FILE *fp, int_t m_loc, p@(pre)gsmv_comm_t *gsmv_comm,
