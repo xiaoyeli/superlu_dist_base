@@ -41,7 +41,7 @@ single:	\
 	$(TGTSRC)/sscatter3d.c \
 	$(TGTSRC)/slook_ahead_update.c \
 	$(TGTSRC)/sSchCompUdt-2Ddynamic.c \
-	$(TGTSRC)/sSchCompUdt-cuda.c \
+	$(TGTSRC)/sSchCompUdt-gpu.c \
 	$(TGTSRC)/psgssvx_ABglobal.c \
 	$(TGTSRC)/psgstrs_Bglobal.c \
 	$(TGTSRC)/psgsrfs_ABXglobal.c \
@@ -130,7 +130,7 @@ $(TGTSRC)/slook_ahead_update.c:	$(SRC)/xlook_ahead_update.c.base
 	extract -b $? -o $@ precision=single
 $(TGTSRC)/sSchCompUdt-2Ddynamic.c:	$(SRC)/xSchCompUdt-2Ddynamic.c.base
 	extract -b $? -o $@ precision=single
-$(TGTSRC)/sSchCompUdt-cuda.c:	$(SRC)/xSchCompUdt-cuda.c.base
+$(TGTSRC)/sSchCompUdt-gpu.c:	$(SRC)/xSchCompUdt-gpu.c.base
 	extract -b $? -o $@ precision=single
 $(TGTSRC)/psgssvx_ABglobal.c:	$(SRC)/pxgssvx_ABglobal.c.base
 	extract -b $? -o $@ precision=single
@@ -273,7 +273,7 @@ double:	\
 	$(TGTSRC)/dscatter.c \
 	$(TGTSRC)/dlook_ahead_update.c \
 	$(TGTSRC)/dSchCompUdt-2Ddynamic.c \
-	$(TGTSRC)/dSchCompUdt-cuda.c \
+	$(TGTSRC)/dSchCompUdt-gpu.c \
 	$(TGTSRC)/pdgssvx_ABglobal.c \
 	$(TGTSRC)/pdgstrs_Bglobal.c \
 	$(TGTSRC)/pdgsrfs_ABXglobal.c \
@@ -363,7 +363,7 @@ $(TGTSRC)/dlook_ahead_update.c:	$(SRC)/xlook_ahead_update.c.base
 	extract -b $? -o $@ precision=double
 $(TGTSRC)/dSchCompUdt-2Ddynamic.c:	$(SRC)/xSchCompUdt-2Ddynamic.c.base
 	extract -b $? -o $@ precision=double
-$(TGTSRC)/dSchCompUdt-cuda.c:	$(SRC)/xSchCompUdt-cuda.c.base
+$(TGTSRC)/dSchCompUdt-gpu.c:	$(SRC)/xSchCompUdt-gpu.c.base
 	extract -b $? -o $@ precision=double
 $(TGTSRC)/pdgssvx_ABglobal.c:	$(SRC)/pxgssvx_ABglobal.c.base
 	extract -b $? -o $@ precision=double
@@ -508,7 +508,7 @@ dcomplex: \
 	$(TGTSRC)/zscatter.c \
 	$(TGTSRC)/zlook_ahead_update.c \
 	$(TGTSRC)/zSchCompUdt-2Ddynamic.c \
-	$(TGTSRC)/zSchCompUdt-cuda.c \
+	$(TGTSRC)/zSchCompUdt-gpu.c \
 	$(TGTSRC)/pzgssvx_ABglobal.c \
 	$(TGTSRC)/pzgstrs_Bglobal.c \
 	$(TGTSRC)/pzgsrfs_ABXglobal.c \
@@ -597,7 +597,7 @@ $(TGTSRC)/zlook_ahead_update.c:	$(SRC)/xlook_ahead_update.c.base
 	extract -b $? -o $@ precision=dcomplex
 $(TGTSRC)/zSchCompUdt-2Ddynamic.c: $(SRC)/xSchCompUdt-2Ddynamic.c.base
 	extract -b $? -o $@ precision=dcomplex
-$(TGTSRC)/zSchCompUdt-cuda.c:	$(SRC)/xSchCompUdt-cuda.c.base
+$(TGTSRC)/zSchCompUdt-gpu.c:	$(SRC)/xSchCompUdt-gpu.c.base
 	extract -b $? -o $@ precision=dcomplex
 $(TGTSRC)/pzgssvx_ABglobal.c:	$(SRC)/pxgssvx_ABglobal.c.base
 	extract -b $? -o $@ precision=dcomplex

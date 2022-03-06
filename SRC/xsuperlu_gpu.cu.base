@@ -773,10 +773,15 @@ static size_t get_acc_memory ()
 
 }
 
+/* Free all the data structures allocated on GPU.
+   This routine is called from Host                 */
 int @(pre)free_LUstruct_gpu (
-    @(pre)LUstruct_gpu_t * A_gpu,
+    @(pre)sluGPU_t * sluGPU,
     SuperLUStat_t* stat )
 {
+	@(pre)LUstruct_gpu_t * A_gpu = sluGPU-A_gpu;
+	int streamId = 0;
+    
 	/* Free the L data structure on GPU */
 	checkGPU(gpuFree(A_gpu->LrowindVec));
 	checkGPU(gpuFree(A_gpu->LrowindPtr));
@@ -786,7 +791,6 @@ int @(pre)free_LUstruct_gpu (
 	free(A_gpu->LnzvalPtr_host);
 	
 	/*freeing the pinned memory*/
-	int_t streamId = 0;
 	checkGPU (gpuFreeHost (A_gpu->scubufs[streamId].Remain_info_host));
 	checkGPU (gpuFreeHost (A_gpu->scubufs[streamId].Ublock_info_host));
 	checkGPU (gpuFreeHost (A_gpu->scubufs[streamId].Remain_L_buff_host));
@@ -841,8 +845,15 @@ int @(pre)free_LUstruct_gpu (
 	checkGPU(gpuFree(A_gpu->ijb_lookupVec));
 	checkGPU(gpuFree(A_gpu->ijb_lookupPtr));
 
+	/* Destroy all the meta-structures associated with the streams. */
+    	gpuStreamDestroy(sluGPU->CopyStream);
+	for (streamId = 0; streamId < sluGPU->nGPUStreams; streamId++) {
+	    gpuStreamDestroy(sluGPU->funCallStreams[streamId]);
+	    gpublasDestroy(sluGPU->gpublasHandles[streamId]);
+    	}
+    
 	return 0;
-}
+} /* end @(pre)free_LUstruct_gpu */
 
 
 
@@ -1182,14 +1193,6 @@ int @(pre)sendSCUdataHost2GPU(
 
     return 0;
 }
-
-/* Sherry: not used ?*/
-#if 0
-int freeSluGPU(@(pre)sluGPU_t *sluGPU)
-{
-    return 0;
-}
-#endif
 
 /* Allocate GPU memory for the LU data structures, and copy
    the host LU structure to GPU side.

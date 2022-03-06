@@ -65,7 +65,7 @@ void @(pre)Init_HyP(HyP_t* HyP, @(pre)LocalLU_t *Llu, int_t mcb, int_t mrb )
     HyP->last_offload = -1;
     HyP->superlu_acc_offload = get_acc_offload ();
 
-    HyP->nCudaStreams =0;
+    HyP->nGPUStreams =0;
 } /* @(pre)Init_HyP */
 
 /*init3DLUstruct with forest interface */
