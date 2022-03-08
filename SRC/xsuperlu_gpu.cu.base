@@ -779,7 +779,7 @@ int @(pre)free_LUstruct_gpu (
     @(pre)sluGPU_t * sluGPU,
     SuperLUStat_t* stat )
 {
-	@(pre)LUstruct_gpu_t * A_gpu = sluGPU-A_gpu;
+	@(pre)LUstruct_gpu_t * A_gpu = sluGPU->A_gpu;
 	int streamId = 0;
     
 	/* Free the L data structure on GPU */
