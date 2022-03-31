@@ -243,7 +243,7 @@ double  @(pre)memForest(sForest_t*sforest, @(pre)LUstruct_t *LUstruct, gridinfo3
     return memlu;
 }
 
-void @(pre)3D_printMemUse( trf3Dpartition_t*  trf3Dpartition,  @(pre)LUstruct_t *LUstruct,
+void @(pre)3D_printMemUse( @(pre)trf3Dpartition_t*  trf3Dpartition,  @(pre)LUstruct_t *LUstruct,
 		      gridinfo3d_t * grid3d )
 {
     int_t* myTreeIdxs = trf3Dpartition->myTreeIdxs;

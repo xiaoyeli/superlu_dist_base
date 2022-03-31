@@ -306,6 +306,7 @@ typedef struct {
 
 // new structures for pdgstrf_4_8 
 
+#if 0  // Sherry: moved to superlu_defs.h
 typedef struct
 {
     int_t nub;
@@ -323,8 +324,6 @@ typedef struct
     int_t nlb;  //number of l blocks
     int_t nsupr;
 } lPanelInfo_t;
-
- 
 
 /* HyP_t is the data structure to assist HALO offload of Schur-complement. */
 typedef struct
@@ -355,6 +354,9 @@ typedef struct
     int nGPUStreams;
 } HyP_t;
 
+#endif  // Above are moved to superlu_defs.h
+
+
 typedef struct 
 {
     int_t * Lsub_buf ;
@@ -381,7 +383,7 @@ typedef struct
     sForest_t** sForests;
     int_t* supernode2treeMap;
     @(pre)LUValSubBuf_t  *LUvsb;
-} trf3Dpartition_t;
+} @(pre)trf3Dpartition_t;
 
 typedef struct
 {
@@ -395,15 +397,6 @@ typedef struct
     @(type)* BlockUFactor;
 } @(pre)diagFactBufs_t;
 
-typedef struct
-{
-    Ublock_info_t* Ublock_info;
-    Remain_info_t*  Remain_info;
-    uPanelInfo_t* uPanelInfo;
-    lPanelInfo_t* lPanelInfo;
-} packLUInfo_t;
-
-//#endif
 /*=====================*/
 
 /***********************************************************************
@@ -576,7 +569,7 @@ extern void @(pre)ComputeLevelsets(int , int_t , gridinfo_t *,
 			   
 #ifdef GPU_ACC               
 extern void @(pre)lsum_fmod_inv_gpu_wrap(int_t, int_t, int_t, int_t, @(type) *, @(type) *, int, int, int_t , int *fmod, C_Tree  *, C_Tree  *, int_t *, int_t *, int64_t *, @(type) *, int64_t *, @(type) *, int64_t *, int_t *, int64_t *, int_t *, gridinfo_t *, @(type) * , @(type) * , int_t );
-extern void dlsum_bmod_inv_gpu_wrap(int_t, int_t, int_t, int_t, @(type) *, @(type) *,int,int, int_t , int *bmod, C_Tree  *, C_Tree  *, int_t *, int_t *,int_t *, int64_t *, @(type) *, int64_t *, int_t  *, int64_t *, Ucb_indptr_t *, int64_t *, @(type) *, int64_t *,int_t *,gridinfo_t *);
+extern void @(pre)lsum_bmod_inv_gpu_wrap(int_t, int_t, int_t, int_t, @(type) *, @(type) *,int,int, int_t , int *bmod, C_Tree  *, C_Tree  *, int_t *, int_t *,int_t *, int64_t *, @(type) *, int64_t *, int_t  *, int64_t *, Ucb_indptr_t *, int64_t *, @(type) *, int64_t *,int_t *,gridinfo_t *);
 #endif
 
 extern void p@(pre)gsrfs(int_t, SuperMatrix *, @(mod_type), @(pre)LUstruct_t *,
@@ -759,7 +752,7 @@ extern void p@(pre)gssvx3d (superlu_dist_options_t *, SuperMatrix *,
 		       gridinfo3d_t *, @(pre)LUstruct_t *, @(pre)SOLVEstruct_t *, 
 		       @(mod_type) *berr, SuperLUStat_t *, int *info);
 extern int_t p@(pre)gstrf3d(superlu_dist_options_t *, int m, int n, @(mod_type) anorm,
-		       trf3Dpartition_t*, SCT_t *, @(pre)LUstruct_t *,
+		       @(pre)trf3Dpartition_t*, SCT_t *, @(pre)LUstruct_t *,
 		       gridinfo3d_t *, SuperLUStat_t *, int *);
 extern void @(pre)Init_HyP(HyP_t* HyP, @(pre)LocalLU_t *Llu, int_t mcb, int_t mrb );
 extern void Free_HyP(HyP_t* HyP);
@@ -855,12 +848,12 @@ extern void @(pre)Rgather_U(int_t k, int_t jj0, int_t *usub, @(type) *uval,
 		      int_t *iperm_c_supno, int_t *perm_u);
 
     /* from xtrf3Dpartition.h */
-extern trf3Dpartition_t* @(pre)initTrf3Dpartition(int_t nsupers,
+extern @(pre)trf3Dpartition_t* @(pre)initTrf3Dpartition(int_t nsupers,
 					     superlu_dist_options_t *options,
 					     @(pre)LUstruct_t *LUstruct, gridinfo3d_t * grid3d);
-extern void @(pre)Destroy_trf3Dpartition(trf3Dpartition_t *trf3Dpartition, gridinfo3d_t *grid3d);
+extern void @(pre)Destroy_trf3Dpartition(@(pre)trf3Dpartition_t *trf3Dpartition, gridinfo3d_t *grid3d);
 
-extern void @(pre)3D_printMemUse(trf3Dpartition_t*  trf3Dpartition,
+extern void @(pre)3D_printMemUse(@(pre)trf3Dpartition_t*  trf3Dpartition,
 			    @(pre)LUstruct_t *LUstruct, gridinfo3d_t * grid3d);
 
 //extern int* getLastDep(gridinfo_t *grid, SuperLUStat_t *stat,
@@ -952,7 +945,7 @@ int_t @(pre)gatherFactoredLU(int_t sender, int_t receiver,
 
 /*Gathers all the L and U factors to grid 0 for solve stage 
 	By  repeatidly calling above function*/
-int_t @(pre)gatherAllFactoredLU(trf3Dpartition_t*  trf3Dpartition, @(pre)LUstruct_t* LUstruct,
+int_t @(pre)gatherAllFactoredLU(@(pre)trf3Dpartition_t*  trf3Dpartition, @(pre)LUstruct_t* LUstruct,
 			   gridinfo3d_t* grid3d, SCT_t* SCT );
 
 /*Distributes data in each layer and initilizes ancestors
@@ -1074,6 +1067,7 @@ extern int_t @(pre)initScuBufs(int_t ldt, int_t num_threads, int_t nsupers,
 			  @(pre)scuBufs_t*, @(pre)LUstruct_t*, gridinfo_t *);
 extern int @(pre)freeScuBufs(@(pre)scuBufs_t* scuBufs);
 
+#if 0 // NOT CALLED
 // the generic tree factoring code 
 extern int_t treeFactor(
     int_t nnnodes,          // number of nodes in the tree
@@ -1093,6 +1087,7 @@ extern int_t treeFactor(
     double thresh,  SCT_t *SCT,
     int *info
 );
+#endif
 
 extern int_t @(pre)sparseTreeFactor(
     int_t nnodes,          // number of nodes in the tree
@@ -1161,7 +1156,8 @@ extern int_t checkRecvUDiag(int_t k, commRequests_t *comReqs,
 			    gridinfo_t *grid, SCT_t *SCT);
 extern int_t checkRecvLDiag(int_t k, commRequests_t *comReqs, gridinfo_t *, SCT_t *);
 
-    /* from ancFactorization.h (not called) */
+#if 0 // NOT CALLED
+/* from ancFactorization.h (not called) */
 extern int_t ancestorFactor(
     int_t ilvl,             // level of factorization 
     sForest_t* sforest,
@@ -1181,6 +1177,7 @@ extern int_t ancestorFactor(
     @(pre)LUstruct_t *LUstruct, gridinfo3d_t * grid3d, SuperLUStat_t *stat,
     double thresh,  SCT_t *SCT, int tag_ub, int *info
 );
+#endif
 
 /*== end 3D prototypes ===================*/
 

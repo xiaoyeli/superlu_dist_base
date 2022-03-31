@@ -542,7 +542,7 @@ int_t @(pre)SchurComplementSetupGPU(
 } /* @(pre)getBigU */
 
 
-trf3Dpartition_t* @(pre)initTrf3Dpartition(int_t nsupers,
+@(pre)trf3Dpartition_t* @(pre)initTrf3Dpartition(int_t nsupers,
 				      superlu_dist_options_t *options,
 				      @(pre)LUstruct_t *LUstruct, gridinfo3d_t * grid3d
 				      )
@@ -608,7 +608,7 @@ trf3Dpartition_t* @(pre)initTrf3Dpartition(int_t nsupers,
         }
     }
 
-    trf3Dpartition_t*  trf3Dpartition = SUPERLU_MALLOC(sizeof(trf3Dpartition_t));
+    @(pre)trf3Dpartition_t*  trf3Dpartition = SUPERLU_MALLOC(sizeof(@(pre)trf3Dpartition_t));
 
     trf3Dpartition->gEtreeInfo = gEtreeInfo;
     trf3Dpartition->iperm_c_supno = iperm_c_supno;
@@ -634,7 +634,7 @@ trf3Dpartition_t* @(pre)initTrf3Dpartition(int_t nsupers,
 } /* @(pre)initTrf3Dpartition */
 
 /* Free memory allocated for trf3Dpartition structure. Sherry added this routine */
-void @(pre)Destroy_trf3Dpartition(trf3Dpartition_t *trf3Dpartition, gridinfo3d_t *grid3d)
+void @(pre)Destroy_trf3Dpartition(@(pre)trf3Dpartition_t *trf3Dpartition, gridinfo3d_t *grid3d)
 {
     int i;
 #if ( DEBUGlevel>=1 )

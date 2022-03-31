@@ -88,7 +88,7 @@ extern void @(pre)matvec(int, int, int, @(type)*, @(type)*, @(type)*);
  *
  *   info    - (output) int*
  *             If *info = -i, the i-th argument had an illegal value.
- * <pre>
+ * </pre>
  */
 int
 sp_@(pre)trsv_dist(char *uplo, char *trans, char *diag, SuperMatrix *L, 
@@ -113,7 +113,6 @@ sp_@(pre)trsv_dist(char *uplo, char *trans, char *diag, SuperMatrix *L,
     int i, k, iptr, jcol;
     @(type) *work;
     flops_t solve_ops;
-    /*extern SuperLUStat_t SuperLUStat;*/
 
     /* Test the input parameters */
     *info = 0;
@@ -152,6 +151,7 @@ sp_@(pre)trsv_dist(char *uplo, char *trans, char *diag, SuperMatrix *L,
 		nsupc = SuperLU_L_FST_SUPC(k+1) - fsupc;
 		luptr = SuperLU_L_NZ_START(fsupc);
 		nrow = nsupr - nsupc;
+		
 @precision SINGLE DOUBLE
 	        solve_ops += nsupc * (nsupc - 1);
 	        solve_ops += 2 * nrow * nsupc;
@@ -159,6 +159,7 @@ sp_@(pre)trsv_dist(char *uplo, char *trans, char *diag, SuperMatrix *L,
 	        solve_ops += 4 * nsupc * (nsupc - 1);
 	        solve_ops += 8 * nrow * nsupc;
 @precision !
+
 		if ( nsupc == 1 ) {
 		    for (iptr=istart+1; iptr < SuperLU_L_SUB_START(fsupc+1); ++iptr) {
 			irow = SuperLU_L_SUB(iptr);
@@ -219,6 +220,7 @@ sp_@(pre)trsv_dist(char *uplo, char *trans, char *diag, SuperMatrix *L,
 	    	nsupr = SuperLU_L_SUB_START(fsupc+1) - SuperLU_L_SUB_START(fsupc);
 	    	nsupc = SuperLU_L_FST_SUPC(k+1) - fsupc;
 	    	luptr = SuperLU_L_NZ_START(fsupc);
+		
 @precision SINGLE DOUBLE		
     	        solve_ops += nsupc * (nsupc + 1);
 @precision SCOMPLEX DCOMPLEX
@@ -295,6 +297,7 @@ sp_@(pre)trsv_dist(char *uplo, char *trans, char *diag, SuperMatrix *L,
 @precision SCOMPLEX DCOMPLEX
 		solve_ops += 8 * (nsupr - nsupc) * nsupc;
 @precision !
+
 		for (jcol = fsupc; jcol < SuperLU_L_FST_SUPC(k+1); jcol++) {
 		    iptr = istart + nsupc;
 		    for (i = SuperLU_L_NZ_START(jcol) + nsupc; 
