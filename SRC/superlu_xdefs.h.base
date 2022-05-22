@@ -474,13 +474,14 @@ extern int     sp_@(pre)gemv_dist (char *, @(type), SuperMatrix *, @(type) *,
 extern int     sp_@(pre)gemm_dist (char *, int, @(type), SuperMatrix *,
                         @(type) *, int, @(type), @(type) *, int);
 
-extern float @(pre)distribute(fact_t, int_t, SuperMatrix *, Glu_freeable_t *,
+extern float @(pre)distribute(superlu_dist_options_t *,
+                         int_t, SuperMatrix *, Glu_freeable_t *,
 			 @(pre)LUstruct_t *, gridinfo_t *);
 extern void  p@(pre)gssvx_ABglobal(superlu_dist_options_t *, SuperMatrix *,
 			      @(pre)ScalePermstruct_t *, @(type) *,
 			      int, int, gridinfo_t *, @(pre)LUstruct_t *, @(mod_type) *,
 			      SuperLUStat_t *, int *);
-extern float p@(pre)distribute(fact_t, int_t, SuperMatrix *,
+extern float p@(pre)distribute(superlu_dist_options_t *, int_t, SuperMatrix *,
 			 @(pre)ScalePermstruct_t *, Glu_freeable_t *,
 			 @(pre)LUstruct_t *, gridinfo_t *);
 extern void  p@(pre)gssvx(superlu_dist_options_t *, SuperMatrix *,
@@ -523,9 +524,11 @@ extern int_t p@(pre)gstrf(superlu_dist_options_t *, int, int, @(mod_type) anorm,
 #define IPM_PROF */
 
 /* Solve related */
-extern void p@(pre)gstrs_Bglobal(int_t, @(pre)LUstruct_t *, gridinfo_t *,
+extern void p@(pre)gstrs_Bglobal(superlu_dist_options_t *,
+                             int_t, @(pre)LUstruct_t *, gridinfo_t *,
 			     @(type) *, int_t, int, SuperLUStat_t *, int *);
-extern void p@(pre)gstrs(int_t, @(pre)LUstruct_t *, @(pre)ScalePermstruct_t *, gridinfo_t *,
+extern void p@(pre)gstrs(superlu_dist_options_t *, int_t,
+                    @(pre)LUstruct_t *, @(pre)ScalePermstruct_t *, gridinfo_t *,
 		    @(type) *, int_t, int_t, int_t, int, @(pre)SOLVEstruct_t *,
 		    SuperLUStat_t *, int *);
 extern void p@(pre)gstrf2_trsm(superlu_dist_options_t * options, int_t k0, int_t k,
@@ -569,14 +572,17 @@ extern void @(pre)ComputeLevelsets(int , int_t , gridinfo_t *,
 			   
 #ifdef GPU_ACC               
 extern void @(pre)lsum_fmod_inv_gpu_wrap(int_t, int_t, int_t, int_t, @(type) *, @(type) *, int, int, int_t , int *fmod, C_Tree  *, C_Tree  *, int_t *, int_t *, int64_t *, @(type) *, int64_t *, @(type) *, int64_t *, int_t *, int64_t *, int_t *, gridinfo_t *, @(type) * , @(type) * , int_t );
-extern void @(pre)lsum_bmod_inv_gpu_wrap(int_t, int_t, int_t, int_t, @(type) *, @(type) *,int,int, int_t , int *bmod, C_Tree  *, C_Tree  *, int_t *, int_t *,int_t *, int64_t *, @(type) *, int64_t *, int_t  *, int64_t *, Ucb_indptr_t *, int64_t *, @(type) *, int64_t *,int_t *,gridinfo_t *);
+extern void @(pre)lsum_bmod_inv_gpu_wrap(superlu_dist_options_t *,
+int_t, int_t, int_t, int_t, @(type) *, @(type) *,int,int, int_t , int *bmod, C_Tree  *, C_Tree  *, int_t *, int_t *,int_t *, int64_t *, @(type) *, int64_t *, int_t  *, int64_t *, Ucb_indptr_t *, int64_t *, @(type) *, int64_t *,int_t *,gridinfo_t *);
 #endif
 
-extern void p@(pre)gsrfs(int_t, SuperMatrix *, @(mod_type), @(pre)LUstruct_t *,
+extern void p@(pre)gsrfs(superlu_dist_options_t *, int_t,
+                    SuperMatrix *, @(mod_type), @(pre)LUstruct_t *,
 		    @(pre)ScalePermstruct_t *, gridinfo_t *,
 		    @(type) [], int_t, @(type) [], int_t, int,
 		    @(pre)SOLVEstruct_t *, @(mod_type) *, SuperLUStat_t *, int *);
-extern void p@(pre)gsrfs_ABXglobal(int_t, SuperMatrix *, @(mod_type), @(pre)LUstruct_t *,
+extern void p@(pre)gsrfs_ABXglobal(superlu_dist_options_t *, int_t,
+                  SuperMatrix *, @(mod_type), @(pre)LUstruct_t *,
 		  gridinfo_t *, @(type) *, int_t, @(type) *, int_t,
 		  int, @(mod_type) *, SuperLUStat_t *, int *);
 extern int   p@(pre)gsmv_AXglobal_setup(SuperMatrix *, Glu_persist_t *,
@@ -632,7 +638,7 @@ extern int  @(pre)read_binary(FILE *, int_t *, int_t *, int_t *,
 	                  @(type) **, int_t **, int_t **);
 
 /* Distribute the data for numerical factorization */
-extern float @(pre)dist_psymbtonum(fact_t, int_t, SuperMatrix *,
+extern float @(pre)dist_psymbtonum(superlu_dist_options_t *, int_t, SuperMatrix *,
                                 @(pre)ScalePermstruct_t *, Pslu_freeable_t *,
                                 @(pre)LUstruct_t *, gridinfo_t *);
 extern void p@(pre)GetDiagU(int_t, @(pre)LUstruct_t *, gridinfo_t *, @(type) *);
@@ -1058,12 +1064,14 @@ extern int_t @(pre)SchurComplementSetupGPU(int_t k, msgs_t* msgs, packLUInfo_t*,
 				      @(pre)LUValSubBuf_t* LUvsb, gridinfo_t *,
 				      @(pre)LUstruct_t *, HyP_t*);
 extern @(type)* @(pre)getBigV(int_t, int_t);
-extern @(type)* @(pre)getBigU(int_t, gridinfo_t *, @(pre)LUstruct_t *);
+extern @(type)* @(pre)getBigU(superlu_dist_options_t *,
+                           int_t, gridinfo_t *, @(pre)LUstruct_t *);
 // permutation from superLU default
 
     /* from treeFactorization.h */
 extern int_t @(pre)LluBufInit(@(pre)LUValSubBuf_t*, @(pre)LUstruct_t *);
-extern int_t @(pre)initScuBufs(int_t ldt, int_t num_threads, int_t nsupers,
+extern int_t @(pre)initScuBufs(superlu_dist_options_t *,
+                          int_t ldt, int_t num_threads, int_t nsupers,
 			  @(pre)scuBufs_t*, @(pre)LUstruct_t*, gridinfo_t *);
 extern int @(pre)freeScuBufs(@(pre)scuBufs_t* scuBufs);
 
