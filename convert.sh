@@ -7,6 +7,7 @@ sed -i 's/[[:blank:]]*$//' EXAMPLE/*.*
 sed -i 's/[[:blank:]]*$//' TEST/*.*
 
 ./extract -b SRC/pxgstrs_lsum.c.base -o ../output/SRC/pdgstrs_lsum.c precision=DOUBLE
+./extract -b SRC/pxgstrs_lsum_cuda.cu.base -o ../output/SRC/pdgstrs_lsum_cuda.cu precision=DOUBLE
 ./extract -b SRC/pxdistribute.c.base -o ../output/SRC/pddistribute.c precision=DOUBLE
 ./extract -b SRC/xdistribute.c.base -o ../output/SRC/ddistribute.c precision=DOUBLE
 ./extract -b SRC/pxgstrs.c.base -o ../output/SRC/pdgstrs.c precision=DOUBLE
@@ -48,6 +49,7 @@ sed -i 's/[[:blank:]]*$//' TEST/*.*
 
 
 ./extract -b SRC/pxgstrs_lsum.c.base -o ../output/SRC/pzgstrs_lsum.c precision=DCOMPLEX
+./extract -b SRC/pxgstrs_lsum_cuda.cu.base -o ../output/SRC/pzgstrs_lsum_cuda.cu precision=DCOMPLEX
 ./extract -b SRC/pxdistribute.c.base -o ../output/SRC/pzdistribute.c precision=DCOMPLEX
 ./extract -b SRC/xdistribute.c.base -o ../output/SRC/zdistribute.c precision=DCOMPLEX
 ./extract -b SRC/pxgstrs.c.base -o ../output/SRC/pzgstrs.c precision=DCOMPLEX

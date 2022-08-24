@@ -523,6 +523,38 @@ extern int_t p@(pre)gstrf(superlu_dist_options_t *, int, int, @(mod_type) anorm,
 /* #define GPU_PROF
 #define IPM_PROF */
 
+#ifdef one_sided
+extern float p@(pre)distribute_onesided(superlu_dist_options_t *, int_t, SuperMatrix *,
+                                  			 @(pre)ScalePermstruct_t *, Glu_freeable_t *,
+                                  			 @(pre)LUstruct_t *, gridinfo_t *, int);
+extern int_t p@(pre)ReDistribute_X_to_B(int_t, @(type)*, int_t, int_t, int_t,
+		      int_t, @(type)*, int_t*,
+		      @(pre)ScalePermstruct_t*,
+		      Glu_persist_t*, gridinfo_t*,
+		      @(pre)SOLVEstruct_t*);
+extern int_t @(pre)ReDistribute_A(SuperMatrix *, @(pre)ScalePermstruct_t *,
+                Glu_freeable_t *, int_t *, int_t *,
+                gridinfo_t *, int_t **, int_t **,
+                @(type) **);
+
+extern void @(pre)lsum_fmod_inv_master_onesided(@(type) *, @(type) *, @(type) *, @(type) *,
+                                  int, int, int_t , int *, int_t,
+                                  int_t *, gridinfo_t *,  @(pre)LocalLU_t *,
+                                  SuperLUStat_t **, int_t, int_t, int_t, int_t, int, int,
+                                  int*, long*, int*, long*, int,int);
+extern void @(pre)lsum_bmod_inv_master_onesided(@(type) *, @(type) *, @(type) *, @(type) *,
+                                  int, int_t, int *, int_t *, Ucb_indptr_t **,
+                                  int_t **, int_t *, gridinfo_t *, @(pre)LocalLU_t *,
+                                  SuperLUStat_t **, int_t, int_t, int, int,
+		                          int*, long*, int*, long*, int,int);
+
+
+extern void p@(pre)gstrs_onesided(superlu_dist_options_t *, int_t,
+                    @(pre)LUstruct_t *, @(pre)ScalePermstruct_t *, gridinfo_t *,
+		    @(type) *, int_t, int_t, int_t, int, @(pre)SOLVEstruct_t *,
+		    SuperLUStat_t *, int *);
+#endif
+
 /* Solve related */
 extern void p@(pre)gstrs_Bglobal(superlu_dist_options_t *,
                              int_t, @(pre)LUstruct_t *, gridinfo_t *,

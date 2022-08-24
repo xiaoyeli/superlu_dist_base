@@ -24,327 +24,36 @@ at the top-level directory.
 #include "gpublas_utils.h"
 #endif
 
-/*! \brief
- *
- * <pre>
- * Purpose
- * =======
- *   Re-distribute A on the 2D process mesh.
- *
- * Arguments
- * =========
- *
- * A      (input) SuperMatrix*
- *	  The distributed input matrix A of dimension (A->nrow, A->ncol).
- *        A may be overwritten by diag(R)*A*diag(C)*Pc^T.
- *        The type of A can be: Stype = SLU_NR_loc; Dtype = @(Dtype_PRE); Mtype = SLU_GE.
- *
- * ScalePermstruct (input) @(pre)ScalePermstruct_t*
- *        The data structure to store the scaling and permutation vectors
- *        describing the transformations performed to the original matrix A.
- *
- * Glu_freeable (input) *Glu_freeable_t
- *        The global structure describing the graph of L and U.
- *
- * grid   (input) gridinfo_t*
- *        The 2D process mesh.
- *
- * colptr (output) int*
- *
- * rowind (output) int*
- *
- * a      (output) @(type)*
- *
- * Return value
- * ============
- *   > 0, working storage (in bytes) required to perform redistribution.
- *        (excluding LU factor size)
- * </pre>
- */
-int_t
-@(pre)ReDistribute_A(SuperMatrix *A, @(pre)ScalePermstruct_t *ScalePermstruct,
-                Glu_freeable_t *Glu_freeable, int_t *xsup, int_t *supno,
-                gridinfo_t *grid, int_t *colptr[], int_t *rowind[],
-                @(type) *a[])
-{
-    NRformat_loc *Astore;
-    int_t  *perm_r; /* row permutation vector */
-    int_t  *perm_c; /* column permutation vector */
-    int_t  i, irow, fst_row, j, jcol, k, gbi, gbj, n, m_loc, jsize,nnz_tot;
-    int_t  nnz_loc;    /* number of local nonzeros */
-    int_t  SendCnt; /* number of remote nonzeros to be sent */
-    int_t  RecvCnt; /* number of remote nonzeros to be sent */
-    int_t  *nnzToSend, *nnzToRecv, maxnnzToRecv;
-    int_t  *ia, *ja, **ia_send, *index, *itemp = NULL;
-    int_t  *ptr_to_send;
-    @(type) *aij, **aij_send, *nzval, *dtemp = NULL;
-    @(type) *nzval_a;
-	@(type) asum,asum_tot;
-    int    iam, it, p, procs, iam_g;
-    MPI_Request *send_req;
-    MPI_Status  status;
-
-
-    /* ------------------------------------------------------------
-       INITIALIZATION.
-       ------------------------------------------------------------*/
-    iam = grid->iam;
-#if ( DEBUGlevel>=1 )
-    CHECK_MALLOC(iam, "Enter @(pre)ReDistribute_A()");
+#ifdef one_sided
+#include "onesided.h"
+#ifdef USE_FOMPI
+foMPI_Win bc_winl;
+foMPI_Win rd_winl;
+#else
+MPI_Win bc_winl;
+MPI_Win rd_winl;
 #endif
-    perm_r = ScalePermstruct->perm_r;
-    perm_c = ScalePermstruct->perm_c;
-    procs = grid->nprow * grid->npcol;
-    Astore = (NRformat_loc *) A->Store;
-    n = A->ncol;
-    m_loc = Astore->m_loc;
-    fst_row = Astore->fst_row;
-    nnzToRecv = intCalloc_dist(2*procs);
-    nnzToSend = nnzToRecv + procs;
-
-    /* ------------------------------------------------------------
-       COUNT THE NUMBER OF NONZEROS TO BE SENT TO EACH PROCESS,
-       THEN ALLOCATE SPACE.
-       THIS ACCOUNTS FOR THE FIRST PASS OF A.
-       ------------------------------------------------------------*/
-    for (i = 0; i < m_loc; ++i) {
-        for (j = Astore->rowptr[i]; j < Astore->rowptr[i+1]; ++j) {
-  	    irow = perm_c[perm_r[i+fst_row]];  /* Row number in Pc*Pr*A */
-	    jcol = Astore->colind[j];
-	    gbi = BlockNum( irow );
-	    gbj = BlockNum( jcol );
-	    p = PNUM( PROW(gbi,grid), PCOL(gbj,grid), grid );
-	    ++nnzToSend[p];
-	}
-    }
-
-    /* All-to-all communication */
-    MPI_Alltoall( nnzToSend, 1, mpi_int_t, nnzToRecv, 1, mpi_int_t,
-		  grid->comm);
-
-    maxnnzToRecv = 0;
-    nnz_loc = SendCnt = RecvCnt = 0;
-
-    for (p = 0; p < procs; ++p) {
-	if ( p != iam ) {
-	    SendCnt += nnzToSend[p];
-	    RecvCnt += nnzToRecv[p];
-	    maxnnzToRecv = SUPERLU_MAX( nnzToRecv[p], maxnnzToRecv );
-	} else {
-	    nnz_loc += nnzToRecv[p];
-	    /*assert(nnzToSend[p] == nnzToRecv[p]);*/
-	}
-    }
-    k = nnz_loc + RecvCnt; /* Total nonzeros ended up in my process. */
-
-    /* Allocate space for storing the triplets after redistribution. */
-    if ( k ) { /* count can be zero. */
-        if ( !(ia = intMalloc_dist(2*k)) )
-            ABORT("Malloc fails for ia[].");
-        if ( !(aij = @(type)Malloc_dist(k)) )
-            ABORT("Malloc fails for aij[].");
-        ja = ia + k;
-    }
-
-    /* Allocate temporary storage for sending/receiving the A triplets. */
-    if ( procs > 1 ) {
-      if ( !(send_req = (MPI_Request *)
-	     SUPERLU_MALLOC(2*procs *sizeof(MPI_Request))) )
-	ABORT("Malloc fails for send_req[].");
-      if ( !(ia_send = (int_t **) SUPERLU_MALLOC(procs*sizeof(int_t*))) )
-        ABORT("Malloc fails for ia_send[].");
-      if ( !(aij_send = (@(type) **)SUPERLU_MALLOC(procs*sizeof(@(type)*))) )
-        ABORT("Malloc fails for aij_send[].");
-      if ( SendCnt ) { /* count can be zero */
-          if ( !(index = intMalloc_dist(2*SendCnt)) )
-              ABORT("Malloc fails for index[].");
-          if ( !(nzval = @(type)Malloc_dist(SendCnt)) )
-              ABORT("Malloc fails for nzval[].");
-      }
-      if ( !(ptr_to_send = intCalloc_dist(procs)) )
-        ABORT("Malloc fails for ptr_to_send[].");
-      if ( maxnnzToRecv ) { /* count can be zero */
-          if ( !(itemp = intMalloc_dist(2*maxnnzToRecv)) )
-              ABORT("Malloc fails for itemp[].");
-          if ( !(dtemp = @(type)Malloc_dist(maxnnzToRecv)) )
-              ABORT("Malloc fails for dtemp[].");
-      }
-
-      for (i = 0, j = 0, p = 0; p < procs; ++p) {
-          if ( p != iam ) {
-	      if (nnzToSend[p] > 0) ia_send[p] = &index[i];
-	      i += 2 * nnzToSend[p]; /* ia/ja indices alternate */
-	      if (nnzToSend[p] > 0) aij_send[p] = &nzval[j];
-	      j += nnzToSend[p];
-	  }
-      }
-    } /* if procs > 1 */
-
-    if ( !(*colptr = intCalloc_dist(n+1)) )
-        ABORT("Malloc fails for *colptr[].");
-
-    /* ------------------------------------------------------------
-       LOAD THE ENTRIES OF A INTO THE (IA,JA,AIJ) STRUCTURES TO SEND.
-       THIS ACCOUNTS FOR THE SECOND PASS OF A.
-       ------------------------------------------------------------*/
-    nnz_loc = 0; /* Reset the local nonzero count. */
-    nzval_a = Astore->nzval;
-    for (i = 0; i < m_loc; ++i) {
-        for (j = Astore->rowptr[i]; j < Astore->rowptr[i+1]; ++j) {
-  	    irow = perm_c[perm_r[i+fst_row]];  /* Row number in Pc*Pr*A */
-	    jcol = Astore->colind[j];
-	    gbi = BlockNum( irow );
-	    gbj = BlockNum( jcol );
-	    p = PNUM( PROW(gbi,grid), PCOL(gbj,grid), grid );
-
-	    if ( p != iam ) { /* remote */
-	        k = ptr_to_send[p];
-	        ia_send[p][k] = irow;
-	        ia_send[p][k + nnzToSend[p]] = jcol;
-		aij_send[p][k] = nzval_a[j];
-		++ptr_to_send[p];
-	    } else {          /* local */
-	        ia[nnz_loc] = irow;
-	        ja[nnz_loc] = jcol;
-		aij[nnz_loc] = nzval_a[j];
-		++nnz_loc;
-		++(*colptr)[jcol]; /* Count nonzeros in each column */
-	    }
-	}
-    }
-
-    /* ------------------------------------------------------------
-       PERFORM REDISTRIBUTION. THIS INVOLVES ALL-TO-ALL COMMUNICATION.
-       NOTE: Can possibly use MPI_Alltoallv.
-       ------------------------------------------------------------*/
-    for (p = 0; p < procs; ++p) {
-        if ( p != iam && nnzToSend[p] > 0 ) {
-    	//if ( p != iam ) {
-	    it = 2*nnzToSend[p];
-	    MPI_Isend( ia_send[p], it, mpi_int_t,
-		       p, iam, grid->comm, &send_req[p] );
-	    it = nnzToSend[p];
-	    MPI_Isend( aij_send[p], it, @(MPI_TYPE),
-	               p, iam+procs, grid->comm, &send_req[procs+p] );
-	}
-    }
-
-    for (p = 0; p < procs; ++p) {
-        if ( p != iam && nnzToRecv[p] > 0 ) {
-	//if ( p != iam ) {
-	    it = 2*nnzToRecv[p];
-	    MPI_Recv( itemp, it, mpi_int_t, p, p, grid->comm, &status );
-	    it = nnzToRecv[p];
-            MPI_Recv( dtemp, it, @(MPI_TYPE), p, p+procs,
-		      grid->comm, &status );
-	    for (i = 0; i < nnzToRecv[p]; ++i) {
-	        ia[nnz_loc] = itemp[i];
-		jcol = itemp[i + nnzToRecv[p]];
-		/*assert(jcol<n);*/
-	        ja[nnz_loc] = jcol;
-		aij[nnz_loc] = dtemp[i];
-		++nnz_loc;
-		++(*colptr)[jcol]; /* Count nonzeros in each column */
-	    }
-	}
-    }
-
-    for (p = 0; p < procs; ++p) {
-        if ( p != iam && nnzToSend[p] > 0 ) { // cause two of the tests to hang
-        //if ( p != iam ) {
-	    MPI_Wait( &send_req[p], &status);
-	    MPI_Wait( &send_req[procs+p], &status);
-	}
-    }
-
-    /* ------------------------------------------------------------
-       DEALLOCATE TEMPORARY STORAGE
-       ------------------------------------------------------------*/
-
-    SUPERLU_FREE(nnzToRecv);
-
-    if ( procs > 1 ) {
-	SUPERLU_FREE(send_req);
-	SUPERLU_FREE(ia_send);
-	SUPERLU_FREE(aij_send);
-	if ( SendCnt ) {
-            SUPERLU_FREE(index);
-            SUPERLU_FREE(nzval);
-        }
-	SUPERLU_FREE(ptr_to_send);
-        if ( maxnnzToRecv ) {
-            SUPERLU_FREE(itemp);
-            SUPERLU_FREE(dtemp);
-        }
-    }
-
-    /* ------------------------------------------------------------
-       CONVERT THE TRIPLET FORMAT INTO THE CCS FORMAT.
-       ------------------------------------------------------------*/
-    if ( nnz_loc ) { /* nnz_loc can be zero */
-        if ( !(*rowind = intMalloc_dist(nnz_loc)) )
-            ABORT("Malloc fails for *rowind[].");
-        if ( !(*a = @(type)Malloc_dist(nnz_loc)) )
-            ABORT("Malloc fails for *a[].");
-    }
-
-    /* Initialize the array of column pointers */
-    k = 0;
-    jsize = (*colptr)[0];
-    (*colptr)[0] = 0;
-    for (j = 1; j < n; ++j) {
-	k += jsize;
-	jsize = (*colptr)[j];
-	(*colptr)[j] = k;
-    }
-
-    /* Copy the triplets into the column oriented storage */
-    for (i = 0; i < nnz_loc; ++i) {
-	j = ja[i];
-	k = (*colptr)[j];
-	(*rowind)[k] = ia[i];
-	(*a)[k] = aij[i];
-	++(*colptr)[j];
-    }
-
-    /* Reset the column pointers to the beginning of each column */
-    for (j = n; j > 0; --j) (*colptr)[j] = (*colptr)[j-1];
-    (*colptr)[0] = 0;
-
-    if ( nnz_loc ) {
-        SUPERLU_FREE(ia);
-        SUPERLU_FREE(aij);
-    }
-
-#if ( DEBUGlevel>=1 )
-    CHECK_MALLOC(iam, "Exit @(pre)ReDistribute_A()");
-#endif
-
-    return 0;
-} /* @(pre)ReDistribute_A */
-
-int* mystatus, *mystatusmod,*d_rownum,*d_rowstart;
-int *d_status, *d_statusmod;
-int* mystatus_u, *mystatusmod_u;
-int *flag_bc_q, *flag_rd_q ;
-int* my_flag_bc, *my_flag_rd;
-int* d_mynum,*d_mymaskstart,*d_mymasklength;
-int* d_mynum_u,*d_mymaskstart_u,*d_mymasklength_u;
-double *ready_x, *ready_lsum;
-int*d_nfrecv, *h_nfrecv, *d_colnum;
-int*d_nfrecv_u, *h_nfrecv_u, *d_colnum_u;
-int* d_nfrecvmod, *h_nfrecvmod, *d_colnummod;
-int* d_nfrecvmod_u, *h_nfrecvmod_u, *d_colnummod_u;
-int* d_mynummod,*d_mymaskstartmod,*d_mymasklengthmod;
-int* d_mynummod_u,*d_mymaskstartmod_u,*d_mymasklengthmod_u;
-int *h_recv_cnt, *d_recv_cnt, *d_msgnum;
-int *h_recv_cnt_u, *d_recv_cnt_u, *d_msgnum_u;
-int *d_flag_mod
+MPI_Comm row_comm;
+MPI_Comm col_comm;
+int* BufSize;
+int* BufSize_rd;
+int *keep_validBCQindex;
+int *keep_validRDQindex;
+int *recv_size_all;
+int* BufSize_u;
+int* BufSize_urd;
+int *keep_validBCQindex_u;
+int *keep_validRDQindex_u;
+int *recv_size_all_u;
+double* BC_taskq;
+double* RD_taskq;
+double* BC_taskq_u;
+double* RD_taskq_u;
 float
 p@(pre)distribute(superlu_dist_options_t *options, int_t n, SuperMatrix *A,
 	     @(pre)ScalePermstruct_t *ScalePermstruct,
 	     Glu_freeable_t *Glu_freeable, @(pre)LUstruct_t *LUstruct,
-	     gridinfo_t *grid, int_t nrhs)
+	     gridinfo_t *grid, int nrhs)
 /*
  * -- Distributed SuperLU routine (version 2.0) --
  * Lawrence Berkeley National Lab, Univ. of California Berkeley.
@@ -359,7 +68,7 @@ p@(pre)distribute(superlu_dist_options_t *options, int_t n, SuperMatrix *A,
  * =========
  *
  * options (input) superlu_dist_options_t*
- *        Specifies whether or not the L and U structures will be re-used.
+ *        options->Fact specifies whether or not the L and U structures will be re-used.
  *        = SamePattern_SameRowPerm: L and U structures are input, and
  *                                   unchanged on exit.
  *        = DOFACT or SamePattern: L and U structures are computed and output.
@@ -420,29 +129,11 @@ p@(pre)distribute(superlu_dist_options_t *options, int_t n, SuperMatrix *A,
 	int   *index1;        /* temporary pointer to array of int */
     @(type) *lusup, *lusup_srt, *uval; /* nonzero values in L and U */
     @(type) **Lnzval_bc_ptr;  /* size ceil(NSUPERS/Pc) */
-    @(type) *Lnzval_bc_dat;  /* size sum of sizes of Lnzval_bc_ptr[lk])                 */
-    long int *Lnzval_bc_offset;  /* size ceil(NSUPERS/Pc)                 */
-
     int_t  **Lrowind_bc_ptr; /* size ceil(NSUPERS/Pc) */
-    int_t *Lrowind_bc_dat;  /* size sum of sizes of Lrowind_bc_ptr[lk])                 */
-    long int *Lrowind_bc_offset;  /* size ceil(NSUPERS/Pc)                 */
-
 	int_t   **Lindval_loc_bc_ptr; /* size ceil(NSUPERS/Pc)                 */
-	int_t *Lindval_loc_bc_dat;  /* size sum of sizes of Lindval_loc_bc_ptr[lk])                 */
-    long int *Lindval_loc_bc_offset;  /* size ceil(NSUPERS/Pc)                 */
-
-
 	int_t   *Unnz; /* size ceil(NSUPERS/Pc)                 */
 	@(type) **Unzval_br_ptr;  /* size ceil(NSUPERS/Pr) */
-	@(type) *Unzval_br_dat;  /* size sum of sizes of Unzval_br_ptr[lk])                 */
-	long int *Unzval_br_offset;  /* size ceil(NSUPERS/Pr)    */
-    long int Unzval_br_cnt=0;
-
     int_t  **Ufstnz_br_ptr;  /* size ceil(NSUPERS/Pr) */
-    int_t   *Ufstnz_br_dat;  /* size sum of sizes of Ufstnz_br_ptr[lk])                 */
-    long int *Ufstnz_br_offset;  /* size ceil(NSUPERS/Pr)    */
-    long int Ufstnz_br_cnt=0;
-
 
 	C_Tree  *LBtree_ptr;       /* size ceil(NSUPERS/Pc)                */
 	C_Tree  *LRtree_ptr;		  /* size ceil(NSUPERS/Pr)                */
@@ -452,15 +143,7 @@ p@(pre)distribute(superlu_dist_options_t *options, int_t n, SuperMatrix *A,
 
     int_t  *Urbs,*Urbs1; /* Number of row blocks in each block column of U. */
     Ucb_indptr_t **Ucb_indptr;/* Vertical linked list pointing to Uindex[] */
-    Ucb_indptr_t *Ucb_inddat;
-    long int *Ucb_indoffset;
-    long int Ucb_indcnt=0;
-
     int_t  **Ucb_valptr;      /* Vertical linked list pointing to Unzval[] */
-    int_t  *Ucb_valdat;
-    long int *Ucb_valoffset;
-    long int Ucb_valcnt=0;
-
     /*-- Counts to be used in factorization. --*/
     int  *ToRecv, *ToSendD, **ToSendR;
 
@@ -512,12 +195,7 @@ p@(pre)distribute(superlu_dist_options_t *options, int_t n, SuperMatrix *A,
     int   *frecv, *brecv;
     int_t *lloc;
     @(type) **Linv_bc_ptr;  /* size ceil(NSUPERS/Pc) */
-    @(type) *Linv_bc_dat;  /* size sum of sizes of Linv_bc_ptr[lk])                 */
-    long int *Linv_bc_offset;  /* size ceil(NSUPERS/Pc)                 */
-
     @(type) **Uinv_bc_ptr;  /* size ceil(NSUPERS/Pc) */
-	@(type) *Uinv_bc_dat;  /* size sum of sizes of Uinv_bc_ptr[lk])                 */
-    long int *Uinv_bc_offset;  /* size ceil(NSUPERS/Pc)     */
     double *SeedSTD_BC,*SeedSTD_RD;
     int_t idx_indx,idx_lusup;
     int_t nbrow;
@@ -546,6 +224,87 @@ p@(pre)distribute(superlu_dist_options_t *options, int_t n, SuperMatrix *A,
     iword = sizeof(int_t);
     dword = sizeof(@(type));
 //#endif
+    /* one_sided Initialization. */
+    int Pr=grid->nprow;
+    int Pc=grid->npcol;
+    int BC_buffer_size=0; //= Pr * maxrecvsz*(nfrecvx+1) + Pr;
+    int RD_buffer_size=0; //= Pc * maxrecvsz*(nfrecvmod+1) + Pc;
+
+    if ( !(BufSize = (int*)SUPERLU_MALLOC( Pr * sizeof(int))) )
+    	ABORT("Malloc fails for BufSize[]");
+    memset(BufSize, 0, Pr  * sizeof(int));
+
+    if ( !(BufSize_rd = (int*)SUPERLU_MALLOC( Pc*sizeof(int))) )
+    	ABORT("Malloc fails for BufSize_rd[]");
+    memset(BufSize_rd, 0, Pc * sizeof(int));
+
+    if ( !(keep_validBCQindex = (int*)SUPERLU_MALLOC( Pr * sizeof(int))) )
+    	ABORT("Malloc fails for  keep_validBCQindex[]");
+    if ( !(keep_validRDQindex = (int*)SUPERLU_MALLOC( Pc *sizeof(int))) )
+    	ABORT("Malloc fails for keep_validRDQindex[]");
+
+    if ( !(BufSize_u = (int*)SUPERLU_MALLOC( Pr * sizeof(int))) )
+    	ABORT("Malloc fails for BufSize_u[]");
+    memset(BufSize_u, 0, Pr  * sizeof(int));
+
+    if ( !(BufSize_urd = (int*)SUPERLU_MALLOC( Pc*sizeof(int))) )
+    	ABORT("Malloc fails for BufSize_urd[]");
+    memset(BufSize_urd, 0, Pc * sizeof(int));
+
+    if ( !(keep_validBCQindex_u = (int*)SUPERLU_MALLOC( Pr * sizeof(int))) )
+    	ABORT("Malloc fails for  keep_validBCQindex_u[]");
+    if ( !(keep_validRDQindex_u = (int*)SUPERLU_MALLOC( Pc *sizeof(int))) )
+    	ABORT("Malloc fails for keep_validRDQindex_u[]");
+
+    for (i=0; i< Pr; i++){
+        keep_validBCQindex[i]=-1;
+        keep_validBCQindex_u[i]=-1;
+    }
+    for (i=0; i< Pc; i++){
+        keep_validRDQindex[i]=-1;
+        keep_validRDQindex_u[i]=-1;
+    }
+
+    MPI_Request *col_req;
+	MPI_Request *row_req;
+    col_req=(MPI_Request *) malloc(2*(Pr-1) * sizeof(MPI_Request));
+    row_req=(MPI_Request *) malloc(2*(Pc-1) * sizeof(MPI_Request));
+	MPI_Status *col_status;
+	MPI_Status *row_status;
+    col_status=(MPI_Status *) malloc(2*(Pr-1) * sizeof(MPI_Status));
+    row_status=(MPI_Status *) malloc(2*(Pc-1) * sizeof(MPI_Status));
+    int req_count=0;
+
+    //printf("Check who is here: iam=%d\n",iam);
+    //fflush(stdout);
+    int color = iam % Pc;
+    MPI_Comm_split(grid->comm, color, iam, &col_comm);
+
+    //printf("Check MPI_Comm_split, iam=%d\n",iam);
+    //fflush(stdout);
+    int iam_col;
+    MPI_Comm_rank(col_comm, &iam_col);
+
+    color = iam / Pc;
+    MPI_Comm_split(grid->comm, color, iam, &row_comm);
+    int iam_row;
+    MPI_Comm_rank(row_comm, &iam_row);
+    //printf("iam=%d,iam_col=%d,iam_row=%d\n",iam,iam_col,iam_row);
+    //fflush(stdout);
+    //int *recv_size_all;// Pc + Pr
+    if ( !(recv_size_all = (int*)SUPERLU_MALLOC( ( Pr+Pc) * sizeof(int))) )
+	    ABORT("Malloc fails for recv_size_all[].");
+	memset(recv_size_all, 0, (Pr+Pc) * sizeof(int));
+
+    if ( !(recv_size_all_u = (int*)SUPERLU_MALLOC( ( Pr+Pc) * sizeof(int))) )
+	    ABORT("Malloc fails for recv_size_all[].");
+	memset(recv_size_all_u, 0, (Pr+Pc) * sizeof(int));
+
+    int *oneside_buf_offset;
+    if ( !(oneside_buf_offset = (int*)SUPERLU_MALLOC( ( Pr+Pc) * sizeof(int))) )
+	    ABORT("Malloc fails for oneside_buf_offset[].");
+	memset(oneside_buf_offset, 0, (Pr+Pc) * sizeof(int));
+    /* End one_sided Initialization. */
 
 #if ( DEBUGlevel>=1 )
     CHECK_MALLOC(iam, "Enter p@(pre)distribute()");
@@ -875,7 +634,7 @@ p@(pre)distribute(superlu_dist_options_t *options, int_t n, SuperMatrix *A,
 	if ( !(Lnzval_bc_ptr =
               (@(type)**)SUPERLU_MALLOC(k * sizeof(@(type)*))) )
 	    ABORT("Malloc fails for Lnzval_bc_ptr[].");
-	Lnzval_bc_ptr[k-1] = NULL;	
+	Lnzval_bc_ptr[k-1] = NULL;
 	if ( !(Lrowind_bc_ptr = (int_t**)SUPERLU_MALLOC(k * sizeof(int_t*))) )
 	    ABORT("Malloc fails for Lrowind_bc_ptr[].");
 	Lrowind_bc_ptr[k-1] = NULL;
@@ -1302,17 +1061,9 @@ p@(pre)distribute(superlu_dist_options_t *options, int_t n, SuperMatrix *A,
 	if ( !(SeedSTD_BC = (double*)SUPERLU_MALLOC(k * sizeof(double))) )
 		ABORT("Malloc fails for SeedSTD_BC[].");
 
-    if ( !(mystatus = (int*)SUPERLU_MALLOC(k * sizeof(int))) )
-        ABORT("Malloc fails for mystatus[].");
-    if ( !(h_nfrecv = (int*)SUPERLU_MALLOC( 3* sizeof(int))) )
-        ABORT("Malloc fails for h_nfrecv[].");
-    if ( !(h_nfrecvmod = (int*)SUPERLU_MALLOC( 4 * sizeof(int))) )
-        ABORT("Malloc fails for h_nfrecvmod[].");
-    h_nfrecvmod[3]=0;
-    //printf("(%d)k=%d\n",iam,k);
+
 	for (i=0;i<k;i++){
 		SeedSTD_BC[i]=rand();
-        mystatus[i]=1;
 	}
 
 	MPI_Allreduce(MPI_IN_PLACE,&SeedSTD_BC[0],k,MPI_DOUBLE,MPI_MAX,grid->cscp.comm);
@@ -1390,12 +1141,8 @@ p@(pre)distribute(superlu_dist_options_t *options, int_t n, SuperMatrix *A,
 				msgsize = SuperSize( jb );
 				//LBtree_ptr[ljb] = BcTree_Create(grid->comm, ranks, rank_cnt, msgsize,SeedSTD_BC[ljb],'@(pre)');
 				//BcTree_SetTag(LBtree_ptr[ljb],BC_L,'@(pre)');
-				int needrecv=0;
-				C_BcTree_Create_nv(&LBtree_ptr[ljb], grid->comm, ranks, rank_cnt, msgsize, '@(pre)',&needrecv);
-				if (needrecv==1) {
-                    mystatus[ljb]=0;
-                    //printf("(%d) Col %d need one msg %d\n",iam, ljb,mystatus[ljb]);
-                }
+				//C_BcTree_Create(&LBtree_ptr[ljb], grid->comm, ranks, rank_cnt, msgsize, '@(pre)');
+                C_BcTree_Create_onesided(&LBtree_ptr[ljb], grid->comm, ranks, rank_cnt, msgsize, '@(pre)', BufSize, Pc);
 				LBtree_ptr[ljb].tag_=BC_L;
 
 				// printf("iam %5d btree rank_cnt %5d \n",iam,rank_cnt);
@@ -1435,6 +1182,40 @@ p@(pre)distribute(superlu_dist_options_t *options, int_t n, SuperMatrix *A,
 	SUPERLU_FREE(SeedSTD_BC);
 	memTRS -= k*dword + grid->nprow*k*iword;  //acount for SeedSTD_BC, ActiveFlagAll
 
+    req_count = 0;
+    BufSize[iam_col]=0;
+
+    for (i=0; i<Pr;i++){
+        for(j=0;j<i;j++){
+                //oneside_buf_offset[i]: When rank i put flags to my flag buffer, the relative first offet for rank i is oneside_buf_offset[i].
+                // Eg., RDMA_FLAG_SIZE*oneside_buf_offset[i] is the real offset to get flag from rank i
+                oneside_buf_offset[i] += BufSize[j];
+        }
+        //printf("iam=%d, iam_col=%d, L oneside_buf_offset[%d]=%d\n",iam, iam_col,i,oneside_buf_offset[i]);
+        //fflush(stdout);
+        if (iam_col!=i){
+                MPI_Irecv(&recv_size_all[i], 1, MPI_INT, i, 0, col_comm, &col_req[req_count]);
+                MPI_Isend(&oneside_buf_offset[i],1, MPI_INT, i, 0, col_comm, &col_req[req_count+1]);
+                req_count += 2;
+        }
+    }
+    MPI_Waitall(2*(Pr-1), col_req, col_status);
+    recv_size_all[iam_col]=0;
+//   for (i=0; i<Pr;i++){
+//       // recv_size_all: when they want to send flag message to me, what's my relative offsets for my different parents.
+//       printf("iam=%d, iam_col=%d, recv_size_all[%d]=%d\n",iam, iam_col,i,recv_size_all[i]);
+//       fflush(stdout);
+//   }
+
+    j=0;
+    for(i=0; i<Pr; i++){
+        if(BufSize[i]>0){
+           keep_validBCQindex[j]=i;
+           j += 1;
+       }
+    }
+
+
 #if ( PROFlevel>=1 )
 t = SuperLU_timer_() - t;
 if ( !iam) printf(".. Construct Bcast tree for L: %.2f\t\n", t);
@@ -1464,9 +1245,9 @@ if ( !iam) printf(".. Construct Bcast tree for L: %.2f\t\n", t);
 	}
 	/* Every process receives the count, but it is only useful on the
 	   diagonal processes.  */
-#if 0 // Sherry: 1/26/2022	   
+#if 0 // Sherry: 1/26/2022
 	MPI_Allreduce( mod_bit, frecv, nlb, mpi_int_t, MPI_SUM, grid->rscp.comm);
-#else	
+#else
 	MPI_Allreduce( mod_bit, frecv, nlb, MPI_INT, MPI_SUM, grid->rscp.comm);
 #endif
 
@@ -1488,17 +1269,9 @@ if ( !iam) printf(".. Construct Bcast tree for L: %.2f\t\n", t);
 	if ( !(SeedSTD_RD = (double*)SUPERLU_MALLOC(k * sizeof(double))) )
 		ABORT("Malloc fails for SeedSTD_RD[].");
 
-    if ( !(mystatusmod = (int*)SUPERLU_MALLOC(2*k * sizeof(int))) )
-        ABORT("Malloc fails for mystatusmod[].");
-	if ( !(h_recv_cnt = (int*)SUPERLU_MALLOC(k * sizeof(int))) )
-        ABORT("Malloc fails for mystatusmod[].");
-
-	int nfrecvmod=0;
 	for (i=0;i<k;i++){
 		SeedSTD_RD[i]=rand();
-        h_recv_cnt[i]=0;
 	}
-	for (i=0;i<2*k;i++) mystatusmod[i]=1;
 
 	MPI_Allreduce(MPI_IN_PLACE,&SeedSTD_RD[0],k,MPI_DOUBLE,MPI_MAX,grid->rscp.comm);
 
@@ -1591,16 +1364,8 @@ if ( !iam) printf(".. Construct Bcast tree for L: %.2f\t\n", t);
 
 					//LRtree_ptr[lib] = RdTree_Create(grid->comm, ranks, rank_cnt, msgsize,SeedSTD_RD[lib],'@(pre)');
 					//RdTree_SetTag(LRtree_ptr[lib], RD_L,'@(pre)');
-					int needrecvrd=0;
-                    int needsendrd=0;
-					C_RdTree_Create_nv(&LRtree_ptr[lib], grid->comm, ranks, rank_cnt, msgsize, '@(pre)', &needrecvrd, &needsendrd);
-					if (needrecvrd!=0) {
-                        mystatusmod[lib*2]=0;
-                        mystatusmod[lib*2+1]=0;
-                        h_recv_cnt[lib]=needrecvrd;
-                        //printf("(%d) on CPU, lib=%d, cnt=%d\n",iam,lib,LRtree_ptr[lib].destCnt_);
-                        nfrecvmod+=needrecvrd;
-                    }
+					//C_RdTree_Create(&LRtree_ptr[lib], grid->comm, ranks, rank_cnt, msgsize, '@(pre)');
+					C_RdTree_Create_onesided(&LRtree_ptr[lib], grid->comm, ranks, rank_cnt, msgsize, '@(pre)', BufSize_rd,Pc);
 					LRtree_ptr[lib].tag_=RD_L;
 					// }
 
@@ -1644,6 +1409,27 @@ if ( !iam) printf(".. Construct Bcast tree for L: %.2f\t\n", t);
 	// SUPERLU_FREE(nzrows);
 	memTRS -= k*dword + grid->nprow*k*iword;  //acount for SeedSTD_RD, ActiveFlagAll
 		////////////////////////////////////////////////////////
+    req_count = 0;
+    BufSize_rd[iam_row]=0;
+    for (i=0; i<Pc;i++){
+            for(j=0;j<i;j++){
+                    oneside_buf_offset[i+Pr] += BufSize_rd[j];
+            }
+            if (iam_row!=i){
+                    MPI_Irecv(&recv_size_all[Pr+i],  1, MPI_INT, i, 0, row_comm, &row_req[req_count]);
+    	            MPI_Isend(&oneside_buf_offset[i+Pr],1, MPI_INT, i, 0, row_comm, &row_req[req_count+1]);
+                    req_count += 2;
+                    //MPI_Sendrecv(&nfrecvmod,1, MPI_INT, i, 0,&recv_size_all[Pr+i], 1, MPI_INT, i, 0, row_comm,&status);
+            }
+    }
+    MPI_Waitall(2*(Pc-1), row_req, row_status);
+    recv_size_all[Pr+iam_row]=0;
+    j=0;
+    for(i=0; i<Pc; i++){
+       if(BufSize_rd[i]!=0){
+           keep_validRDQindex[j]=i;
+           j += 1;
+       }
 
 #if ( PROFlevel>=1 )
 t = SuperLU_timer_() - t;
@@ -1666,16 +1452,8 @@ if ( !iam) printf(".. Construct Reduce tree for L: %.2f\t\n", t);
 	if ( !(SeedSTD_BC = (double*)SUPERLU_MALLOC(k * sizeof(double))) )
 		ABORT("Malloc fails for SeedSTD_BC[].");
 
-    if ( !(mystatus_u = (int*)SUPERLU_MALLOC(k * sizeof(int))) )
-        ABORT("Malloc fails for mystatus_u[].");
-    if ( !(h_nfrecv_u = (int*)SUPERLU_MALLOC( 3* sizeof(int))) )
-        ABORT("Malloc fails for h_nfrecv_u[].");
-    if ( !(h_nfrecvmod_u = (int*)SUPERLU_MALLOC( 3* sizeof(int))) )
-        ABORT("Malloc fails for h_nfrecvmod_u[].");
-
 	for (i=0;i<k;i++){
 		SeedSTD_BC[i]=rand();
-		mystatus_u[i]=1;
 	}
 
 	MPI_Allreduce(MPI_IN_PLACE,&SeedSTD_BC[0],k,MPI_DOUBLE,MPI_MAX,grid->cscp.comm);
@@ -1768,13 +1546,9 @@ if ( !iam) printf(".. Construct Reduce tree for L: %.2f\t\n", t);
 				msgsize = SuperSize( jb );
 				//UBtree_ptr[ljb] = BcTree_Create(grid->comm, ranks, rank_cnt, msgsize,SeedSTD_BC[ljb],'@(pre)');
 				//BcTree_SetTag(UBtree_ptr[ljb],BC_U,'@(pre)');
-				int needrecv=0;
-				C_BcTree_Create_nv(&UBtree_ptr[ljb], grid->comm, ranks, rank_cnt, msgsize, '@(pre)',&needrecv);
-				if (needrecv==1) {
-                    mystatus_u[ljb]=0;
-                    //printf("(%d) Col %d need one msg %d\n",iam, ljb,mystatus[ljb]);
-                }
-                UBtree_ptr[ljb].tag_=BC_U;
+				//C_BcTree_Create(&UBtree_ptr[ljb], grid->comm, ranks, rank_cnt, msgsize, '@(pre)');
+				C_BcTree_Create_onesided(&UBtree_ptr[ljb], grid->comm, ranks, rank_cnt, msgsize, '@(pre)', BufSize_u, Pc);
+				UBtree_ptr[ljb].tag_=BC_U;
 
 				// printf("iam %5d btree rank_cnt %5d \n",iam,rank_cnt);
 				// fflush(stdout);
@@ -1801,6 +1575,41 @@ if ( !iam) printf(".. Construct Reduce tree for L: %.2f\t\n", t);
 	SUPERLU_FREE(ranks);
 	SUPERLU_FREE(SeedSTD_BC);
 	memTRS -= k*dword + grid->nprow*k*iword;  //acount for SeedSTD_BC, ActiveFlagAll
+
+    req_count = 0;
+	memset(oneside_buf_offset, 0, (Pr+Pc) * sizeof(int));
+    BufSize_u[iam_col]=0;
+//    for (i=0; i<Pr;i++){
+//        printf("iam=%d, iam_col=%d, BufSize_u[%d]=%d\n",iam, iam_row,i,BufSize_u[i]);
+//        fflush(stdout);
+//    }
+    for (i=0; i<Pr;i++){
+        for(j=0;j<i;j++){
+                oneside_buf_offset[i] += BufSize_u[j];
+        }
+//        printf("iam=%d, iam_col=%d, oneside_buf_offset[%d]=%d\n",iam, iam_col,i,oneside_buf_offset[i]);
+//        fflush(stdout);
+        if (iam_col!=i){
+                MPI_Irecv(&recv_size_all_u[i], 1, MPI_INT, i, 0, col_comm, &col_req[req_count]);
+                MPI_Isend(&oneside_buf_offset[i],1, MPI_INT, i, 0, col_comm, &col_req[req_count+1]);
+                req_count += 2;
+        }
+    }
+    MPI_Waitall(2*(Pr-1), col_req, col_status);
+    recv_size_all_u[iam_col]=0;
+
+    j=0;
+    for(i=0; i<Pr; i++){
+    //       printf("iam=%d, iam_col=%d,  recv_size_all_u[%d]=%d\n",iam, iam_col,i,recv_size_all_u[i]);
+    //       fflush(stdout);
+        if(BufSize_u[i]>0){
+           keep_validBCQindex_u[j]=i;
+    //       printf("iam=%d, iam_col=%d, I need to check from %d, size=%d\n",iam, iam_col,keep_validBCQindex_u[j],BufSize_u[i]);
+    //       fflush(stdout);
+           j += 1;
+       }
+    }
+
 
 #if ( PROFlevel>=1 )
 t = SuperLU_timer_() - t;
@@ -1851,17 +1660,9 @@ if ( !iam) printf(".. Construct Bcast tree for U: %.2f\t\n", t);
 	if ( !(SeedSTD_RD = (double*)SUPERLU_MALLOC(k * sizeof(double))) )
 		ABORT("Malloc fails for SeedSTD_RD[].");
 
-    if ( !(mystatusmod_u = (int*)SUPERLU_MALLOC(2*k * sizeof(int))) )
-        ABORT("Malloc fails for mystatusmod_u[].");
-    if ( !(h_recv_cnt_u = (int*)SUPERLU_MALLOC(k * sizeof(int))) )
-        ABORT("Malloc fails for h_recv_cnt_u[].");
-
-    int nbrecvmod=0;
 	for (i=0;i<k;i++){
 		SeedSTD_RD[i]=rand();
-        h_recv_cnt_u[i]=0;
 	}
-	for (i=0;i<2*k;i++) mystatusmod_u[i]=1;
 
 	MPI_Allreduce(MPI_IN_PLACE,&SeedSTD_RD[0],k,MPI_DOUBLE,MPI_MAX,grid->rscp.comm);
 
@@ -1986,16 +1787,8 @@ if ( !iam) printf(".. Construct Bcast tree for U: %.2f\t\n", t);
 
 					//URtree_ptr[lib] = RdTree_Create(grid->comm, ranks, rank_cnt, msgsize,SeedSTD_RD[lib],'@(pre)');
 					//RdTree_SetTag(URtree_ptr[lib], RD_U,'@(pre)');
-					int needrecvrd=0;
-                    int needsendrd=0;
-					C_RdTree_Create_nv(&URtree_ptr[lib], grid->comm, ranks, rank_cnt, msgsize, '@(pre)',, &needrecvrd,&needsendrd);
-					if (needrecvrd!=0) {
-                        mystatusmod_u[lib*2]=0;
-                        mystatusmod_u[lib*2+1]=0;
-                        h_recv_cnt_u[lib]=needrecvrd;
-                        //printf("(%d) on CPU, lib=%d, cnt=%d\n",iam,lib,LRtree_ptr[lib].destCnt_);
-                        nbrecvmod+=needrecvrd;
-                    }
+					//C_RdTree_Create(&URtree_ptr[lib], grid->comm, ranks, rank_cnt, msgsize, '@(pre)');
+					C_RdTree_Create_onesided(&URtree_ptr[lib], grid->comm, ranks, rank_cnt, msgsize, '@(pre)', BufSize_urd, Pc);
 					URtree_ptr[lib].tag_=RD_U;
 					// }
 
@@ -2029,6 +1822,31 @@ if ( !iam) printf(".. Construct Bcast tree for U: %.2f\t\n", t);
 	// SUPERLU_FREE(nzrows);
 
 	memTRS -= k*dword + grid->nprow*k*iword;  //acount for SeedSTD_RD, ActiveFlagAll
+
+    req_count = 0;
+    BufSize_urd[iam_row]=0;
+    for (i=0; i<Pc;i++){
+            for(j=0;j<i;j++){
+                    oneside_buf_offset[i+Pr] += BufSize_urd[j];
+            }
+            if (iam_row!=i){
+                    MPI_Irecv(&recv_size_all_u[Pr+i],  1, MPI_INT, i, 0, row_comm, &row_req[req_count]);
+    	            MPI_Isend(&oneside_buf_offset[i+Pr],1, MPI_INT, i, 0, row_comm, &row_req[req_count+1]);
+                    req_count += 2;
+                    //MPI_Sendrecv(&nfrecvmod,1, MPI_INT, i, 0,&recv_size_all[Pr+i], 1, MPI_INT, i, 0, row_comm,&status);
+            }
+    }
+    MPI_Waitall(2*(Pc-1), row_req, row_status);
+    recv_size_all_u[Pr+iam_row]=0;
+    j=0;
+    for(i=0; i<Pc; i++){
+       if(BufSize_urd[i]!=0){
+           keep_validRDQindex_u[j]=i;
+           //printf("iam=%d, iam_row=%d, I need to check from %d, size=%d\n",iam, iam_row,keep_validRDQindex_u[j],BufSize_urd[i]);
+           //fflush(stdout);
+           j += 1;
+       }
+    }
 
 #if ( PROFlevel>=1 )
 t = SuperLU_timer_() - t;
@@ -2068,274 +1886,52 @@ if ( !iam) printf(".. Construct Reduce tree for U: %.2f\t\n", t);
 	Llu->Ucb_indptr = Ucb_indptr;
 	Llu->Ucb_valptr = Ucb_valptr;
 
-#ifdef GPU_ACC
-	checkGPU(gpuMalloc( (void**)&Llu->d_xsup, (n+1) * sizeof(int_t)));
-	checkGPU(gpuMemcpy(Llu->d_xsup, xsup, (n+1) * sizeof(int_t), gpuMemcpyHostToDevice));
-	checkGPU(gpuMalloc( (void**)&Llu->d_LRtree_ptr, CEILING( nsupers, grid->nprow ) * sizeof(C_Tree)));
-	checkGPU(gpuMalloc( (void**)&Llu->d_LBtree_ptr, CEILING( nsupers, grid->npcol ) * sizeof(C_Tree)));
-	checkGPU(gpuMalloc( (void**)&Llu->d_URtree_ptr, CEILING( nsupers, grid->nprow ) * sizeof(C_Tree)));
-	checkGPU(gpuMalloc( (void**)&Llu->d_UBtree_ptr, CEILING( nsupers, grid->npcol ) * sizeof(C_Tree)));
-	checkGPU(gpuMemcpy(Llu->d_LRtree_ptr, Llu->LRtree_ptr, CEILING( nsupers, grid->nprow ) * sizeof(C_Tree), gpuMemcpyHostToDevice));
-	checkGPU(gpuMemcpy(Llu->d_LBtree_ptr, Llu->LBtree_ptr, CEILING( nsupers, grid->npcol ) * sizeof(C_Tree), gpuMemcpyHostToDevice));
-	checkGPU(gpuMemcpy(Llu->d_URtree_ptr, Llu->URtree_ptr, CEILING( nsupers, grid->nprow ) * sizeof(C_Tree), gpuMemcpyHostToDevice));
-	checkGPU(gpuMemcpy(Llu->d_UBtree_ptr, Llu->UBtree_ptr, CEILING( nsupers, grid->npcol ) * sizeof(C_Tree), gpuMemcpyHostToDevice));
-	checkGPU(gpuMalloc( (void**)&Llu->d_Lrowind_bc_dat, (Llu->Lrowind_bc_cnt) * sizeof(int_t)));
-	checkGPU(gpuMemcpy(Llu->d_Lrowind_bc_dat, Llu->Lrowind_bc_dat, (Llu->Lrowind_bc_cnt) * sizeof(int_t), gpuMemcpyHostToDevice));
-	checkGPU(gpuMalloc( (void**)&Llu->d_Lindval_loc_bc_dat, (Llu->Lindval_loc_bc_cnt) * sizeof(int_t)));
-	checkGPU(gpuMemcpy(Llu->d_Lindval_loc_bc_dat, Llu->Lindval_loc_bc_dat, (Llu->Lindval_loc_bc_cnt) * sizeof(int_t), gpuMemcpyHostToDevice));
-	checkGPU(gpuMalloc( (void**)&Llu->d_Lrowind_bc_offset, CEILING( nsupers, grid->npcol ) * sizeof(long int)));
-	checkGPU(gpuMemcpy(Llu->d_Lrowind_bc_offset, Llu->Lrowind_bc_offset, CEILING( nsupers, grid->npcol ) * sizeof(long int), gpuMemcpyHostToDevice));
-	checkGPU(gpuMalloc( (void**)&Llu->d_Lindval_loc_bc_offset, CEILING( nsupers, grid->npcol ) * sizeof(long int)));
-	checkGPU(gpuMemcpy(Llu->d_Lindval_loc_bc_offset, Llu->Lindval_loc_bc_offset, CEILING( nsupers, grid->npcol ) * sizeof(long int), gpuMemcpyHostToDevice));
-	checkGPU(gpuMalloc( (void**)&Llu->d_Lnzval_bc_offset, CEILING( nsupers, grid->npcol ) * sizeof(long int)));
-	checkGPU(gpuMemcpy(Llu->d_Lnzval_bc_offset, Llu->Lnzval_bc_offset, CEILING( nsupers, grid->npcol ) * sizeof(long int), gpuMemcpyHostToDevice));
 
-	checkGPU(gpuMalloc( (void**)&Llu->d_Unzval_br_offset, CEILING( nsupers, grid->nprow ) * sizeof(long int)));
-	checkGPU(gpuMemcpy(Llu->d_Unzval_br_offset, Llu->Unzval_br_offset, CEILING( nsupers, grid->nprow ) * sizeof(long int), gpuMemcpyHostToDevice));
-	checkGPU(gpuMalloc( (void**)&Llu->d_Ufstnz_br_offset, CEILING( nsupers, grid->nprow ) * sizeof(long int)));
-	checkGPU(gpuMemcpy(Llu->d_Ufstnz_br_offset, Llu->Ufstnz_br_offset, CEILING( nsupers, grid->nprow ) * sizeof(long int), gpuMemcpyHostToDevice));
-	checkGPU(gpuMalloc( (void**)&Llu->d_Ufstnz_br_dat, (Llu->Ufstnz_br_cnt) * sizeof(int_t)));
-	checkGPU(gpuMemcpy(Llu->d_Ufstnz_br_dat, Llu->Ufstnz_br_dat, (Llu->Ufstnz_br_cnt) * sizeof(int_t), gpuMemcpyHostToDevice));
-	checkGPU(gpuMalloc( (void**)&Llu->d_Urbs, 2* CEILING( nsupers, grid->npcol ) * sizeof(int_t)));
-	checkGPU(gpuMemcpy(Llu->d_Urbs, Llu->Urbs, 2* CEILING( nsupers, grid->npcol ) * sizeof(int_t), gpuMemcpyHostToDevice));
-	checkGPU(gpuMalloc( (void**)&Llu->d_Ucb_valdat, Llu->Ucb_valcnt * sizeof(int_t)));
-	checkGPU(gpuMemcpy(Llu->d_Ucb_valdat, Llu->Ucb_valdat, Llu->Ucb_valcnt * sizeof(int_t), gpuMemcpyHostToDevice));
-	checkGPU(gpuMalloc( (void**)&Llu->d_Ucb_valoffset, CEILING( nsupers, grid->npcol ) * sizeof(long int)));
-	checkGPU(gpuMemcpy(Llu->d_Ucb_valoffset, Llu->Ucb_valoffset, CEILING( nsupers, grid->npcol ) * sizeof(long int), gpuMemcpyHostToDevice));
-	checkGPU(gpuMalloc( (void**)&Llu->d_Ucb_inddat, Llu->Ucb_indcnt * sizeof(Ucb_indptr_t)));
-	checkGPU(gpuMemcpy(Llu->d_Ucb_inddat, Llu->Ucb_inddat, Llu->Ucb_indcnt * sizeof(Ucb_indptr_t), gpuMemcpyHostToDevice));
-	checkGPU(gpuMalloc( (void**)&Llu->d_Ucb_indoffset, CEILING( nsupers, grid->npcol ) * sizeof(long int)));
-	checkGPU(gpuMemcpy(Llu->d_Ucb_indoffset, Llu->Ucb_indoffset, CEILING( nsupers, grid->npcol ) * sizeof(long int), gpuMemcpyHostToDevice));
+    int maxrecvsz = sp_ienv_dist(3,options)* nrhs + SUPERLU_MAX( XK_H, LSUM_H ) + 2;
+    BC_buffer_size = (maxrecvsz) * ( (nfrecvx>nbrecvx?nfrecvx:nbrecvx) + 1 );
+@precision SINGLE DOUBLE
+    int size_num=1;
+@precision SCOMPLEX DCOMPLEX
+    int size_num=2;
+@precision !
 
+    BC_taskq = (double*)SUPERLU_MALLOC( size_num * BC_buffer_size * sizeof(double));
 
+    for(i=0; i<(size_num * BC_buffer_size); i++){
+            BC_taskq[i] = -1.00;
+    }
+#ifdef USE_FOMPI
+    foMPI_Win_create(BC_taskq, (BC_buffer_size*size_num)*sizeof(double), sizeof(double), MPI_INFO_NULL, col_comm, &bc_winl);
+#else
+    MPI_Win_create(BC_taskq, (BC_buffer_size*size_num)*sizeof(double), sizeof(double), MPI_INFO_NULL, col_comm, &bc_winl);
+#endif
+    int nfrecvmod=0;
+    for (lk=0;lk<CEILING( nsupers, grid->nprow );++lk){
+        if(LRtree_ptr[lk].empty_==NO){
+            nfrecvmod += LRtree_ptr[lk].destCnt_;
+        }
+    }
+    int nbrecvmod=0 ;
+	for (lk=0;lk<CEILING( nsupers, grid->nprow );++lk){
+		if(URtree_ptr[lk].empty_==NO){
+			nbrecvmod += URtree_ptr[lk].destCnt_;
+		}
+    }
+    RD_buffer_size=((nfrecvmod>nbrecvmod?nfrecvmod:nbrecvmod)+1)*(maxrecvsz);
+    RD_taskq = (double*)SUPERLU_MALLOC( size_num*RD_buffer_size * sizeof(double));   // this needs to be optimized for 1D row mapping
+    for(i=0; i<RD_buffer_size*size_num; i++){
+            RD_taskq[i] = -1.0;
+    }
+#ifdef USE_FOMPI
+	foMPI_Win_create(RD_taskq, (size_num*RD_buffer_size)*sizeof(double), sizeof(double), MPI_INFO_NULL, row_comm, &rd_winl);
+#else
+	MPI_Win_create(RD_taskq, (size_num*RD_buffer_size)*sizeof(double), sizeof(double), MPI_INFO_NULL, row_comm, &rd_winl);
+#endif
 
-
-	checkGPU(gpuMalloc( (void**)&Llu->d_Linv_bc_offset, CEILING( nsupers, grid->npcol ) * sizeof(long int)));
-	checkGPU(gpuMemcpy(Llu->d_Linv_bc_offset, Llu->Linv_bc_offset, CEILING( nsupers, grid->npcol ) * sizeof(long int), gpuMemcpyHostToDevice));
-	checkGPU(gpuMalloc( (void**)&Llu->d_Uinv_bc_offset, CEILING( nsupers, grid->npcol ) * sizeof(long int)));
-	checkGPU(gpuMemcpy(Llu->d_Uinv_bc_offset, Llu->Uinv_bc_offset, CEILING( nsupers, grid->npcol ) * sizeof(long int), gpuMemcpyHostToDevice));
-	checkGPU(gpuMalloc( (void**)&Llu->d_ilsum, (CEILING( nsupers, grid->nprow )+1) * sizeof(int_t)));
-	checkGPU(gpuMemcpy(Llu->d_ilsum, Llu->ilsum, (CEILING( nsupers, grid->nprow )+1) * sizeof(int_t), gpuMemcpyHostToDevice));
-
-
-	/* gpuMemcpy for the following is performed in pxgssvx */
-
-	checkGPU(gpuMalloc( (void**)&Llu->d_Lnzval_bc_dat, (Llu->Lnzval_bc_cnt) * sizeof(@(type))));
-	checkGPU(gpuMalloc( (void**)&Llu->d_Unzval_br_dat, (Llu->Unzval_br_cnt) * sizeof(@(type))));
-	checkGPU(gpuMalloc( (void**)&Llu->d_Linv_bc_dat, (Llu->Linv_bc_cnt) * sizeof(@(type))));
-	checkGPU(gpuMalloc( (void**)&Llu->d_Uinv_bc_dat, (Llu->Uinv_bc_cnt) * sizeof(@(type))));
-
-
-
-
-	/////* reuse: L and U *////
-	int scalefactor=1;
-	if (@(type) == 'doublecomplex'){
-	    scalefactor=2;
-	    printf("(%d) type=doublecomplex\n",iam);
-	    fflush(stdout);
-	}
-	int maxrecvsz = sp_ienv_dist(3)* nrhs + SUPERLU_MAX( XK_H, LSUM_H );
-    flag_bc_q = (int *) nvshmem_malloc (RDMA_FLAG_SIZE * (k+1) * sizeof(int)); // for sender
-    flag_rd_q = (int *)nvshmem_malloc( RDMA_FLAG_SIZE * nlb * 2 * sizeof(int)); // for sender
-    printf("(%d) k=%d, nlb=%d, flag_size=%.2f MB, data_size=%.f MB\n",iam,k,nlb,(RDMA_FLAG_SIZE * nlb * 2 * sizeof(int))/1e6,(2*maxrecvsz*CEILING( nsupers, grid->nprow) * sizeof(double))/1e6);
+#if ( DEBUGlevel>=1 )
+    printf("iam=%d, maxrecvsz=%d, maxBCmsg=%d (%f MB),maxRDmsg=%d (%f MB)\n",
+            iam, maxrecvsz,BC_buffer_size/maxrecvsz,((BC_buffer_size*size_num)*sizeof(double))/1e6, RD_buffer_size/maxrecvsz,((RD_buffer_size*size_num)*sizeof(double))/1e6);
     fflush(stdout);
-    ready_x = (double *)nvshmem_malloc(maxrecvsz*CEILING( nsupers, grid->npcol) * sizeof(double)*scalefactor); // for receiver
-    ready_lsum = (double *)nvshmem_malloc(2*maxrecvsz*CEILING( nsupers, grid->nprow) * sizeof(double)*scalefactor); // for receiver
-    my_flag_bc = (int *) nvshmem_malloc ( RDMA_FLAG_SIZE * (CEILING( nsupers, grid->npcol)+1)  * sizeof(int)); // for sender
-    my_flag_rd = (int *) nvshmem_malloc (RDMA_FLAG_SIZE * nlb * 2 * sizeof(int)); // for sender
-    checkGPU(gpuMemset(my_flag_bc, 0, RDMA_FLAG_SIZE * (CEILING( nsupers, grid->npcol)+1)  * sizeof(int)));
-    checkGPU(gpuMemset(my_flag_rd, 0, RDMA_FLAG_SIZE * nlb * 2 * sizeof(int)));
-    //checkGPU(gpuMemset(ready_x, 0, maxrecvsz*CEILING( nsupers, grid->npcol) * sizeof(double)*scalefactor));
-    //checkGPU(gpuMemset(ready_lsum, 0, 2*maxrecvsz*CEILING( nsupers, grid->nprow) * sizeof(double)*scalefactor));
-
-    /////* for L solve *////
-	checkGPU(gpuMalloc( (void**)&d_status,  CEILING( nsupers, grid->npcol) * sizeof(int)));
-	checkGPU(gpuMalloc( (void**)&d_nfrecv,  3 * sizeof(int)));
-	checkGPU(gpuMemcpy(d_status, mystatus, CEILING( nsupers, grid->npcol) * sizeof(int), gpuMemcpyHostToDevice));
-
-
-    int *my_colnum;
-    if ( !(my_colnum = (int*)SUPERLU_MALLOC((nfrecvx+1) * sizeof(int))) )
-        ABORT("Malloc fails for my_colnum[].");
-	checkGPU(gpuMalloc( (void**)&d_colnum,  (nfrecvx+1) * sizeof(int)));
-
-	//printf("(%d),CEILING( nsupers, grid->npcol)=%d\n",iam,CEILING( nsupers, grid->npcol));
-	//fflush(stdout);
-	int tmp_idx=0;
-    for(int i=0; i<CEILING( nsupers, grid->npcol);i++){
-        if(mystatus[i]==0) {
-            my_colnum[tmp_idx]=i;
-	        //printf("(%d),nfrecvx=%d,i=%d,my_column[%d]=%d\n",iam,nfrecvx,i,tmp_idx,my_colnum[tmp_idx]);
-	        //fflush(stdout);
-            tmp_idx += 1;
-        }
-    }
-	checkGPU(gpuMemcpy(d_colnum, my_colnum,  (nfrecvx+1) * sizeof(int), gpuMemcpyHostToDevice));
-	printf("(%d) nfrecvx=%d,nfrecvmod=%d,maxrecvsz=%d\n",iam,nfrecvx,nfrecvmod,maxrecvsz);
-    fflush(stdout);
-
-    h_nfrecv[0]=nfrecvx;
-    h_nfrecv[1]=256;
-    h_nfrecv[2]=3;
-
-	checkGPU(gpuMalloc( (void**)&d_mynum, h_nfrecv[1]  * sizeof(int)));
-	checkGPU(gpuMalloc( (void**)&d_mymaskstart, h_nfrecv[1] * sizeof(int)));
-	checkGPU(gpuMalloc( (void**)&d_mymasklength, h_nfrecv[1]  * sizeof(int)));
-
-    //printf("(%d), wait=%d,%d\n",iam,h_nfrecv[2],h_nfrecv[1]);
-    //fflush(stdout);
-
-    checkGPU(gpuMemcpy(d_nfrecv, h_nfrecv, 3 * sizeof(int), gpuMemcpyHostToDevice));
-
-	int *my_colnummod;
-    if ( !(my_colnummod = (int*)SUPERLU_MALLOC((nfrecvmod+1) * sizeof(int))) )
-        ABORT("Malloc fails for my_colnum[].");
-	checkGPU(gpuMalloc( (void**)&d_colnummod,  (nfrecvmod+1) * sizeof(int)));
-
-	tmp_idx=0;
-	for(int i=0; i<CEILING( nsupers, grid->nprow);i++){
-	    //printf("(%d),nfrecvmod=%d,i=%d,recv_cnt=%d\n",iam,nfrecvmod,i,h_recv_cnt[i]);
-        if(mystatusmod[i*2]==0) {
-            my_colnummod[tmp_idx]=i;
-	        //printf("(%d),nfrecvmod=%d,i=%d,my_colnummod[%d]=%d\n",iam,nfrecvmod,i,tmp_idx,my_colnummod[tmp_idx]);
-	        //fflush(stdout);
-            tmp_idx += 1;
-        }
-    }
-    h_nfrecvmod[0]=nfrecvmod;
-    h_nfrecvmod[1]=tmp_idx;
-    h_nfrecvmod[2]=h_nfrecv[2];
-    checkGPU(gpuMalloc( (void**)&d_nfrecvmod, 4 * sizeof(int)));
-	checkGPU(gpuMemcpy(d_nfrecvmod, h_nfrecvmod, 4 * sizeof(int), gpuMemcpyHostToDevice));
-	checkGPU(gpuMalloc( (void**)&d_statusmod, 2*CEILING(nsupers, grid->nprow) * sizeof(int)));
-	checkGPU(gpuMalloc( (void**)&d_recv_cnt, CEILING(nsupers, grid->nprow) * sizeof(int)));
-	checkGPU(gpuMemcpy(d_recv_cnt, h_recv_cnt,  CEILING(nsupers, grid->nprow) * sizeof(int), gpuMemcpyHostToDevice));
-
-	checkGPU(gpuMemcpy(d_colnummod, my_colnummod,  (nfrecvmod+1) * sizeof(int), gpuMemcpyHostToDevice));
-	checkGPU(gpuMalloc( (void**)&d_mynummod, h_nfrecv[1]  * sizeof(int)));
-	checkGPU(gpuMalloc( (void**)&d_mymaskstartmod, h_nfrecv[1]  * sizeof(int)));
-	checkGPU(gpuMalloc( (void**)&d_mymasklengthmod,   h_nfrecv[1] * sizeof(int)));
-
-    checkGPU(gpuMalloc( (void**)&d_msgnum,  h_nfrecv[1] * sizeof(int)));
-    checkGPU(gpuMalloc( (void**)&d_flag_mod,  (h_nfrecvmod[3]+1) * sizeof(int)));
-    int* tmp_val;
-    if ( !(tmp_val = (int*)SUPERLU_MALLOC((h_nfrecvmod[3]+1) * sizeof(int))) )
-        ABORT("Malloc fails for tmp_val[].");
-    tmp_val[0]=0;
-    for(int i=1; i<h_nfrecvmod[3]+1;i++) tmp_val[i]=-1;
-    checkGPU(gpuMemcpy(d_flag_mod, tmp_val,  (h_nfrecvmod[3]+1) * sizeof(int), gpuMemcpyHostToDevice));
-    //printf("(%d) nfrecvx=%d, nfrecvmod=%d,nfsendmod=%d\n",iam,nfrecvx, nfrecvmod,h_nfrecvmod[3]);
-    //fflush(stdout);
-
-
-
-        /////* for U solve *////
-    checkGPU(gpuMalloc( (void**)&d_nfrecv_u,  3 * sizeof(int)));
-
-    int *my_colnum_u;
-    if ( !(my_colnum_u = (int*)SUPERLU_MALLOC((nbrecvx+1) * sizeof(int))) )
-        ABORT("Malloc fails for my_colnum_u[].");
-    checkGPU(gpuMalloc( (void**)&d_colnum_u,  (nbrecvx+1) * sizeof(int)));
-
-    //printf("(%d),CEILING( nsupers, grid->npcol)=%d\n",iam,CEILING( nsupers, grid->npcol));
-    //fflush(stdout);
-    tmp_idx=0;
-    for(int i=0; i<CEILING( nsupers, grid->npcol);i++){
-        if(mystatus_u[i]==0) {
-            my_colnum_u[tmp_idx]=i;
-            //printf("(%d),nbrecvx=%d,i=%d,my_column_u[%d]=%d\n",iam,nbrecvx,i,tmp_idx,my_colnum_u[tmp_idx]);
-            //fflush(stdout);
-            tmp_idx += 1;
-        }
-    }
-    h_nfrecv_u[0]=nbrecvx;
-    h_nfrecv_u[1]=256;
-    h_nfrecv_u[2]=3;
-    //printf("(%d), wait=%d,%d\n",iam,h_nfrecv[2],h_nfrecv[1]);
-    //fflush(stdout);
-
-    checkGPU(gpuMemcpy(d_colnum_u, my_colnum_u,  (nbrecvx+1) * sizeof(int), gpuMemcpyHostToDevice));
-    //printf("(%d) nbrecvx=%d,nbrecvmod=%d\n",iam,nbrecvx,nbrecvmod);
-    //fflush(stdout);
-    checkGPU(gpuMalloc( (void**)&d_mynum_u, h_nfrecv_u[1]  * sizeof(int)));
-    checkGPU(gpuMalloc( (void**)&d_mymaskstart_u, h_nfrecv_u[1] * sizeof(int)));
-    checkGPU(gpuMalloc( (void**)&d_mymasklength_u, h_nfrecv_u[1]  * sizeof(int)));
-    checkGPU(gpuMemcpy(d_nfrecv_u, h_nfrecv_u, 3 * sizeof(int), gpuMemcpyHostToDevice));
-
-    int *my_colnummod_u;
-    if ( !(my_colnummod_u = (int*)SUPERLU_MALLOC((nbrecvmod+1) * sizeof(int))) )
-        ABORT("Malloc fails for my_colnummod_u[].");
-    checkGPU(gpuMalloc( (void**)&d_colnummod_u,  (nbrecvmod+1) * sizeof(int)));
-
-    tmp_idx=0;
-    for(int i=0; i<CEILING( nsupers, grid->nprow);i++){
-        //printf("(%d),nfrecvmod=%d,i=%d,recv_cnt=%d\n",iam,nfrecvmod,i,h_recv_cnt[i]);
-        if(mystatusmod_u[i*2]==0) {
-            my_colnummod_u[tmp_idx]=i;
-            //printf("(%d),nfrecvmod=%d,i=%d,my_colnummod[%d]=%d\n",iam,nfrecvmod,i,tmp_idx,my_colnummod[tmp_idx]);
-            //fflush(stdout);
-            tmp_idx += 1;
-        }
-    }
-    h_nfrecvmod_u[0]=nbrecvmod;
-    h_nfrecvmod_u[1]=tmp_idx;
-    h_nfrecvmod_u[2]=h_nfrecv[2];
-    //printf("(%d) nfrecvmod=%d,%d,nfrecvx=%d\n",iam,nfrecvmod, tmp_idx,nfrecvx);
-    //fflush(stdout);
-    checkGPU(gpuMalloc( (void**)&d_nfrecvmod_u,  3 * sizeof(int)));
-    checkGPU(gpuMemcpy(d_nfrecvmod_u, h_nfrecvmod_u, 3 * sizeof(int), gpuMemcpyHostToDevice));
-    checkGPU(gpuMalloc( (void**)&d_recv_cnt_u, CEILING(nsupers, grid->nprow) * sizeof(int)));
-    checkGPU(gpuMemcpy(d_recv_cnt_u, h_recv_cnt_u,  CEILING(nsupers, grid->nprow) * sizeof(int), gpuMemcpyHostToDevice));
-
-    checkGPU(gpuMemcpy(d_colnummod_u, my_colnummod_u,  (nbrecvmod+1) * sizeof(int), gpuMemcpyHostToDevice));
-    checkGPU(gpuMalloc( (void**)&d_mynummod_u, h_nfrecv_u[1]  * sizeof(int)));
-    checkGPU(gpuMalloc( (void**)&d_mymaskstartmod_u, h_nfrecv_u[1]  * sizeof(int)));
-    checkGPU(gpuMalloc( (void**)&d_mymasklengthmod_u,   h_nfrecv_u[1] * sizeof(int)));
-
-    //double mygpumem_L=0,mygpumem_U=0;
-    //double mygpumem_L_nv=0,mygpumem_U_nv=0;
-    //mygpumem_L=((Llu->Lnzval_bc_cnt) * sizeof(double)
-    //            +(Llu->Linv_bc_cnt) * sizeof(double)
-    //            +CEILING( nsupers, grid->npcol ) * sizeof(long int)
-    //            +(CEILING( nsupers, grid->nprow )+1) * sizeof(int_t)
-    //            +(n+1) * sizeof(int_t)
-    //            +CEILING( nsupers, grid->nprow ) * sizeof(C_Tree)*4
-    //            +(Llu->Lrowind_bc_cnt) * sizeof(int_t)
-    //            +(Llu->Lindval_loc_bc_cnt) * sizeof(int_t)
-    //            +CEILING( nsupers, grid->npcol ) * sizeof(long int)
-    //            +CEILING( nsupers, grid->npcol ) * sizeof(long int)
-    //            +CEILING( nsupers, grid->npcol ) * sizeof(long int)
-    //            )/1e6;
-
-    //mygpumem_U=((Llu->Unzval_br_cnt) * sizeof(double)
-    //            +(Llu->Uinv_bc_cnt) * sizeof(double)
-    //            +CEILING( nsupers, grid->npcol ) * sizeof(long int)
-    //            +CEILING( nsupers, grid->npcol ) * sizeof(long int)
-    //            +Llu->Ucb_indcnt * sizeof(Ucb_indptr_t)
-    //            +CEILING( nsupers, grid->npcol ) * sizeof(long int)
-    //            +Llu->Ucb_valcnt * sizeof(int_t)
-    //            +2* CEILING( nsupers, grid->npcol ) * sizeof(int_t)
-    //            +(Llu->Ufstnz_br_cnt) * sizeof(int_t)
-    //            +CEILING( nsupers, grid->nprow ) * sizeof(long int)
-    //            +CEILING( nsupers, grid->nprow ) * sizeof(long int)
-    //            )/1e6;
-
-    //printf("(%d) CUDA buffer size, L= %lf MB, U= %lf MB\n",iam,mygpumem_L, mygpumem_U);
-
-    //mygpumem_L_nv=(h_nfrecv[1] * sizeof(int)*7
-    //              +3*CEILING(nsupers, grid->nprow) * sizeof(int)
-    //              + (nfrecvmod+1) * sizeof(int)
-    //              + (nfrecvx+1) * sizeof(int)
-    //              +CEILING( nsupers, grid->npcol) * sizeof(int) )/1e6;
-    //mygpumem_U_nv=(h_nfrecv_u[1]*3*sizeof(int)
-    //              + h_nfrecv_u[1]*3*sizeof(int)
-    //              +(nbrecvmod+1) * sizeof(int)
-    //               +(nbrecvx+1) * sizeof(int)
-    //              +CEILING(nsupers, grid->nprow) * sizeof(int)
-    //              + 3 * sizeof(int))/1e6;
-    //printf("(%d) NVSHMEM buffer size, L= %lf MB, U= %lf MB\n",iam,mygpumem_L_nv, mygpumem_U_nv);
-    //fflush(stdout);
 #endif
 
 #if ( PRNTlevel>=1 )
@@ -2385,3 +1981,4 @@ if ( !iam) printf(".. Construct Reduce tree for U: %.2f\t\n", t);
     return (mem_use+memTRS);
 
 } /* P@(PRE)DISTRIBUTE */
+#endif
