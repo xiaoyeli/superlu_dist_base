@@ -21,6 +21,10 @@
 
 #include "@(pre)lustruct_gpu.h"
 
+#ifdef HAVE_HIP
+#include "superlu_gpu_utils.hip.cpp"
+#endif
+
 @precision SCOMPLEX DCOMPLEX
 #include "@(mod_pre)complex.h"
 @precision !

@@ -363,11 +363,11 @@ int @(pre)Scatter_B3d(NRformat_loc3d *A3d,  // modified
          In the most general case, block rows of B are not of even size, then the
 	 Layer 0 partition may overlap with 3D partition in an arbitrary manner.
 	 For example:
-	                  P0        P1        P2       P3
+	                  P0          P1         P2        P3
              X on grid-0: |___________|__________|_________|________|
 
 	     X on 3D:     |___|____|_____|____|__|______|_____|_____|
-	                  P0  P1   P2    P3   P4   P5     P6   P7  
+	                  P0  P1   P2    P3   P4 P5     P6    P7  
 	*/
 	MPI_Status recv_status;
 	int pxy = grid2d->nprow * grid2d->npcol;
