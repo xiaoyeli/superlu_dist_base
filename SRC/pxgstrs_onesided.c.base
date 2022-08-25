@@ -386,7 +386,7 @@ p@(pre)gstrs_onesided(superlu_dist_options_t *options, int_t n,
 
     /* Allocate working storage. */
     knsupc = sp_ienv_dist(3, options);
-    maxrecvsz = knsupc * nrhs + SUPERLU_MAX( XK_H, LSUM_H );
+    maxrecvsz = knsupc * nrhs + SUPERLU_MAX( XK_H, LSUM_H )+2;
     sizelsum = (((size_t)ldalsum)*nrhs + nlb*LSUM_H);
     sizelsum = ((sizelsum + (aln_d - 1)) / aln_d) * aln_d;
 
