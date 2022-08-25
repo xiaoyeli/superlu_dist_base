@@ -50,7 +50,7 @@ double* RD_taskq;
 double* BC_taskq_u;
 double* RD_taskq_u;
 float
-p@(pre)distribute(superlu_dist_options_t *options, int_t n, SuperMatrix *A,
+p@(pre)distribute_onesided(superlu_dist_options_t *options, int_t n, SuperMatrix *A,
 	     @(pre)ScalePermstruct_t *ScalePermstruct,
 	     Glu_freeable_t *Glu_freeable, @(pre)LUstruct_t *LUstruct,
 	     gridinfo_t *grid, int nrhs)
@@ -376,26 +376,26 @@ p@(pre)distribute(superlu_dist_options_t *options, int_t n, SuperMatrix *A,
 			if ( myrow == PROW( gb, grid ) ) {
 			    lb = LBi( gb, grid );
  			    if ( gb < jb ) { /* in U */
- 				index = Ufstnz_br_ptr[lb];
- 				uval = Unzval_br_ptr[lb];
- 				while (  (k = index[Urb_indptr[lb]]) < jb ) {
- 				    /* Skip nonzero values in this block */
- 				    Urb_length[lb] += index[Urb_indptr[lb]+1];
- 				    /* Move pointer to the next block */
- 				    Urb_indptr[lb] += UB_DESCRIPTOR
- 					+ SuperSize( k );
- 				}
- 				/*assert(k == jb);*/
- 				/* start fstnz */
- 				istart = Urb_indptr[lb] + UB_DESCRIPTOR;
- 				len = Urb_length[lb];
- 				fsupc1 = FstBlockC( gb+1 );
- 				k = j - fsupc;
- 				/* Sum the lengths of the leading columns */
- 				for (jj = 0; jj < k; ++jj)
-				    len += fsupc1 - index[istart++];
-				/*assert(irow>=index[istart]);*/
-				uval[len + irow - index[istart]] = a[i];
+ 				    index = Ufstnz_br_ptr[lb];
+ 				    uval = Unzval_br_ptr[lb];
+ 				    while (  (k = index[Urb_indptr[lb]]) < jb ) {
+ 				        /* Skip nonzero values in this block */
+ 				        Urb_length[lb] += index[Urb_indptr[lb]+1];
+ 				        /* Move pointer to the next block */
+ 				        Urb_indptr[lb] += UB_DESCRIPTOR
+ 				    	+ SuperSize( k );
+ 				    }
+ 				    /*assert(k == jb);*/
+ 				    /* start fstnz */
+ 				    istart = Urb_indptr[lb] + UB_DESCRIPTOR;
+ 				    len = Urb_length[lb];
+ 				    fsupc1 = FstBlockC( gb+1 );
+ 				    k = j - fsupc;
+ 				    /* Sum the lengths of the leading columns */
+ 				    for (jj = 0; jj < k; ++jj)
+				        len += fsupc1 - index[istart++];
+				    /*assert(irow>=index[istart]);*/
+				    uval[len + irow - index[istart]] = a[i];
 			    } else { /* in L; put in SPA first */
   				irow = ilsum[lb] + irow - FstBlockC( gb );
   				dense_col[irow] = a[i];
@@ -487,8 +487,19 @@ p@(pre)distribute(superlu_dist_options_t *options, int_t n, SuperMatrix *A,
 	if ( !(Unzval_br_ptr =
               (@(type)**)SUPERLU_MALLOC(k * sizeof(@(type)*))) )
 	    ABORT("Malloc fails for Unzval_br_ptr[].");
+	if ( !(Unzval_br_offset =
+    				(long int*)SUPERLU_MALLOC(k * sizeof(long int))) ) {
+    		fprintf(stderr, "Malloc fails for Unzval_br_offset[].");
+    }
+    Unzval_br_offset[k-1] = -1;
 	if ( !(Ufstnz_br_ptr = (int_t**)SUPERLU_MALLOC(k * sizeof(int_t*))) )
 	    ABORT("Malloc fails for Ufstnz_br_ptr[].");
+    if ( !(Ufstnz_br_offset =
+    				(long int*)SUPERLU_MALLOC(k * sizeof(long int))) ) {
+    		fprintf(stderr, "Malloc fails for Ufstnz_br_offset[].");
+    	}
+    Ufstnz_br_offset[k-1] = -1;
+
 
 	if ( !(ToSendD = SUPERLU_MALLOC(k * sizeof(int))) )
 	    ABORT("Malloc fails for ToSendD[].");
@@ -1430,7 +1441,7 @@ if ( !iam) printf(".. Construct Bcast tree for L: %.2f\t\n", t);
            keep_validRDQindex[j]=i;
            j += 1;
        }
-
+    }
 #if ( PROFlevel>=1 )
 t = SuperLU_timer_() - t;
 if ( !iam) printf(".. Construct Reduce tree for L: %.2f\t\n", t);
