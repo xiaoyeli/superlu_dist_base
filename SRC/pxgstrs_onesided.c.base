@@ -107,6 +107,10 @@ p@(pre)gstrs_onesided(superlu_dist_options_t *options, int_t n,
     int  *fmod;         /* Modification count for L-solve --
     			 Count the number of local block products to
     			 be summed into lsum[lk]. */
+    int_t *fmod_sort;
+	int_t *order;
+	//int_t *order1;
+	//int_t *order2;
     int  fmod_tmp;
     int  **fsendx_plist = Llu->fsendx_plist;
     int  nfrecvx = Llu->nfrecvx; /* Number of X components to be recv'd. */
@@ -395,7 +399,7 @@ p@(pre)gstrs_onesided(superlu_dist_options_t *options, int_t n,
 	ABORT("Malloc fails for lsum[].");
 #pragma omp parallel default(shared) private(ii)
     {
-	thread_id = omp_get_thread_num(); //mjc
+	int thread_id = omp_get_thread_num(); //mjc
 	for (ii=0; ii<sizelsum; ii++)
     	    lsum[thread_id*sizelsum+ii]=zero;
     }
@@ -416,7 +420,7 @@ p@(pre)gstrs_onesided(superlu_dist_options_t *options, int_t n,
 #ifdef _OPENMP
 #pragma omp parallel default(shared) private(ii)
     {
-	thread_id=omp_get_thread_num();
+	int thread_id=omp_get_thread_num();
 	for ( ii=0; ii<sizertemp; ii++ )
 		rtemp[thread_id*sizertemp+ii]=zero;
     }
@@ -1693,14 +1697,7 @@ while( nfrecv1 < nfrecvx+nfrecvmod ){
 	SUPERLU_FREE(frecv);
 	SUPERLU_FREE(leaf_send);
 	SUPERLU_FREE(leafsups);
-@precision SINGLE DOUBLE
-	log_memory(-nlb*aln_i*iword-nlb*iword-(CEILING( nsupers, Pr )+CEILING( nsupers, Pc ))*aln_i*iword- nsupers_i*iword -maxrecvsz*(nfrecvx+1)*dword, stat);	//account for fmod, frecv, leaf_send, leafsups, recvbuf_BC_fwd
-@precision SCOMPLEX DCOMPLEX
-	log_memory(-nlb*aln_i*iword-nlb*iword-(CEILING( nsupers, Pr )+CEILING( nsupers, Pc ))*aln_i*iword- nsupers_i*iword -maxrecvsz*(nfrecvx+1)*dword*2.0, stat);	//account for fmod, frecv, leaf_send, leafsups, recvbuf_BC_fwd
-@precision !
 
-
-	MPI_Barrier( grid->comm );
 	int tmp_size=maxrecvsz * ( (nfrecvx>nbrecvx?nfrecvx:nbrecvx) + 1 )*my_adjust_num;
     for(i=0;i<tmp_size;i++){
         BC_taskq[i]=(-1.0);
@@ -1709,6 +1706,14 @@ while( nfrecv1 < nfrecvx+nfrecvmod ){
     for(i=0;i<tmp_size;i++){
         RD_taskq[i]=(-1.0);
     }
+
+@precision SINGLE DOUBLE
+	log_memory(-nlb*aln_i*iword-nlb*iword-(CEILING( nsupers, Pr )+CEILING( nsupers, Pc ))*aln_i*iword- nsupers_i*iword -maxrecvsz*(nfrecvx+1)*dword, stat);	//account for fmod, frecv, leaf_send, leafsups, recvbuf_BC_fwd
+@precision SCOMPLEX DCOMPLEX
+	log_memory(-nlb*aln_i*iword-nlb*iword-(CEILING( nsupers, Pr )+CEILING( nsupers, Pc ))*aln_i*iword- nsupers_i*iword -maxrecvsz*(nfrecvx+1)*dword*2.0, stat);	//account for fmod, frecv, leaf_send, leafsups, recvbuf_BC_fwd
+@precision !
+
+	MPI_Barrier( grid->comm );
 
 #if ( VAMPIR>=1 )
 	VT_traceoff();
@@ -1913,7 +1918,7 @@ while( nfrecv1 < nfrecvx+nfrecvmod ){
 	log_memory(nlb*aln_i*iword+nlb*iword + nsupers_i*iword + maxrecvsz*(nbrecvx+1)*dword*2.0, stat);	//account for bmod, brecv, rootsups, recvbuf_BC_fwd
 @precision !
 
-#if ( DEBUGlevel>=2 )
+#if ( DEBUGlevel>=1 )
 	printf("(%2d) nbrecvx %4d,  nbrecvmod %4d,  nroot %4d\n,  nbtree %4d\n,  nrtree %4d\n",
 			iam, nbrecvx, nbrecvmod, nroot, nbtree, nrtree);
 	fflush(stdout);
@@ -2215,10 +2220,18 @@ for (i=0;i<nroot_send;i++){
                 ird=RD_taskbuf_offset[recvRankNum]+RDis_solved[recvRankNum]*maxrecvsz*my_adjust_num;
                 recvbuf0 = &RD_taskq[ird];
 @precision SINGLE DOUBLE
-                k=recvbuf0[1];
+                k_tmp=*recvbuf0;
 @precision SCOMPLEX DCOMPLEX
-                k=recvbuf0[1].r;
+                k_tmp=(*recvbuf0).r;
 @precision !
+
+#if ( DEBUGlevel>=1 )
+    printf("U iam=%d, RD_taskbuf_offset=%lu,RDis_solved=%d,maxrecvsz=%d,my_adjust_num=%d\n",
+        iam,RD_taskbuf_offset[recvRankNum],RDis_solved[recvRankNum],maxrecvsz,my_adjust_num);
+    printf("U iam=%d, recvRankNum=%d,sig=%lf,%lf\n",iam,recvRankNum,k_tmp,recvbuf0[1]);
+    fflush(stdout);
+#endif
+
                 //printf("rdrd--111--iam=%d, rdidx=%d,k=%d\n",iam,rdidx,k);
                 //fflush(stdout);
 #if ( PROFlevel>=1 )
@@ -2394,6 +2407,10 @@ for (i=0;i<nroot_send;i++){
                         validRDQindex_u[rdidx]=-1;
                     }
                 }
+#if ( DEBUGlevel>=1 )
+                printf("U iam=%d,RDis_solved[%d]=%d,BufSize_rd[%d]=%d\n",iam,recvRankNum,RDis_solved[recvRankNum],recvRankNum,BufSize_rd[recvRankNum]);
+                fflush(stdout);
+#endif
             }//for (rdidx=0;rdidx<Pc;rdidx++)
         }
         nbrecv1 = totalsolveBC + totalsolveRD;

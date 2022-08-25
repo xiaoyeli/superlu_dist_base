@@ -1,5 +1,4 @@
 @extract -b Typedef.inc
-
 #include "superlu_@(pre)defs.h"
 #include "superlu_defs.h"
 
@@ -76,7 +75,7 @@ void @(pre)lsum_fmod_inv_master_onesided
     int_t  *ilsum = Llu->ilsum; /* Starting position of each supernode in lsum.   */
     int  *frecv = Llu->frecv;
     int  **fsendx_plist = Llu->fsendx_plist;
-	int_t  luptr_tmp,luptr_tmp1,lptr1_tmp, idx_i, idx_v,idx_n,  idx_l, fmod_tmp, lbstart,lbend,nn,Nchunk,nlb_loc,remainder;
+	int_t  luptr_tmp,luptr_tmp1,lptr1_tmp,idx_i, idx_v,idx_n,  idx_l, fmod_tmp, lbstart,lbend,nn,Nchunk,nlb_loc,remainder;
 	int thread_id1;
 	int m;
 	flops_t ops_loc=0.0;
