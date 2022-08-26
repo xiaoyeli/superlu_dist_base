@@ -116,6 +116,23 @@ typedef struct {
     int_t *Lindval_loc_bc_dat;  /* size sum of sizes of Lindval_loc_bc_ptr[lk]) */
     long int *Lindval_loc_bc_offset;  /* size ceil(NSUPERS/Pc)                  */
     long int Lindval_loc_bc_cnt;
+
+    int_t   **Ucolind_bc_ptr; /* size ceil(NSUPERS/Pc)                 */
+    int_t *Ucolind_bc_dat;  /* size sum of sizes of Ucolind_bc_ptr[lk])    */
+    int64_t *Ucolind_bc_offset;  /* size ceil(NSUPERS/Pc)                 */
+    int64_t Ucolind_bc_cnt;
+
+    @(type) **Unzval_bc_ptr;  /* size ceil(NSUPERS/Pc)                 */
+    @(type) *Unzval_bc_dat;  /* size sum of sizes of Unzval_bc_ptr[lk])  */
+    int64_t *Unzval_bc_offset;  /* size ceil(NSUPERS/Pc)                */
+    int64_t Unzval_bc_cnt;
+
+    int_t   **Uindval_loc_bc_ptr; /* size ceil(NSUPERS/Pc)  pointers to locations in Ucolind_bc_ptr and Unzval_bc_ptr */
+    int_t *Uindval_loc_bc_dat;  /* size sum of sizes of Uindval_loc_bc_ptr[lk]) */
+    int64_t *Uindval_loc_bc_offset;  /* size ceil(NSUPERS/Pc)                  */
+    int64_t Uindval_loc_bc_cnt;
+
+
     int_t   *Unnz; /* number of nonzeros per block column in U*/
     int_t   **Lrowind_bc_2_lsum; /* size ceil(NSUPERS/Pc)  map indices of Lrowind_bc_ptr to indices of lsum  */
     @(type) **Uinv_bc_ptr;  /* size ceil(NSUPERS/Pc)     	*/
@@ -524,6 +541,8 @@ extern int_t p@(pre)gstrf(superlu_dist_options_t *, int, int, @(mod_type) anorm,
 #define IPM_PROF */
 
 #ifdef one_sided
+extern @(type)* BC_taskq;
+extern @(type)* RD_taskq;
 extern float p@(pre)distribute_onesided(superlu_dist_options_t *, int_t, SuperMatrix *,
                                   			 @(pre)ScalePermstruct_t *, Glu_freeable_t *,
                                   			 @(pre)LUstruct_t *, gridinfo_t *, int);

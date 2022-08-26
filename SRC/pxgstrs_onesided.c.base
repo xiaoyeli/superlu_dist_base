@@ -558,11 +558,6 @@ if(procs==1){
     int *validRDQindex;
     int *validBCQindex_u;
     int *validRDQindex_u;
-@precision SINGLE DOUBLE
-    int my_adjust_num=1;
-@precision SCOMPLEX DCOMPLEX
-    int my_adjust_num=2;
-@precision !
 
 
     BCcount = (int*)SUPERLU_MALLOC( Pr * sizeof(int));
@@ -586,7 +581,7 @@ if(procs==1){
 
     if( Pr > 1){
         for (i=0;i<Pr;i++){
-            BCbase[i] = recv_size_all[i]*maxrecvsz*my_adjust_num;
+            BCbase[i] = recv_size_all[i]*maxrecvsz;
             validBCQindex[i]=keep_validBCQindex[i];
             validBCQindex_u[i]=keep_validBCQindex_u[i];
 #if ( DEBUGlevel>=1 )
@@ -597,7 +592,7 @@ if(procs==1){
      }
     if(Pc > 1){
         for (i=0;i<Pc;i++){
-            RDbase[i] = recv_size_all[Pr+i]*maxrecvsz*my_adjust_num;
+            RDbase[i] = recv_size_all[Pr+i]*maxrecvsz;
             validRDQindex[i]=keep_validRDQindex[i];
             validRDQindex_u[i]=keep_validRDQindex_u[i];
 #if ( DEBUGlevel>=1 )
@@ -616,7 +611,7 @@ if(procs==1){
 
     for (bcidx=0;bcidx<Pr;bcidx++){
         for(int tmp=0;tmp<bcidx;tmp++){
-            BC_taskbuf_offset[bcidx] += BufSize[tmp]*maxrecvsz*my_adjust_num;
+            BC_taskbuf_offset[bcidx] += BufSize[tmp]*maxrecvsz;
         }
 #if ( DEBUGlevel>=1 )
         printf("iam=%d, BC_taskbuf_offset[%d]=%lu\n",iam,bcidx,BC_taskbuf_offset[bcidx]);
@@ -625,7 +620,7 @@ if(procs==1){
     }
     for (rdidx=0;rdidx<Pc;rdidx++){
         for(int tmp=0;tmp<rdidx;tmp++){
-            RD_taskbuf_offset[rdidx] += BufSize_rd[tmp]*maxrecvsz*my_adjust_num;
+            RD_taskbuf_offset[rdidx] += BufSize_rd[tmp]*maxrecvsz;
         }
 #if ( DEBUGlevel>=1 )
         printf("iam=%d, RD_taskbuf_offset[%d]=%lu\n",iam,rdidx,RD_taskbuf_offset[rdidx]);
@@ -1305,7 +1300,7 @@ while( nfrecv1 < nfrecvx+nfrecvmod ){
             for (bcidx=0;bcidx<Pr && validBCQindex[bcidx]!=-1;bcidx++){
 
                 recvRankNum=validBCQindex[bcidx];  //bcidx; //validBCQindex[bcidx];
-                i=BC_taskbuf_offset[recvRankNum]+BCis_solved[recvRankNum]*maxrecvsz*my_adjust_num; //BCis_solved[bcidx];
+                i=BC_taskbuf_offset[recvRankNum]+BCis_solved[recvRankNum]*maxrecvsz; //BCis_solved[bcidx];
                 recvbuf0 = &BC_taskq[i];
 @precision SINGLE DOUBLE
        			k_tmp = *recvbuf0;
@@ -1314,8 +1309,8 @@ while( nfrecv1 < nfrecvx+nfrecvmod ){
 @precision !
 
 #if ( DEBUGlevel>=2 )
-        printf("iam=%d, recvRankNum=%d,BC_taskbuf_offset=%lu,BCis_solved=%d/%d,maxrecvsz=%d,my_adjust_num=%d\n",
-               iam,recvRankNum,BC_taskbuf_offset[recvRankNum],BCis_solved[recvRankNum],nfrecvx,maxrecvsz,my_adjust_num);
+        printf("iam=%d, recvRankNum=%d,BC_taskbuf_offset=%lu,BCis_solved=%d/%d,maxrecvsz=%d\n",
+               iam,recvRankNum,BC_taskbuf_offset[recvRankNum],BCis_solved[recvRankNum],nfrecvx,maxrecvsz);
         fflush(stdout);
 @precision SINGLE DOUBLE
         printf("iam=%d, recvRankNum=%d,sig=%lf,%lf\n",iam,recvRankNum,k_tmp,recvbuf0[1]);
@@ -1439,7 +1434,7 @@ while( nfrecv1 < nfrecvx+nfrecvmod ){
             //for (rdidx=0;rdidx<Pc ;rdidx++){
             for (rdidx=0;rdidx<Pc && validRDQindex[rdidx]!=-1;rdidx++){
                 recvRankNum=validRDQindex[rdidx];  //bcidx; //validBCQindex[bcidx];
-                ird=RD_taskbuf_offset[recvRankNum]+RDis_solved[recvRankNum]*maxrecvsz*my_adjust_num;
+                ird=RD_taskbuf_offset[recvRankNum]+RDis_solved[recvRankNum]*maxrecvsz;
                 recvbuf0 = &RD_taskq[ird];
 @precision SINGLE DOUBLE
        			k_tmp = *recvbuf0;
@@ -1447,8 +1442,8 @@ while( nfrecv1 < nfrecvx+nfrecvmod ){
    	    		k_tmp = (*recvbuf0).r;
 @precision !
 #if ( DEBUGlevel>=2 )
-                printf("iam=%d, RD_taskbuf_offset=%lu,RDis_solved=%d,maxrecvsz=%d,my_adjust_num=%d\n",
-                       iam,RD_taskbuf_offset[recvRankNum],RDis_solved[recvRankNum],maxrecvsz,my_adjust_num);
+                printf("iam=%d, RD_taskbuf_offset=%lu,RDis_solved=%d,maxrecvsz=%d\n",
+                       iam,RD_taskbuf_offset[recvRankNum],RDis_solved[recvRankNum],maxrecvsz);
                 fflush(stdout);
 @precision SINGLE DOUBLE
                 printf("iam=%d, recvRankNum=%d,sig=%lf,%lf\n",iam,recvRankNum,k_tmp,recvbuf0[1]);
@@ -1698,13 +1693,23 @@ while( nfrecv1 < nfrecvx+nfrecvmod ){
 	SUPERLU_FREE(leaf_send);
 	SUPERLU_FREE(leafsups);
 
-	int tmp_size=maxrecvsz * ( (nfrecvx>nbrecvx?nfrecvx:nbrecvx) + 1 )*my_adjust_num;
+	int tmp_size=maxrecvsz * ( (nfrecvx>nbrecvx?nfrecvx:nbrecvx) + 1 );
     for(i=0;i<tmp_size;i++){
+@precision SINGLE DOUBLE
         BC_taskq[i]=(-1.0);
+@precision SCOMPLEX DCOMPLEX
+        BC_taskq[i].r=(-1.0);
+        BC_taskq[i].i=(-1.0);
+@precision !
     }
-    tmp_size=((nfrecvmod>nbrecvmod?nfrecvmod:nbrecvmod)+1)*maxrecvsz*my_adjust_num;
+    tmp_size=((nfrecvmod>nbrecvmod?nfrecvmod:nbrecvmod)+1)*maxrecvsz;
     for(i=0;i<tmp_size;i++){
+@precision SINGLE DOUBLE
         RD_taskq[i]=(-1.0);
+@precision SCOMPLEX DCOMPLEX
+        RD_taskq[i].r=(-1.0);
+        RD_taskq[i].i=(-1.0);
+@precision !
     }
 
 @precision SINGLE DOUBLE
@@ -1884,24 +1889,24 @@ while( nfrecv1 < nfrecvx+nfrecvmod ){
 
     if( Pr > 1){
         for (i=0;i<Pr;i++){
-            BCbase[i] = recv_size_all_u[i]*maxrecvsz*my_adjust_num;
+            BCbase[i] = recv_size_all_u[i]*maxrecvsz;
         }
     }
     if(Pc > 1){
         for (i=0;i<Pc;i++){
-            RDbase[i] = recv_size_all_u[Pr+i]*maxrecvsz*my_adjust_num;
+            RDbase[i] = recv_size_all_u[Pr+i]*maxrecvsz;
         }
     }
 
 
     for (bcidx=0;bcidx<Pr;bcidx++){
         for(int tmp=0;tmp<bcidx;tmp++){
-            BC_taskbuf_offset[bcidx] += BufSize_u[tmp]*maxrecvsz*my_adjust_num;
+            BC_taskbuf_offset[bcidx] += BufSize_u[tmp]*maxrecvsz;
         }
     }
     for (rdidx=0;rdidx<Pc;rdidx++){
         for(int tmp=0;tmp<rdidx;tmp++){
-            RD_taskbuf_offset[rdidx] += BufSize_urd[tmp]*maxrecvsz*my_adjust_num;
+            RD_taskbuf_offset[rdidx] += BufSize_urd[tmp]*maxrecvsz;
         }
     }
 
@@ -2145,7 +2150,7 @@ for (i=0;i<nroot_send;i++){
          for (bcidx=0;bcidx<Pr && validBCQindex_u[bcidx]!=-1;bcidx++){
 
              recvRankNum=validBCQindex_u[bcidx];  //bcidx; //validBCQindex[bcidx];
-             i=BC_taskbuf_offset[recvRankNum]+BCis_solved[recvRankNum]*maxrecvsz*my_adjust_num; //BCis_solved[bcidx];
+             i=BC_taskbuf_offset[recvRankNum]+BCis_solved[recvRankNum]*maxrecvsz; //BCis_solved[bcidx];
              recvbuf0 = &BC_taskq[i];
 @precision SINGLE DOUBLE
             k_tmp = *recvbuf0;
@@ -2217,7 +2222,7 @@ for (i=0;i<nroot_send;i++){
             shift=0;
             for (rdidx=0;rdidx<Pc && validRDQindex_u[rdidx]!=-1;rdidx++){
                 recvRankNum=validRDQindex_u[rdidx];  //bcidx; //validBCQindex[bcidx];
-                ird=RD_taskbuf_offset[recvRankNum]+RDis_solved[recvRankNum]*maxrecvsz*my_adjust_num;
+                ird=RD_taskbuf_offset[recvRankNum]+RDis_solved[recvRankNum]*maxrecvsz;
                 recvbuf0 = &RD_taskq[ird];
 @precision SINGLE DOUBLE
                 k_tmp=*recvbuf0;
@@ -2226,8 +2231,8 @@ for (i=0;i<nroot_send;i++){
 @precision !
 
 #if ( DEBUGlevel>=1 )
-    printf("U iam=%d, RD_taskbuf_offset=%lu,RDis_solved=%d,maxrecvsz=%d,my_adjust_num=%d\n",
-        iam,RD_taskbuf_offset[recvRankNum],RDis_solved[recvRankNum],maxrecvsz,my_adjust_num);
+    printf("U iam=%d, RD_taskbuf_offset=%lu,RDis_solved=%d,maxrecvsz=%d\n",
+        iam,RD_taskbuf_offset[recvRankNum],RDis_solved[recvRankNum],maxrecvsz);
     printf("U iam=%d, recvRankNum=%d,sig=%lf,%lf\n",iam,recvRankNum,k_tmp,recvbuf0[1]);
     fflush(stdout);
 #endif

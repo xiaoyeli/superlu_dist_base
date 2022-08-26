@@ -25,7 +25,7 @@ at the top-level directory.
 #endif
 
 #ifdef one_sided
-#include "onesided.h"
+#include "onesided_@(pre)defs.h"
 #ifdef USE_FOMPI
 foMPI_Win bc_winl;
 foMPI_Win rd_winl;
@@ -45,10 +45,8 @@ int* BufSize_urd;
 int *keep_validBCQindex_u;
 int *keep_validRDQindex_u;
 int *recv_size_all_u;
-double* BC_taskq;
-double* RD_taskq;
-double* BC_taskq_u;
-double* RD_taskq_u;
+@(type)* BC_taskq;
+@(type)* RD_taskq;
 float
 p@(pre)distribute_onesided(superlu_dist_options_t *options, int_t n, SuperMatrix *A,
 	     @(pre)ScalePermstruct_t *ScalePermstruct,
@@ -916,12 +914,12 @@ p@(pre)distribute_onesided(superlu_dist_options_t *options, int_t n, SuperMatrix
             krow = PROW( jb, grid );
 
             if(myrow==krow){   /* diagonal block */
-                if (!(Linv_bc_ptr[ljb] = (double*)SUPERLU_MALLOC(nsupc*nsupc * sizeof(double))))
+                if (!(Linv_bc_ptr[ljb] = (@(type)*)SUPERLU_MALLOC(nsupc*nsupc * sizeof(@(type)))))
                 ABORT("Malloc fails for Linv_bc_ptr[ljb][]");
                 Linv_bc_offset[ljb]=nsupc*nsupc;
                 Linv_bc_cnt += Linv_bc_offset[ljb];
 
-                if (!(Uinv_bc_ptr[ljb] = (double*)SUPERLU_MALLOC(nsupc*nsupc * sizeof(double))))
+                if (!(Uinv_bc_ptr[ljb] = (@(type)*)SUPERLU_MALLOC(nsupc*nsupc * sizeof(@(type)))))
                 ABORT("Malloc fails for Uinv_bc_ptr[ljb][]");
                 Uinv_bc_offset[ljb]=nsupc*nsupc;
                 Uinv_bc_cnt += Uinv_bc_offset[ljb];
@@ -2223,21 +2221,21 @@ if ( !iam) printf(".. Construct Reduce tree for U: %.2f\t\n", t);
 
     int maxrecvsz = sp_ienv_dist(3,options)* nrhs + SUPERLU_MAX( XK_H, LSUM_H ) + 2;
     BC_buffer_size = (maxrecvsz) * ( (nfrecvx>nbrecvx?nfrecvx:nbrecvx) + 1 );
+
+    BC_taskq = (@(type)*)SUPERLU_MALLOC( BC_buffer_size * sizeof(@(type)));
+
+    for(i=0; i<(BC_buffer_size); i++){
 @precision SINGLE DOUBLE
-    int size_num=1;
-@precision SCOMPLEX DCOMPLEX
-    int size_num=2;
-@precision !
-
-    BC_taskq = (double*)SUPERLU_MALLOC( size_num * BC_buffer_size * sizeof(double));
-
-    for(i=0; i<(size_num * BC_buffer_size); i++){
             BC_taskq[i] = -1.00;
+@precision SCOMPLEX DCOMPLEX
+            BC_taskq[i].r = -1.00;
+            BC_taskq[i].i = -1.00;
+@precision !
     }
 #ifdef USE_FOMPI
-    foMPI_Win_create(BC_taskq, (BC_buffer_size*size_num)*sizeof(double), sizeof(double), MPI_INFO_NULL, col_comm, &bc_winl);
+    foMPI_Win_create(BC_taskq, (BC_buffer_size)*sizeof(@(type)), sizeof(@(type)), MPI_INFO_NULL, col_comm, &bc_winl);
 #else
-    MPI_Win_create(BC_taskq, (BC_buffer_size*size_num)*sizeof(double), sizeof(double), MPI_INFO_NULL, col_comm, &bc_winl);
+    MPI_Win_create(BC_taskq, (BC_buffer_size)*sizeof(@(type)), sizeof(@(type)), MPI_INFO_NULL, col_comm, &bc_winl);
 #endif
     int nfrecvmod=0;
     for (lk=0;lk<CEILING( nsupers, grid->nprow );++lk){
@@ -2252,19 +2250,24 @@ if ( !iam) printf(".. Construct Reduce tree for U: %.2f\t\n", t);
 		}
     }
     RD_buffer_size=((nfrecvmod>nbrecvmod?nfrecvmod:nbrecvmod)+1)*(maxrecvsz);
-    RD_taskq = (double*)SUPERLU_MALLOC( size_num*RD_buffer_size * sizeof(double));   // this needs to be optimized for 1D row mapping
-    for(i=0; i<RD_buffer_size*size_num; i++){
+    RD_taskq = (@(type)*)SUPERLU_MALLOC(RD_buffer_size * sizeof(@(type)));   // this needs to be optimized for 1D row mapping
+    for(i=0; i<RD_buffer_size; i++){
+@precision SINGLE DOUBLE
             RD_taskq[i] = -1.0;
+@precision SCOMPLEX DCOMPLEX
+            RD_taskq[i].r = -1.00;
+            RD_taskq[i].i = -1.00;
+@precision !
     }
 #ifdef USE_FOMPI
-	foMPI_Win_create(RD_taskq, (size_num*RD_buffer_size)*sizeof(double), sizeof(double), MPI_INFO_NULL, row_comm, &rd_winl);
+	foMPI_Win_create(RD_taskq, (RD_buffer_size)*sizeof(@(type)), sizeof(@(type)), MPI_INFO_NULL, row_comm, &rd_winl);
 #else
-	MPI_Win_create(RD_taskq, (size_num*RD_buffer_size)*sizeof(double), sizeof(double), MPI_INFO_NULL, row_comm, &rd_winl);
+	MPI_Win_create(RD_taskq, (RD_buffer_size)*sizeof(@(type)), sizeof(@(type)), MPI_INFO_NULL, row_comm, &rd_winl);
 #endif
 
 #if ( DEBUGlevel>=1 )
     printf("iam=%d, maxrecvsz=%d, maxBCmsg=%d (%f MB),maxRDmsg=%d (%f MB)\n",
-            iam, maxrecvsz,BC_buffer_size/maxrecvsz,((BC_buffer_size*size_num)*sizeof(double))/1e6, RD_buffer_size/maxrecvsz,((RD_buffer_size*size_num)*sizeof(double))/1e6);
+            iam, maxrecvsz,BC_buffer_size/maxrecvsz,((BC_buffer_size)*sizeof(@(type)))/1e6, RD_buffer_size/maxrecvsz,((RD_buffer_size)*sizeof(@(type)))/1e6);
     fflush(stdout);
 #endif
 
