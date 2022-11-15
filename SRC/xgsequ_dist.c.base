@@ -27,8 +27,6 @@ at the top-level directory.
 #include <math.h>
 #include "superlu_@(pre)defs.h"
 
-
-
 /*! \brief
  *
  * <pre>
@@ -98,7 +96,8 @@ void
     /* Local variables */
     NCformat *Astore;
     @(type)   *Aval;
-    int i, j, irow;
+    int_t i, j, irow;
+    int i0;
     @(mod_type) rcmin, rcmax;
     @(mod_type) bignum, smlnum;
     
@@ -108,8 +107,8 @@ void
 	 A->Stype != SLU_NC || A->Dtype != @(Dtype_PRE) || A->Mtype != SLU_GE )
 	*info = -1;
     if (*info != 0) {
-	i = -(*info);
-	xerr_dist("@(pre)gsequ_dist", &i);
+	i0 = -(*info);
+	xerr_dist("@(pre)gsequ_dist", &i0);
 	return;
     }
 
@@ -138,7 +137,7 @@ void
 @precision DOUBLE SINGLE
 	    r[irow] = SUPERLU_MAX( r[irow], fabs(Aval[i]) );
 @precision DCOMPLEX SCOMPLEX
-	    r[irow] = SUPERLU_MAX( r[irow], @(pre)_abs1(&Aval[i]) );
+	    r[irow] = SUPERLU_MAX( r[irow], slud_@(pre)_abs1(&Aval[i]) );
 @precision !
 	}
 
@@ -177,7 +176,7 @@ void
 @precision DOUBLE SINGLE
 	    c[j] = SUPERLU_MAX( c[j], fabs(Aval[i]) * r[irow] );
 @precision DCOMPLEX SCOMPLEX
-	    c[j] = SUPERLU_MAX( c[j], @(pre)_abs1(&Aval[i]) * r[irow] );
+	    c[j] = SUPERLU_MAX( c[j], slud_@(pre)_abs1(&Aval[i]) * r[irow] );
 @precision !
 	}
 

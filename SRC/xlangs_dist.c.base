@@ -74,7 +74,7 @@ at the top-level directory.
     /* Local variables */
     NCformat *Astore;
     @(type)   *Aval;
-    int      i, j, irow;
+    int_t     i, j, irow;
     @(mod_type)   value = 0.0, sum;
     @(mod_type)   *rwork;
 
@@ -92,7 +92,7 @@ at the top-level directory.
 @precision DOUBLE SINGLE
 		value = SUPERLU_MAX( value, fabs( Aval[i]) );
 @precision DCOMPLEX SCOMPLEX
-		value = SUPERLU_MAX( value, @(pre)_abs( &Aval[i]) );
+		value = SUPERLU_MAX( value, slud_@(pre)_abs( &Aval[i]) );
 @precision !
 	
     } else if (strncmp(norm, "O", 1)==0 || *(unsigned char *)norm == '1') {
@@ -104,7 +104,7 @@ at the top-level directory.
 @precision DOUBLE SINGLE
 		sum += fabs(Aval[i]);
 @precision DCOMPLEX SCOMPLEX
-		sum += @(pre)_abs( &Aval[i] );
+		sum += slud_@(pre)_abs( &Aval[i] );
 @precision !
 	    value = SUPERLU_MAX(value,sum);
 	}
@@ -120,7 +120,7 @@ at the top-level directory.
 @precision DOUBLE SINGLE
 		rwork[irow] += fabs(Aval[i]);
 @precision DCOMPLEX SCOMPLEX
-		rwork[irow] += @(pre)_abs( &Aval[i] );
+		rwork[irow] += slud_@(pre)_abs( &Aval[i] );
 @precision !
 	    }
 	value = 0.;

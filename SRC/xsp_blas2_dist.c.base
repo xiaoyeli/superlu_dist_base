@@ -471,7 +471,8 @@ sp_@(pre)gemv_dist(char *trans, @(type) alpha, SuperMatrix *A, @(type) *x,
     @(type)   *Aval;
     int info;
     @(type) temp, temp1;
-    int lenx, leny, i, j, irow;
+    int lenx, leny, j, irow;
+    int_t i;
     int iy, jx, jy, kx, ky;
     int notran;
 @precision SINGLE DOUBLE

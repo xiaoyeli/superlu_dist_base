@@ -89,7 +89,7 @@ p@(pre)gsequ(SuperMatrix *A, @(mod_type) *r, @(mod_type) *c, @(mod_type) *rowcnd
     /* Local variables */
     NRformat_loc *Astore;
     @(type) *Aval;
-    int i, j, irow, jcol, m_loc;
+    int_t i, j, irow, jcol, m_loc;
     @(mod_type) rcmin, rcmax;
     @(mod_type) bignum, smlnum;
     @(mod_type) tempmax, tempmin;
