@@ -1068,7 +1068,7 @@ extern int_t @(pre)UPanelUpdate(int_t k, int_t* factored_U, MPI_Request *,
 extern int_t @(pre)IBcastRecvLPanel(int_t k, int_t k0, int* msgcnt,
 			       MPI_Request *, MPI_Request *,
 			       int_t* Lsub_buf, @(type)* Lval_buf,
-			      int_t * factored, gridinfo_t *, @(pre)LUstruct_t *,
+			      int * factored, gridinfo_t *, @(pre)LUstruct_t *,
 			      SCT_t *, int tag_ub);
 extern int_t @(pre)IBcastRecvUPanel(int_t k, int_t k0, int* msgcnt, MPI_Request *,
 			       MPI_Request *, int_t* Usub_buf, @(type)* Uval_buf,
