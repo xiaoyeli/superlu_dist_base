@@ -460,7 +460,7 @@ int_t @(pre)IBcast_LDiagBlock(int_t k, @(type) *lblk_ptr, /*pointer for the diag
 
 #endif 
 
-int_t @(pre)UDiagBlockRecvWait( int_t k,  int_t* IrecvPlcd_D, int_t* factored_L,
+int_t @(pre)UDiagBlockRecvWait( int_t k,  int* IrecvPlcd_D, int* factored_L,
                            MPI_Request * U_diag_blk_recv_req,
                            gridinfo_t *grid,
                            @(pre)LUstruct_t *LUstruct, SCT_t *SCT)

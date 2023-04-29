@@ -31,7 +31,7 @@ at the top-level directory.
 int_t @(pre)DiagFactIBCast(int_t k,  int_t k0,      // supernode to be factored
                      @(type) *BlockUFactor,
                      @(type) *BlockLFactor,
-                     int_t* IrecvPlcd_D,
+                     int* IrecvPlcd_D,
                      MPI_Request *U_diag_blk_recv_req,
                      MPI_Request *L_diag_blk_recv_req,
                      MPI_Request *U_diag_blk_send_req,
@@ -116,7 +116,7 @@ int_t @(pre)DiagFactIBCast(int_t k,  int_t k0,      // supernode to be factored
     return 0;
 }
 
-int_t @(pre)LPanelTrSolve( int_t k,   int_t* factored_L,
+int_t @(pre)LPanelTrSolve( int_t k,   int* factored_L,
 		      @(type)* BlockUFactor,
 		      gridinfo_t *grid,
 		      @(pre)LUstruct_t *LUstruct)
@@ -225,7 +225,7 @@ int_t @(pre)LPanelTrSolve( int_t k,   int_t* factored_L,
     return 0;
 }  /* @(pre)LPanelTrSolve */
 
-int_t @(pre)LPanelUpdate( int_t k,  int_t* IrecvPlcd_D, int_t* factored_L,
+int_t @(pre)LPanelUpdate( int_t k,  int* IrecvPlcd_D, int* factored_L,
                     MPI_Request * U_diag_blk_recv_req,
                     @(type)* BlockUFactor,
                     gridinfo_t *grid,
@@ -359,7 +359,7 @@ int_t @(pre)UPanelTrSolve( int_t k,
     return 0;
 } /* @(pre)UPanelTrSolve */
 
-int_t @(pre)UPanelUpdate( int_t k,  int_t* factored_U,
+int_t @(pre)UPanelUpdate( int_t k,  int* factored_U,
                     MPI_Request * L_diag_blk_recv_req,
                     @(type)* BlockLFactor,
                     @(type)* bigV,
