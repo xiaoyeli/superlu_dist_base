@@ -10,6 +10,8 @@ sed -i 's/[[:blank:]]*$//' TEST/*.*
 ./extract -b SRC/pxdistribute.c.base -o ../output/SRC/pddistribute.c precision=DOUBLE
 ./extract -b SRC/xdistribute.c.base -o ../output/SRC/ddistribute.c precision=DOUBLE
 ./extract -b SRC/pxgstrs.c.base -o ../output/SRC/pdgstrs.c precision=DOUBLE
+./extract -b SRC/pxgstrs_Bglobal.c.base -o ../output/SRC/pdgstrs_Bglobal.c precision=DOUBLE
+./extract -b SRC/pxgstrs1.c.base -o ../output/SRC/pdgstrs1.c precision=DOUBLE
 ./extract -b SRC/pxsymbfact_distdata.c.base -o ../output/SRC/pdsymbfact_distdata.c precision=DOUBLE
 ./extract -b SRC/pxutil.c.base -o ../output/SRC/pdutil.c precision=DOUBLE
 ./extract -b SRC/superlu_xdefs.h.base -o ../output/SRC/superlu_ddefs.h precision=DOUBLE
@@ -17,9 +19,24 @@ sed -i 's/[[:blank:]]*$//' TEST/*.*
 ./extract -b SRC/xSchCompUdt-2Ddynamic.c.base -o ../output/SRC/dSchCompUdt-2Ddynamic.c precision=DOUBLE
 ./extract -b SRC/xlook_ahead_update.c.base -o ../output/SRC/dlook_ahead_update.c precision=DOUBLE
 ./extract -b SRC/pxgstrf.c.base -o ../output/SRC/pdgstrf.c precision=DOUBLE
+./extract -b SRC/pxgstrf2.c.base -o ../output/SRC/pdgstrf2.c precision=DOUBLE
+./extract -b SRC/pxgstrf3d.c.base -o ../output/SRC/pdgstrf3d.c precision=DOUBLE
 ./extract -b SRC/xutil_dist.c.base -o ../output/SRC/dutil_dist.c precision=DOUBLE
 ./extract -b SRC/xmemory_dist.c.base -o ../output/SRC/dmemory_dist.c precision=DOUBLE
 ./extract -b SRC/pxgssvx_ABglobal.c.base -o ../output/SRC/pdgssvx_ABglobal.c precision=DOUBLE
+./extract -b SRC/xtreeFactorization.c.base -o ../output/SRC/dtreeFactorization.c precision=DOUBLE
+./extract -b SRC/xtreeFactorizationGPU.c.base -o ../output/SRC/dtreeFactorizationGPU.c precision=DOUBLE
+./extract -b SRC/xtrfAux.c.base -o ../output/SRC/dtrfAux.c precision=DOUBLE
+./extract -b SRC/xtrfCommWrapper.c.base -o ../output/SRC/dtrfCommWrapper.c precision=DOUBLE
+./extract -b SRC/pxGetDiagU.c.base -o ../output/SRC/pdGetDiagU.c precision=DOUBLE
+./extract -b SRC/pxgsmv.c.base -o ../output/SRC/pdgsmv.c precision=DOUBLE
+./extract -b SRC/pxgsmv_AXglobal.c.base -o ../output/SRC/pdgsmv_AXglobal.c precision=DOUBLE
+./extract -b SRC/pxgsrfs.c.base -o ../output/SRC/pdgsrfs.c precision=DOUBLE
+./extract -b SRC/pxgsrfs_ABXglobal.c.base -o ../output/SRC/pdgsrfs_ABXglobal.c precision=DOUBLE
+./extract -b SRC/xcommunication_aux.c.base -o ../output/SRC/dcommunication_aux.c precision=DOUBLE
+./extract -b SRC/xstatic_schedule.c.base -o ../output/SRC/dstatic_schedule.c precision=DOUBLE
+./extract -b SRC/pxlangs.c.base -o ../output/SRC/pdlangs.c precision=DOUBLE
+./extract -b SRC/pxlaqgs.c.base -o ../output/SRC/pdlaqgs.c precision=DOUBLE
 
 ./extract -b EXAMPLE/pxdrive.c.base -o ../output/EXAMPLE/pddrive.c precision=DOUBLE
 ./extract -b EXAMPLE/pxdrive_ABglobal.c.base -o ../output/EXAMPLE/pddrive_ABglobal.c precision=DOUBLE
