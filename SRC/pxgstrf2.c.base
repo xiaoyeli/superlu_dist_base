@@ -436,7 +436,7 @@ int_t LpanelUpdate(int off0,  int nsupc, @(type)* ublk_ptr, int ld_ujrow,
     {
         int_t off = i * GT;
         int len = SUPERLU_MIN(GT, l - i * GT);
-	
+
         superlu_@(pre)trsm("R", "U", "N", "N", len, nsupc, alpha,
 		      ublk_ptr, ld_ujrow, &lusup[off0 + off], nsupr);
 
@@ -452,6 +452,106 @@ int_t LpanelUpdate(int off0,  int nsupc, @(type)* ublk_ptr, int ld_ujrow,
 
 #pragma GCC push_options
 #pragma GCC optimize ("O0")
+
+
+void @(pre)gstrf2(int_t k, @(type)* diagBlk, int_t LDA, @(type)* BlockUfactor, int_t LDU,
+    @(mod_type) thresh, int_t* xsup,
+    superlu_dist_options_t *options,
+    SuperLUStat_t *stat, int *info
+ )
+{
+
+    int_t jfst = FstBlockC(k);
+    int_t jlst = FstBlockC(k + 1);
+    int_t nsupc = SuperSize(k);
+
+    @(type) *ublk_ptr = BlockUfactor;
+    @(type) *ujrow = BlockUfactor;
+    int_t luptr = 0;       /* Point_t to the diagonal entries. */
+    int cols_left = nsupc; /* supernode size */
+
+    for (int_t j = 0; j < nsupc; ++j) /* for each column in panel */
+    {
+        /* Diagonal pivot */
+        int_t i = luptr;
+        /* Not to replace zero pivot.  */
+        if (options->ReplaceTinyPivot == YES)
+        {
+            if (fabs(diagBlk[i]) < thresh)
+            { /* Diagonal */
+
+#if (PRNTlevel >= 2)
+                printf("(%d) .. col %d, tiny pivot %e  ",
+                       iam, jfst + j, diagBlk[i]);
+#endif
+                /* Keep the new diagonal entry with the same sign. */
+
+@precision SINGLE DOUBLE
+                if (diagBlk[i] < 0)
+                    diagBlk[i] = -thresh;
+                else
+                    diagBlk[i] = thresh;
+@precision SCOMPLEX DCOMPLEX
+                if ( diagBlk[i].r < 0 )
+                    diagBlk[i].r = -thresh;
+                else
+                    diagBlk[i].r = thresh;
+                diagBlk[i].i = 0.0;
+@precision !
+
+#if (PRNTlevel >= 2)
+                printf("replaced by %e\n", diagBlk[i]);
+#endif
+                ++(stat->TinyPivots);
+            }
+        }
+
+        for (int_t l = 0; l < cols_left; ++l, i += LDA)
+        {
+            int_t st = j * LDU + j;
+            ublk_ptr[st + l * LDU] = diagBlk[i]; /* copy one row of U */
+        }
+        @precision SINGLE DOUBLE
+            @(type) alpha = -1, zero = 0.0;
+        @precision SCOMPLEX DCOMPLEX
+            @(type) alpha = {-1.0, 0.0}, zero = {0.0, 0.0};
+        @precision !
+        if (ujrow[0] == zero) /* Test for singularity. */
+        {
+            *info = j + jfst + 1;
+        }
+        else /* Scale the j-th column. */
+        {
+            @(type) temp;
+            temp = 1.0 / ujrow[0];
+            for (int_t i = luptr + 1; i < luptr - j + nsupc; ++i)
+                diagBlk[i] *= temp;
+            stat->ops[FACT] += nsupc - j - 1;
+        }
+
+        /* Rank-1 update of the trailing submatrix. */
+        if (--cols_left)
+        {
+            /*following must be int*/
+            int l = nsupc - j - 1;
+            int incx = 1;
+            int incy = LDU;
+            /* Rank-1 update */
+            superlu_@(pre)ger(l, cols_left, alpha, &diagBlk[luptr + 1], incx,
+                         &ujrow[LDU], incy, &diagBlk[luptr + LDA + 1],
+                         LDA);
+            stat->ops[FACT] += 2 * l * cols_left;
+        }
+
+        ujrow = ujrow + LDU + 1; /* move to next row of U */
+        luptr += LDA + 1;           /* move to next column */
+
+    } /* for column j ...  first loop */
+
+    // printf("Coming to local @(pre)gstrf2\n");
+}
+
+
 /************************************************************************/
 /*! \brief
  *
@@ -462,7 +562,7 @@ int_t LpanelUpdate(int off0,  int nsupc, @(type)* ublk_ptr, int ld_ujrow,
  *
  * Arguments
  * =========
- * 
+ *
  * info   (output) int*
  *        = 0: successful exit
  *        > 0: if info = i, U(i,i) is exactly zero. The factorization has
@@ -654,7 +754,7 @@ void Local_@(PRE)gstrf2(superlu_dist_options_t *options, int_t k, double thresh,
  *             been completed, but the factor U is exactly singular,
  *             and division by zero will occur if it is used to solve a
  *             system of equations.
- * 
+ *
  * SCT    (output) SCT_t*
  *        Additional statistics used in the 3D algorithm.
  *
@@ -834,7 +934,7 @@ int_t @(pre)Trs2_GatherTrsmScatter(int_t klst, int_t iukp, int_t rukp,
     /*now call @(pre)trsm on packed dense block*/
     int_t luptr = (knsupc - ldu) * (nsupr + 1);
     // if(ldu>nsupr) printf("nsupr %d ldu %d\n",nsupr,ldu );
-    
+
     superlu_@(pre)trsm("L", "L", "N", "U", ldu, ncols, alpha,
 		  &lusup[luptr], nsupr, tempv, ldu);
 
@@ -843,7 +943,7 @@ int_t @(pre)Trs2_GatherTrsmScatter(int_t klst, int_t iukp, int_t rukp,
 
     return 0;
 }
-
+/* END 3D CODE */
 /* +++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
 
 #if 1
@@ -948,7 +1048,7 @@ void p@(pre)gstrs2_omp
 	nsupc = SuperSize( gb );
 	iukp += UB_DESCRIPTOR;
         for (j = 0; j < nsupc; j++) {
-#else	
+#else
         for (j = 0; j < nsupc_temp[b]; j++) {
 #endif
             segsize = klst - usub[iukp++];
@@ -974,7 +1074,7 @@ void p@(pre)gstrs2_omp
 #endif
 	    } /* end if segsize > 0 */
 	} /* end for j in parallel ... */
-#ifdef _OPENMP    
+#ifdef _OPENMP
 /* #pragma omp taskwait */
 #endif
     }  /* end for b ... */
@@ -994,7 +1094,7 @@ void p@(pre)gstrs2_omp
 
 #else  /*==== new version from Piyush ====*/
 
-void p@(pre)gstrs2_omp(int_t k0, int_t k, int_t* Lsub_buf, 
+void p@(pre)gstrs2_omp(int_t k0, int_t k, int_t* Lsub_buf,
 		  @(type) *Lval_buf, Glu_persist_t *Glu_persist,
 		  gridinfo_t *grid, @(pre)LocalLU_t *Llu, SuperLUStat_t *stat,
 		  Ublock_info_t *Ublock_info, @(type) *bigV, int_t ldt, SCT_t *SCT)
@@ -1020,16 +1120,16 @@ void p@(pre)gstrs2_omp(int_t k0, int_t k, int_t* Lsub_buf,
     Trs2_InitUbloc_info(klst, nb, Ublock_info, usub, Glu_persist, stat );
 
     /* Loop through all the row blocks. */
-#ifdef _OPENMP    
+#ifdef _OPENMP
 #pragma omp parallel for schedule(dynamic,2)
 #endif
     for (int_t b = 0; b < nb; ++b)
     {
-#ifdef _OPENMP    
+#ifdef _OPENMP
         int thread_id = omp_get_thread_num();
-#else	
+#else
         int thread_id = 0;
-#endif	
+#endif
         @(type) *tempv = bigV +  thread_id * ldt * ldt;
         @(pre)Trs2_GatherTrsmScatter(klst, Ublock_info[b].iukp, Ublock_info[b].rukp,
 				usub, uval, tempv, knsupc, nsupr, lusup, Glu_persist);

@@ -96,7 +96,7 @@ int
 	@(type) nzval[], int_t *perm, @(mod_type) u[], @(mod_type) v[])
 {
     int i;
-    int num, icntl[10], info[10]; 
+    int num, icntl[10], info[10];
     int_t liw, ldw;
     int_t *iw;
     double *dw;

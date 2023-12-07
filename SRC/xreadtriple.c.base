@@ -78,14 +78,14 @@ void
 #ifdef _LONGINT
 @precision SINGLE
         fscanf(fp, "%lld%lld%f\n", &row[nz], &col[nz], &val[nz]);
-@precision DOUBLE    
+@precision DOUBLE
         fscanf(fp, "%lld%lld%lf\n", &row[nz], &col[nz], &val[nz]);
 @precision SCOMPLEX
         fscanf(fp, "%lld%lld%f%f\n", &row[nz], &col[nz], &val[nz].r, &val[nz].i);
 @precision DCOMPLEX
         fscanf(fp, "%lld%lld%lf%lf\n", &row[nz], &col[nz], &val[nz].r, &val[nz].i);
 @precision !
-#else // int 
+#else // int
 @precision SINGLE
         fscanf(fp, "%d%d%f\n", &row[nz], &col[nz], &val[nz]);
 @precision DOUBLE
@@ -105,7 +105,7 @@ void
 		printf("triplet file: row/col indices are one-based.\n");
      	    }
         }
-	
+
 	if ( !zero_base ) {
 	    /* Change to 0-based indexing. */
 	    --row[nz];

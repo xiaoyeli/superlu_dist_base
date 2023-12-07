@@ -484,7 +484,7 @@ at the top-level directory.
  *
  * info    (output) int*
  *         = 0: successful exit
- *         < 0: if info = -i, the i-th argument had an illegal value  
+ *         < 0: if info = -i, the i-th argument had an illegal value
  *         > 0: if info = i, and i is
  *             <= A->ncol: U(i,i) is exactly zero. The factorization has
  *                been completed, but the factor U is exactly singular,
@@ -549,11 +549,11 @@ p@(pre)gssvx3d (superlu_dist_options_t * options, SuperMatrix * A,
 #endif
 
     LUstruct->dt = '@(pre)';
-    
+
     // get the 2d grid
     gridinfo_t *grid  = &(grid3d->grid2d);
     iam = grid->iam;
-    
+
     /* Test the options choices. */
     *info = 0;
     Fact = options->Fact;
@@ -582,15 +582,15 @@ p@(pre)gssvx3d (superlu_dist_options_t * options, SuperMatrix * A,
 	pxerr_dist ("p@(pre)gssvx3d", grid, -(*info));
 	return;
     }
-    
+
     /* Initialization. */
 
 
     options->Algo3d = YES;
-	
+
     /* definition of factored seen by each process layer */
     factored = (Fact == FACTORED);
-    
+
     /* Save the inputs: ldb -> ldb3d, and B -> B3d, Astore -> Astore3d,
        so that the names {ldb, B, and Astore} can be used internally.
        B3d and Astore3d will be assigned back to B and Astore on return.*/
@@ -599,31 +599,31 @@ p@(pre)gssvx3d (superlu_dist_options_t * options, SuperMatrix * A,
     NRformat_loc3d *A3d = SOLVEstruct->A3d;
 
     /* B3d is aliased to B;
-       B2d is allocated; 
+       B2d is allocated;
        B is then aliased to B2d for the following 2D solve;
     */
     @(pre)GatherNRformat_loc3d(Fact, (NRformat_loc *)A->Store,
 			  B, ldb, nrhs, grid3d, &A3d);
-    
-    B = (@(type) *) A3d->B2d; /* B is now pointing to B2d, 
+
+    B = (@(type) *) A3d->B2d; /* B is now pointing to B2d,
 				allocated in dGatherNRformat_loc3d.  */
     //PrintDouble5("after gather B=B2d", ldb, B);
-    
+
     SOLVEstruct->A3d = A3d; /* This structure need to be persistent across
 			       multiple calls of pdgssvx3d()   */
-    
+
     NRformat_loc *Astore0 = A3d->A_nfmt; // on 2D grid-0
     NRformat_loc *A_orig = A->Store;
-//////    
+//////
 
 #if ( DEBUGlevel>=1 )
     CHECK_MALLOC (iam, "Enter p@(pre)gssvx3d()");
 #endif
-	
+
     /* Perform preprocessing steps on process layer zero, including:
-       gather 3D matrices {A, B} onto 2D grid-0, preprocessing steps: 
+       gather 3D matrices {A, B} onto 2D grid-0, preprocessing steps:
        - equilibration,
-       - ordering, 
+       - ordering,
        - symbolic factorization,
        - distribution of L & U                                      */
 
@@ -636,7 +636,7 @@ p@(pre)gssvx3d (superlu_dist_options_t * options, SuperMatrix * A,
 	// On input, A->Store is on 3D, now A->Store is re-assigned to 2D store
 	A->Store = Astore0;  // on 2D grid-0
 	ldb = Astore0->m_loc;
-	
+
 	/* The following code now works on 2D grid-0 */
     	Astore = (NRformat_loc *) A->Store;
     	nnz_loc = Astore->nnz_loc;
@@ -652,14 +652,14 @@ p@(pre)gssvx3d (superlu_dist_options_t * options, SuperMatrix * A,
     	MPI_Comm symb_comm;  /* communicator for symbolic factorization */
     	int col, key; /* parameters for creating a new communicator */
     	Pslu_freeable_t Pslu_freeable;
-    
+
 	sizes = NULL;
 	fstVtxSep = NULL;
 	symb_comm = MPI_COMM_NULL;
-	
+
 	Equil = (!factored && options->Equil == YES);
 	notran = (options->Trans == NOTRANS);
-	
+
 	iam = grid->iam;
 	job = 5;
 	/* Extract equilibration status from a previous factorization */
@@ -673,7 +673,7 @@ p@(pre)gssvx3d (superlu_dist_options_t * options, SuperMatrix * A,
 	else {
 	    rowequ = colequ = FALSE;
 	}
-	
+
 	/* The following arrays are replicated on all processes. */
 	perm_r = ScalePermstruct->perm_r;
 	perm_c = ScalePermstruct->perm_c;
@@ -681,7 +681,7 @@ p@(pre)gssvx3d (superlu_dist_options_t * options, SuperMatrix * A,
 	R = ScalePermstruct->R;
 	C = ScalePermstruct->C;
 	/********/
-	
+
 	/* Not factored & ask for equilibration */
 	if (Equil && Fact != SamePattern_SameRowPerm) {
 	    /* Allocate storage if not done so before. */
@@ -707,7 +707,7 @@ p@(pre)gssvx3d (superlu_dist_options_t * options, SuperMatrix * A,
 	        default: break;
 	    }
 	}
-	
+
 	/* ------------------------------------------------------------
 	   Diagonal scaling to equilibrate the matrix.
 	   ------------------------------------------------------------ */
@@ -716,7 +716,7 @@ p@(pre)gssvx3d (superlu_dist_options_t * options, SuperMatrix * A,
 	    CHECK_MALLOC (iam, "Enter equil");
 #endif
 	    t = SuperLU_timer_ ();
-		
+
 	    if (Fact == SamePattern_SameRowPerm) {
 		/* Reuse R and C. */
 		switch (ScalePermstruct->DiagScale) {
@@ -767,7 +767,7 @@ p@(pre)gssvx3d (superlu_dist_options_t * options, SuperMatrix * A,
 	    } else { /* Compute R & C from scratch */
 		/* Compute the row and column scalings. */
 		p@(pre)gsequ (A, R, C, &rowcnd, &colcnd, &amax, &iinfo, grid);
-		
+
 		if ( iinfo > 0 ) {
 		    if ( iinfo <= m ) {
 			fprintf(stderr, "The " IFMT "-th row of A is exactly zero\n", iinfo);
@@ -781,7 +781,7 @@ p@(pre)gssvx3d (superlu_dist_options_t * options, SuperMatrix * A,
 		/* Equilibrate matrix A if it is badly-scaled.
 		   A <-- diag(R)*A*diag(C)                     */
 		p@(pre)laqgs (A, R, C, rowcnd, colcnd, amax, equed);
-		
+
 		if ( strncmp(equed, "R", 1)==0 ) {
 		    ScalePermstruct->DiagScale = ROW;
 		    rowequ = ROW;
@@ -817,17 +817,17 @@ p@(pre)gssvx3d (superlu_dist_options_t * options, SuperMatrix * A,
 	     */
 	    if (Fact != SamePattern_SameRowPerm &&
 		(parSymbFact == NO || options->RowPerm != NO)) {
-		    
+
 		need_value = (options->RowPerm == LargeDiag_MC64);
-		
+
 		p@(pre)CompRow_loc_to_CompCol_global (need_value, A, grid, &GA);
-		
+
 		GAstore = (NCformat *) GA.Store;
 		colptr = GAstore->colptr;
 		rowind = GAstore->rowind;
 		nnz = GAstore->nnz;
 		GA_mem_use = (nnz + n + 1) * sizeof (int_t);
-		
+
 		if (need_value) {
 		    a_GA = (@(type) *) GAstore->nzval;
 		    GA_mem_use += nnz * sizeof (@(type));
@@ -836,7 +836,7 @@ p@(pre)gssvx3d (superlu_dist_options_t * options, SuperMatrix * A,
 		else
 		    assert (GAstore->nzval == NULL);
 	    }
-	    
+
 	    /* ------------------------------------------------------------
 	       Find the row permutation for A.
 	       ------------------------------------------------------------ */
@@ -859,7 +859,7 @@ p@(pre)gssvx3d (superlu_dist_options_t * options, SuperMatrix * A,
 			    if (!(C1 = @(mod_type)Malloc_dist (n)))
 				ABORT ("SUPERLU_MALLOC fails for C1[]");
 			}
-			
+
 			if ( iam==0 ) {
 			    /* Process 0 finds a row permutation */
 			    iinfo = @(pre)ldperm_dist (job, m, nnz, colptr, rowind, a_GA,
@@ -899,8 +899,8 @@ p@(pre)gssvx3d (superlu_dist_options_t * options, SuperMatrix * A,
 					R1[i] = exp (R1[i]);
 					C1[i] = exp (C1[i]);
 				    }
-					
-				    /* Scale the distributed matrix further. 
+
+				    /* Scale the distributed matrix further.
 				       A <-- diag(R1)*A*diag(C1)            */
 				    irow = fst_row;
 				    for (j = 0; j < m_loc; ++j) {
@@ -1010,7 +1010,7 @@ p@(pre)gssvx3d (superlu_dist_options_t * options, SuperMatrix * A,
 	    } else { /* options->RowPerm == NOROWPERM / NATURAL */
 		for (i = 0; i < m; ++i)	perm_r[i] = i;
 	    }
-	    
+
 #if ( DEBUGlevel>=2 )
 	    if (!iam)
 		PrintInt10 ("perm_r", m, perm_r);
@@ -1030,8 +1030,8 @@ p@(pre)gssvx3d (superlu_dist_options_t * options, SuperMatrix * A,
 	    }
 #endif
 	}
-	
-	
+
+
 	/* ------------------------------------------------------------
 	   Perform ordering and symbolic factorization
 	   ------------------------------------------------------------ */
@@ -1051,7 +1051,7 @@ p@(pre)gssvx3d (superlu_dist_options_t * options, SuperMatrix * A,
 	    if (parSymbFact == YES || permc_spec == PARMETIS) {
 		nprocs_num = grid->nprow * grid->npcol;
 		noDomains = (int) (pow (2, ((int) LOG2 (nprocs_num))));
-		
+
 		/* create a new communicator for the first noDomains
 		   processes in grid->comm */
 		key = iam;
@@ -1060,7 +1060,7 @@ p@(pre)gssvx3d (superlu_dist_options_t * options, SuperMatrix * A,
 		else
 		    col = MPI_UNDEFINED;
 		MPI_Comm_split (grid->comm, col, key, &symb_comm);
-		
+
 		if (permc_spec == NATURAL || permc_spec == MY_PERMC) {
 		    if (permc_spec == NATURAL)
 			{
@@ -1102,18 +1102,18 @@ p@(pre)gssvx3d (superlu_dist_options_t * options, SuperMatrix * A,
 	    }
 
 	    stat->utime[COLPERM] = SuperLU_timer_ () - t;
-	    
+
 	    /* Compute the elimination tree of Pc*(A'+A)*Pc' or Pc*A'*A*Pc'
 	       (a.k.a. column etree), depending on the choice of ColPerm.
 	       Adjust perm_c[] to be consistent with a postorder of etree.
 	       Permute columns of A to form A*Pc'. */
 	    if (Fact != SamePattern_SameRowPerm) {
 		if (parSymbFact == NO) {
-			    
+
 		    int_t *GACcolbeg, *GACcolend, *GACrowind;
-		    
+
 		    sp_colorder (options, &GA, perm_c, etree, &GAC);
-		    
+
 		    /* Form Pc*A*Pc' to preserve the diagonal of the matrix GAC. */
 		    GACstore = (NCPformat *) GAC.Store;
 		    GACcolbeg = GACstore->colbeg;
@@ -1125,7 +1125,7 @@ p@(pre)gssvx3d (superlu_dist_options_t * options, SuperMatrix * A,
 			    GACrowind[i] = perm_c[irow];
 			}
 		    }
-		    
+
 		    /* Perform a symbolic factorization on Pc*Pr*A*Pc' and set up
 		       the nonzero data structures for L & U. */
 #if ( PRNTlevel>=1 )
@@ -1170,7 +1170,7 @@ p@(pre)gssvx3d (superlu_dist_options_t * options, SuperMatrix * A,
 				     (int) iinfo);
 			    return;
 			}
-		    } 
+		    }
 
 		} /* end serial symbolic factorization */
 		else { /* parallel symbolic factorization */
@@ -1192,7 +1192,7 @@ p@(pre)gssvx3d (superlu_dist_options_t * options, SuperMatrix * A,
 		    Destroy_CompCol_Matrix_dist (&GA);
 		if (parSymbFact == NO)
 		    Destroy_CompCol_Permuted_dist (&GAC);
-		
+
 	    } /* end if Fact not SamePattern_SameRowPerm */
 
 	    if (sizes)
@@ -1201,12 +1201,12 @@ p@(pre)gssvx3d (superlu_dist_options_t * options, SuperMatrix * A,
 		SUPERLU_FREE (fstVtxSep);
 	    if (symb_comm != MPI_COMM_NULL)
 		MPI_Comm_free (&symb_comm);
-	    
+
 	    if (parSymbFact == NO || Fact == SamePattern_SameRowPerm) {
 		/* Apply column permutation to the original distributed A */
 		for (j = 0; j < nnz_loc; ++j)
 		    colind[j] = perm_c[colind[j]];
-		
+
 		/* Distribute Pc*Pr*diag(R)*A*diag(C)*Pc' into L and U storage.
 		   NOTE: the row permutation Pc*Pr is applied internally in the
 		   distribution routine. */
@@ -1214,7 +1214,7 @@ p@(pre)gssvx3d (superlu_dist_options_t * options, SuperMatrix * A,
 		dist_mem_use = p@(pre)distribute (options, n, A, ScalePermstruct,
 					     Glu_freeable, LUstruct, grid);
 		stat->utime[DIST] = SuperLU_timer_ () - t;
-		
+
 		/* Deallocate storage used in symbolic factorization. */
 		if (Fact != SamePattern_SameRowPerm)
 		    {
@@ -1228,7 +1228,7 @@ p@(pre)gssvx3d (superlu_dist_options_t * options, SuperMatrix * A,
 		/* Apply column permutation to the original distributed A */
 		for (j = 0; j < nnz_loc; ++j)
 		    colind[j] = perm_c[colind[j]];
-		
+
 		t = SuperLU_timer_ ();
 		dist_mem_use = @(pre)dist_psymbtonum (options, n, A, ScalePermstruct,
 						 &Pslu_freeable, LUstruct, grid);
@@ -1240,7 +1240,7 @@ p@(pre)gssvx3d (superlu_dist_options_t * options, SuperMatrix * A,
 
 	    /*if (!iam) printf ("\tDISTRIBUTE time  %8.2f\n", stat->utime[DIST]); */
 	} /* end if not Factored */
-	
+
     } /* end 2D process layer 0 */
 
     @(pre)trf3Dpartition_t*  trf3Dpartition;
@@ -1252,7 +1252,7 @@ p@(pre)gssvx3d (superlu_dist_options_t * options, SuperMatrix * A,
 	MPI_Bcast( &m, 1, mpi_int_t, 0,  grid3d->zscp.comm);
 	MPI_Bcast( &n, 1, mpi_int_t, 0,  grid3d->zscp.comm);
 	MPI_Bcast( &anorm, 1, @(MPI_MOD_TYPE), 0,  grid3d->zscp.comm);
-	
+
 	/* send the LU structure to all the grids */
 	@(pre)p3dScatter(n, LUstruct, grid3d);
 
@@ -1261,7 +1261,7 @@ p@(pre)gssvx3d (superlu_dist_options_t * options, SuperMatrix * A,
 
 	SCT_t *SCT = (SCT_t *) SUPERLU_MALLOC(sizeof(SCT_t));
 	SCT_init(SCT);
-	
+
 #if ( PRNTlevel>=1 )
 	if (grid3d->iam == 0) {
 	    printf("after 3D initialization.\n"); fflush(stdout);
@@ -1276,14 +1276,14 @@ p@(pre)gssvx3d (superlu_dist_options_t * options, SuperMatrix * A,
 	p@(pre)gstrf3d (options, m, n, anorm, trf3Dpartition, SCT, LUstruct,
 		   grid3d, stat, info);
 	stat->utime[FACT] = SuperLU_timer_ () - t;
-	
+
 	double tgather = SuperLU_timer_();
-	
+
 	@(pre)gatherAllFactoredLU(trf3Dpartition, LUstruct, grid3d, SCT);
 
 	SCT->gatherLUtimer += SuperLU_timer_() - tgather;
 	/*print stats for bottom grid*/
-	
+
 #if ( PRNTlevel>=1 )
 	if (!grid3d->zscp.Iam)
 	    {
@@ -1304,7 +1304,7 @@ p@(pre)gssvx3d (superlu_dist_options_t * options, SuperMatrix * A,
 	SCT_free(SCT);
 
     } /* end if not Factored ... factor on all process layers */
-    
+
     if ( grid3d->zscp.Iam == 0 ) { // only process layer 0
 	if (!factored) {
 	    if (options->PrintStat) {
@@ -1338,7 +1338,7 @@ p@(pre)gssvx3d (superlu_dist_options_t * options, SuperMatrix * A,
 
 	    	@(pre)QuerySpace_dist(n, LUstruct, grid, stat, &num_mem_usage);
 	        mem_stage[2] = num_mem_usage.total;  /* numerical factorization step */
-	    
+
 	        loc_max = SUPERLU_MAX( loc_max, mem_stage[2] ); /* local max of 3 stages */
 
 	    	local_struct.val = loc_max;
@@ -1346,7 +1346,7 @@ p@(pre)gssvx3d (superlu_dist_options_t * options, SuperMatrix * A,
 	    	MPI_Reduce( &local_struct, &global_struct, 1, MPI_FLOAT_INT, MPI_MAXLOC, 0, grid->comm );
 	    	int all_highmark_rank = global_struct.rank;
 	    	float all_highmark_mem = global_struct.val * 1e-6;
-	    
+
 		MPI_Reduce( &loc_max, &avg,
 		       	    1, MPI_FLOAT, MPI_SUM, 0, grid->comm );
 	        MPI_Reduce( &num_mem_usage.for_lu, &for_lu,
@@ -1359,12 +1359,12 @@ p@(pre)gssvx3d (superlu_dist_options_t * options, SuperMatrix * A,
 	        MPI_Reduce( &local_struct, &global_struct, 1, MPI_FLOAT_INT, MPI_MAXLOC, 0, grid->comm );
 	        int lu_max_rank = global_struct.rank;
 	        float lu_max_mem = global_struct.val*1e-6;
-	    
+
 	        local_struct.val = stat->peak_buffer;
 	        MPI_Reduce( &local_struct, &global_struct, 1, MPI_FLOAT_INT, MPI_MAXLOC, 0, grid->comm );
 	        int buffer_peak_rank = global_struct.rank;
 	        float buffer_peak = global_struct.val*1e-6;
-    
+
                 if ( iam==0 ) {
 		    printf("\n** Memory Usage **********************************\n");
                     printf("** Total highmark (MB):\n"
@@ -1377,7 +1377,7 @@ p@(pre)gssvx3d (superlu_dist_options_t * options, SuperMatrix * A,
 		           "\t. distribution    %8.2f\n"
 		           "\t. numfact         %8.2f\n",
 		           all_highmark_rank, mem_stage[0]*1e-6, mem_stage[1]*1e-6, mem_stage[2]*1e-6);
-		
+
                     printf("** NUMfact space (MB): (sum-of-all-processes)\n"
 		           "    L\\U :        %8.2f |  Total : %8.2f\n",
 		           for_lu * 1e-6, total * 1e-6);
@@ -1390,7 +1390,7 @@ p@(pre)gssvx3d (superlu_dist_options_t * options, SuperMatrix * A,
 		    fflush(stdout);
                 }
 	    } /* end printing stats */
-	    
+
 	}   /* end if not Factored */
 
 	/* ------------------------------------------------------------
@@ -1523,13 +1523,13 @@ p@(pre)gssvx3d (superlu_dist_options_t * options, SuperMatrix * A,
 					    }
 				    }
 			    }
-			    
+
 			    /* Re-use the local col indices of A obtained from the
 			       previous call to pdgsmv_init() */
 			    for (i = 0; i < nnz_loc; ++i)
 				colind[i] = colind_gsmv[i];
 			}
-			
+
 			if (nrhs == 1)
 			    {	/* Use the existing solve structure */
 				SOLVEstruct1 = SOLVEstruct;
@@ -1551,7 +1551,7 @@ p@(pre)gssvx3d (superlu_dist_options_t * options, SuperMatrix * A,
 				SOLVEstruct1->diag_len = SOLVEstruct->diag_len;
 				SOLVEstruct1->gsmv_comm = SOLVEstruct->gsmv_comm;
 				SOLVEstruct1->A_colind_gsmv = SOLVEstruct->A_colind_gsmv;
-				
+
 				/* Initialize the *gstrs_comm for 1 RHS. */
 				if (!(SOLVEstruct1->gstrs_comm = (pxgstrs_comm_t *)
 				      SUPERLU_MALLOC (sizeof (pxgstrs_comm_t))))
@@ -1559,20 +1559,20 @@ p@(pre)gssvx3d (superlu_dist_options_t * options, SuperMatrix * A,
 				p@(pre)gstrs_init (n, m_loc, 1, fst_row, perm_r, perm_c, grid,
 					      Glu_persist, SOLVEstruct1);
 			    }
-			
+
 			p@(pre)gsrfs(options, n, A, anorm, LUstruct, ScalePermstruct, grid,
 				 B, ldb, X, ldx, nrhs, SOLVEstruct1, berr, stat, info);
-			
+
 			/* Deallocate the storage associated with SOLVEstruct1 */
 			if (nrhs > 1)
 			    {
 				pxgstrs_finalize (SOLVEstruct1->gstrs_comm);
 				SUPERLU_FREE (SOLVEstruct1);
 			    }
-			
+
 			stat->utime[REFINE] = SuperLU_timer_ () - t;
 		    } /* end IterRefine */
-		
+
 		/* Permute the solution matrix B <= Pc'*X. */
 		p@(pre)Permute_Dense_Matrix (fst_row, m_loc, SOLVEstruct->row_to_proc,
 					SOLVEstruct->inv_perm_c,
@@ -1582,7 +1582,7 @@ p@(pre)gssvx3d (superlu_dist_options_t * options, SuperMatrix * A,
 		for (i = 0; i < m_loc; ++i)
 		    printf ("\t(%d)\t%4d\t%.10f\n", iam, i + fst_row, B[i]);
 #endif
-		
+
 		/* Transform the solution matrix X to a solution of the original
 		   system before the equilibration. */
 		if (notran)
@@ -1624,18 +1624,18 @@ p@(pre)gssvx3d (superlu_dist_options_t * options, SuperMatrix * A,
 				b_col += ldb;
 			    }
 		    }
-		
+
 		SUPERLU_FREE (b_work);
 		SUPERLU_FREE (X);
-		
+
 	    } /* end if nrhs > 0 and factor successful */
-	
+
 #if ( PRNTlevel>=1 )
 	if (!iam) {
 	    printf (".. DiagScale = %d\n", ScalePermstruct->DiagScale);
         }
 #endif
-	
+
 	/* Deallocate R and/or C if it was not used. */
 	if (Equil && Fact != SamePattern_SameRowPerm)
 	    {
@@ -1653,7 +1653,7 @@ p@(pre)gssvx3d (superlu_dist_options_t * options, SuperMatrix * A,
 	            default: break;
 		}
 	    }
-	
+
 #if 0
 	if (!factored && Fact != SamePattern_SameRowPerm && !parSymbFact)
 	    Destroy_CompCol_Permuted_dist (&GAC);
@@ -1666,7 +1666,7 @@ p@(pre)gssvx3d (superlu_dist_options_t * options, SuperMatrix * A,
 
     B = A3d->B3d; // B is now assigned back to B3d on return
     A->Store = Astore3d; // restore Astore to 3D
-    
+
 #if ( DEBUGlevel>=1 )
 	CHECK_MALLOC (iam, "Exit p@(pre)gssvx3d()");
 #endif

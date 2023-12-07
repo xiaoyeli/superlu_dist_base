@@ -108,7 +108,7 @@ int superlu_@(pre)gemv(const char *trans, const int m,
 #else
     @(pre)gemv_(trans, &m, &n, &alpha, a, &lda, x, &incx, &beta, y, &incy);
 #endif
-    
+
     return 0;
 }
 
@@ -117,14 +117,14 @@ int superlu_@(pre)trsv(char *uplo, char *trans, char *diag,
 {
 #ifdef _CRAY
     // _fcd ftcs = _cptofcd("N", strlen("N"));
-    @(SC_PRE)TRSV(_cptofcd(uplo, strlen(uplo)), _cptofcd(trans, strlen(trans)), _cptofcd(diag, strlen(diag)), 
+    @(SC_PRE)TRSV(_cptofcd(uplo, strlen(uplo)), _cptofcd(trans, strlen(trans)), _cptofcd(diag, strlen(diag)),
          &n, a, &lda, x, &incx);
 #elif defined (USE_VENDOR_BLAS)
     @(pre)trsv_(uplo, trans, diag, &n, a, &lda, x, &incx, 1, 1, 1);
 #else
     @(pre)trsv_(uplo, trans, diag, &n, a, &lda, x, &incx);
 #endif
-    
+
     return 0;
 }
 

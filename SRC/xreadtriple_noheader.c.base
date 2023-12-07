@@ -98,7 +98,7 @@ void
   @precision !
 #endif
     }
-    
+
     if ( minn == 0 ) { /* zero-based indexing */
 	zero_base = 1;
 	++(*n);
@@ -150,7 +150,7 @@ void
 	fscanf(fp, "%d%d%f\n", &row[nz], &col[nz], &val[nz]);
        @precision DOUBLE
 	fscanf(fp, "%d%d%lf\n", &row[nz], &col[nz], &val[nz]);
-       @precision SCOMPLEX	
+       @precision SCOMPLEX
 	fscanf(fp, "%d%d%f%f\n", &row[nz], &col[nz], &val[nz].r, &val[nz].i);
        @precision DCOMPLEX
 	fscanf(fp, "%d%d%lf%lf\n", &row[nz], &col[nz], &val[nz].r, &val[nz].i);
