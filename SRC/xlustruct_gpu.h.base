@@ -104,7 +104,7 @@ typedef struct //LUstruct_gpu_
     int_t buffer_size;      /**/
     int_t nsupers;  /*should have number of supernodes*/
     int_t *xsup;
-    gridinfo_t *grid;
+    // gridinfo_t *grid; // Sherry: this is not used
 
 #if 0 // Sherry: moved to 'SuperLUStat_t'
     double ScatterMOPCounter;

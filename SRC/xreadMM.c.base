@@ -46,11 +46,15 @@ void
     char *cs;
 
     /* 	File format:
+@precision SINGLE DOUBLE
      *    %%MatrixMarket matrix coordinate real general/symmetric/...
+@precision SCOMPLEX DCOMPLEX
+     *    %%MatrixMarket matrix coordinate complex general/symmetric/...
+@precision !
      *    % ...
      *    % (optional comments)
      *    % ...
-     *    #rows    #non-zero
+     *    #rows  #cols  #non-zeros
      *    Triplet in the rest of lines: row    col    value
      */
 
