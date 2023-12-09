@@ -109,6 +109,7 @@ single:	\
 	$(TGTSRC)/psgssvx3d.c \
 	$(TGTSRC)/snrformat_loc3d.c \
 	$(TGTSRC)/ssuperlu_blas.c \
+	$(TGTSRC)/s_c2cpp_GetHWPM.cpp \
 
 $(TGTSRC)/slustruct_gpu.h:	$(SRC)/xlustruct_gpu.h.base
 	extract -b $? -o $@ precision=single
@@ -262,6 +263,8 @@ $(TGTTST)/pstest.c:	$(TST)/pxtest.c.base
 	extract -b $? -o $@ precision=single
 $(TGTTST)/pscompute_resid.c:	$(TST)/pxcompute_resid.c.base
 	extract -b $? -o $@ precision=single
+$(TGTSRC)/s_c2cpp_GetHWPM.cpp: $(SRC)/x_c2cpp_GetHWPM.cpp.base
+	extract -b $? -o $@ precision=single
 
 double:	\
 	$(TGTSRC)/dlustruct_gpu.h \
@@ -341,6 +344,7 @@ double:	\
 	$(TGTSRC)/pdgssvx3d.c \
 	$(TGTSRC)/dnrformat_loc3d.c \
 	$(TGTSRC)/dsuperlu_blas.c \
+	$(TGTSRC)/d_c2cpp_GetHWPM.cpp \
 
 
 $(TGTSRC)/dlustruct_gpu.h:	$(SRC)/xlustruct_gpu.h.base
@@ -497,6 +501,8 @@ $(TGTTST)/pdtest.c:	$(TST)/pxtest.c.base
 	extract -b $? -o $@ precision=double
 $(TGTTST)/pdcompute_resid.c:	$(TST)/pxcompute_resid.c.base
 	extract -b $? -o $@ precision=double
+$(TGTSRC)/d_c2cpp_GetHWPM.cpp:	$(SRC)/x_c2cpp_GetHWPM.cpp.base
+	extract -b $? -o $@ precision=double
 
 dcomplex: \
 	$(TGTSRC)/zlustruct_gpu.h \
@@ -576,6 +582,7 @@ dcomplex: \
 	$(TGTSRC)/pzgssvx3d.c \
 	$(TGTSRC)/znrformat_loc3d.c \
 	$(TGTSRC)/zsuperlu_blas.c \
+	$(TGTSRC)/z_c2cpp_GetHWPM.cpp \
 
 $(TGTSRC)/zlustruct_gpu.h:	$(SRC)/xlustruct_gpu.h.base
 	extract -b $? -o $@ precision=dcomplex
@@ -730,4 +737,6 @@ $(TGTF90)/c2f_zcreate_matrix_x_b.c: $(F90)/c2f_xcreate_matrix_x_b.c.base
 $(TGTTST)/pztest.c:	$(TST)/pxtest.c.base
 	extract -b $? -o $@ precision=dcomplex
 $(TGTTST)/pzcompute_resid.c:	$(TST)/pxcompute_resid.c.base
+	extract -b $? -o $@ precision=dcomplex
+$(TGTSRC)/z_c2cpp_GetHWPM.cpp:	$(SRC)/x_c2cpp_GetHWPM.cpp.base
 	extract -b $? -o $@ precision=dcomplex
