@@ -1,10 +1,8 @@
 @extract -b Typedef.inc
 #include "superlu_@(pre)defs.h"
-#include "p@(pre)distribute3d.h"
+//#include "p@(pre)distribute3d.h"
 @precision DOUBLE
-@precision SCOMPLEX DCOMPLEX
-// YL: These routines (dpropagate_A_to_LU3d, computeLDAspa_Ilsum, propagateDataThroughMatrixBlocks,checkDist3DLUStruct) are not used anymore, so I didn't generate other precisions
-@precision !
+
 /**
  * Propagates the new values of A into the existing L and U data structures.
  *
@@ -514,3 +512,7 @@ int_t checkDist3DLUStruct(  dLUstruct_t* LUstruct, gridinfo3d_t* grid3d)
 #endif
     return 0;
 }
+
+@precision SCOMPLEX DCOMPLEX
+// YL: These routines (dpropagate_A_to_LU3d, computeLDAspa_Ilsum, propagateDataThroughMatrixBlocks,checkDist3DLUStruct) are not used anymore, so I didn't generate other precisions
+@precision !

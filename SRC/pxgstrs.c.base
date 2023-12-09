@@ -14,7 +14,7 @@ at the top-level directory.
  * general N-by-N matrix A using the LU factors computed previously.
  *
  * <pre>
- * -- Distributed SuperLU routine (version 6.1) --
+ * -- Distributed SuperLU routine (version 9.0) --
  * Lawrence Berkeley National Lab, Univ. of California Berkeley.
  * October 15, 2008
  * September 18, 2018  version 6.0
@@ -2487,7 +2487,7 @@ t1 = SuperLU_timer_();
 					for (ii=1;ii<num_thread;ii++)
 					    for (jj=0;jj<knsupc*nrhs;jj++)
 @precision SINGLE DOUBLE
-						lsum[il + jj] += lsum[il + jj + ii*sizelsum];
+						lsum[il + jj ] += lsum[il + jj + ii*sizelsum];
 @precision SCOMPLEX DCOMPLEX
 						@(pre)_add(&lsum[il + jj ],
 							  &lsum[il + jj ],

@@ -3,7 +3,7 @@
  * \brief Descriptions and declarations for structures used in GPU
  *
  * <pre>
- * -- Distributed SuperLU routine (version 7.2) --
+ * -- Distributed SuperLU routine (version 9.0) --
  * Lawrence Berkeley National Lab, Univ. of California Berkeley,
  * Georgia Institute of Technology, Oak Ridge National Laboratory
  *
@@ -520,7 +520,7 @@ int @(pre)SchurCompUpdate_GPU(
 
 	/*sizeof RemainLbuf = Rnbuf*knsupc */
 	double tTmp = SuperLU_timer_();
-	
+
 	gpuEventRecord(stat->ePCIeH2D[k0], FunCallStream);
         //YL: need the following to avoid calling gpuEventElapsedTime later with nonrecorded event
         gpuEventRecord(stat->GemmStart[k0], FunCallStream);
@@ -818,11 +818,14 @@ int @(pre)free_LUstruct_gpu (
 	SUPERLU_FREE(stat->ePCIeH2D);
 	SUPERLU_FREE(stat->ePCIeD2H_Start);
 	SUPERLU_FREE(stat->ePCIeD2H_End);
+	SUPERLU_FREE(sluGPU->isNodeInMyGrid);
+	SUPERLU_FREE(A_gpu->perm_c_supno);
 
 	/* Free the U data structure on GPU */
 	checkGPU(gpuFree(A_gpu->UrowindVec));
 	checkGPU(gpuFree(A_gpu->UrowindPtr));
 
+	free(A_gpu->UnzvalPtr_host);
 	//free(A_gpu->UrowindPtr_host); // Sherry: this is NOT allocated
 
 	checkGPU(gpuFree(A_gpu->UnzvalVec));
@@ -860,7 +863,7 @@ int @(pre)free_LUstruct_gpu (
 	    gpuStreamDestroy(sluGPU->funCallStreams[streamId]);
 	    gpublasDestroy(sluGPU->gpublasHandles[streamId]);
     	}
-
+	free(A_gpu);
 	return 0;
 } /* end @(pre)free_LUstruct_gpu */
 
@@ -1335,6 +1338,15 @@ void @(pre)CopyLUToGPU3D (
 	    checkGPUErrors(gpuEventCreate(&(stat->ePCIeH2D[i])));
 	    checkGPUErrors(gpuEventCreate(&(stat->ePCIeD2H_Start[i])));
 	    checkGPUErrors(gpuEventCreate(&(stat->ePCIeD2H_End[i])));
+
+		//YL: need the following to avoid calling gpuEventElapsedTime later with nonrecorded event
+		checkGPUErrors(gpuEventRecord(stat->GemmStart[i], sluGPU->funCallStreams[0]));
+		checkGPUErrors(gpuEventRecord(stat->GemmEnd[i], sluGPU->funCallStreams[0]));
+		checkGPUErrors(gpuEventRecord(stat->ScatterEnd[i], sluGPU->funCallStreams[0]));
+		checkGPUErrors(gpuEventRecord(stat->ePCIeH2D[i], sluGPU->funCallStreams[0]));
+		checkGPUErrors(gpuEventRecord(stat->ePCIeD2H_Start[i], sluGPU->funCallStreams[0]));
+		checkGPUErrors(gpuEventRecord(stat->ePCIeD2H_End[i], sluGPU->funCallStreams[0]));
+
 	}
 
     /*---- Copy L data structure to GPU ----*/
@@ -1404,11 +1416,13 @@ void @(pre)CopyLUToGPU3D (
     A_gpu->local_l_blk_infoVec = (local_l_blk_info_t *) tmp_ptr;
     gpu_mem_used += cum_num_l_blocks * sizeof(local_l_blk_info_t);
     checkGPUErrors(gpuMemcpy( (A_gpu->local_l_blk_infoVec), local_l_blk_infoVec, cum_num_l_blocks * sizeof(local_l_blk_info_t), gpuMemcpyHostToDevice)) ;
+	free(local_l_blk_infoVec);
 
     checkGPUErrors(gpuMalloc(  &tmp_ptr,  CEILING(nsupers, Pc)*sizeof(int_t))) ;
     A_gpu->local_l_blk_infoPtr = (int_t *) tmp_ptr;
     gpu_mem_used += CEILING(nsupers, Pc) * sizeof(int_t);
     checkGPUErrors(gpuMemcpy( (A_gpu->local_l_blk_infoPtr), local_l_blk_infoPtr, CEILING(nsupers, Pc)*sizeof(int_t), gpuMemcpyHostToDevice)) ;
+	free(local_l_blk_infoPtr);
 
     /*---- Copy U data structure to GPU ----*/
 
@@ -1473,11 +1487,13 @@ void @(pre)CopyLUToGPU3D (
 	A_gpu->local_u_blk_infoVec = (local_u_blk_info_t *) tmp_ptr;
 	gpu_mem_used += cum_num_u_blocks * sizeof(local_u_blk_info_t);
 	checkGPUErrors(gpuMemcpy( (A_gpu->local_u_blk_infoVec), local_u_blk_infoVec, cum_num_u_blocks * sizeof(local_u_blk_info_t), gpuMemcpyHostToDevice)) ;
+	free(local_u_blk_infoVec);
 
 	checkGPUErrors(gpuMalloc( &tmp_ptr,  CEILING(nsupers, Pr)*sizeof(int_t))) ;
 	A_gpu->local_u_blk_infoPtr = (int_t *) tmp_ptr;
 	gpu_mem_used += CEILING(nsupers, Pr) * sizeof(int_t);
 	checkGPUErrors(gpuMemcpy( (A_gpu->local_u_blk_infoPtr), local_u_blk_infoPtr, CEILING(nsupers, Pr)*sizeof(int_t), gpuMemcpyHostToDevice)) ;
+	free(local_u_blk_infoPtr);
 
 	/* Copy the actual L indices and values */
 	int_t l_k = CEILING( nsupers, grid->npcol ); /* # of local block columns */
@@ -1717,6 +1733,8 @@ void @(pre)CopyLUToGPU3D (
 	free (temp_UrowindPtr);
 	free (indtemp1);
 	free (indtemp);
+	free (Unzval_size);
+	free (Lnzval_size);
 
 } /* end @(pre)CopyLUToGPU3D */
 
@@ -1740,7 +1758,7 @@ int @(pre)reduceAllAncestors3d_GPU (
     int_t maxLvl = log2i( (int_t) grid3d->zscp.Np) + 1;
     int_t myGrid = grid3d->zscp.Iam;
     gridinfo_t* grid = &(grid3d->grid2d);
-    int_t* gpuLUreduced = factStat->gpuLUreduced;
+    int* gpuLUreduced = factStat->gpuLUreduced;
 
     int_t sender;
     if ((myGrid % (1 << (ilvl + 1))) == 0)
