@@ -7,13 +7,13 @@ void @(pre)newTrfPartitionInit(int_t nsupers,  @(pre)LUstruct_t *LUstruct, gridi
     gridinfo_t* grid = &(grid3d->grid2d);
     int iam = grid3d->iam;
 #if ( DEBUGlevel>=1 )
-    CHECK_MALLOC (iam, "Enter dnewTrfPartitionInit()");
+    CHECK_MALLOC (iam, "Enter @(pre)newTrfPartitionInit()");
 #endif
 
     // check parameters
     if (LUstruct->trf3Dpart == NULL || grid3d == NULL)
     {
-        fprintf(stderr, "Error: Invalid arguments to dnewTrfPartitionInit().\n");
+        fprintf(stderr, "Error: Invalid arguments to @(pre)newTrfPartitionInit().\n");
         return;
     }
 

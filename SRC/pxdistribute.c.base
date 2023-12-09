@@ -1110,7 +1110,7 @@ p@(pre)distribute(superlu_dist_options_t *options, int_t n, SuperMatrix *A,
   		        if (!(Linv_bc_ptr[ljb] = (@(type)*)SUPERLU_MALLOC(nsupc*nsupc * sizeof(@(type)))))
 			    ABORT("Malloc fails for Linv_bc_ptr[ljb][]");
 			// Linv_bc_offset[ljb]=nsupc*nsupc;
-			Linv_bc_cnt += Linv_bc_offset[ljb];
+			// Linv_bc_cnt += Linv_bc_offset[ljb];
 
 		        if (!(Uinv_bc_ptr[ljb] = (@(type)*)SUPERLU_MALLOC(nsupc*nsupc * sizeof(@(type)))))
 			    ABORT("Malloc fails for Uinv_bc_ptr[ljb][]");
@@ -2322,6 +2322,7 @@ if ( !iam) printf(".. Construct Reduce tree for U: %.2f\t\n", t);
         SUPERLU_FREE(a);
     }
     SUPERLU_FREE(xa);
+	LUstruct->trf3Dpart=NULL;
 
 #if ( DEBUGlevel>=1 )
     /* Memory allocated but not freed:
@@ -3617,7 +3618,7 @@ p@(pre)distribute_allgrid_index_only(superlu_dist_options_t *options, int_t n, S
 //#endif
 
 #if ( DEBUGlevel>=1 )
-    CHECK_MALLOC(iam, "Enter p@(pre)distribute_allgrid()");
+    CHECK_MALLOC(iam, "Enter p@(pre)distribute_allgrid_index_only()");
 #endif
 #if ( PROFlevel>=1 )
     t = SuperLU_timer_();
