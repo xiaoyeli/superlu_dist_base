@@ -8,8 +8,11 @@ sed -i 's/[[:blank:]]*$//' TEST/*.*
 
 ./extract -b SRC/pxgstrs_lsum.c.base -o ../output/SRC/pdgstrs_lsum.c precision=DOUBLE
 ./extract -b SRC/pxdistribute.c.base -o ../output/SRC/pddistribute.c precision=DOUBLE
+./extract -b SRC/pxdistribute3d.c.base -o ../output/SRC/pddistribute3d.c precision=DOUBLE
+./extract -b SRC/x3DPartition.c.base -o ../output/SRC/d3DPartition.c precision=DOUBLE
 ./extract -b SRC/xdistribute.c.base -o ../output/SRC/ddistribute.c precision=DOUBLE
 ./extract -b SRC/pxgstrs.c.base -o ../output/SRC/pdgstrs.c precision=DOUBLE
+./extract -b SRC/pxgstrs3d.c.base -o ../output/SRC/pdgstrs3d.c precision=DOUBLE
 ./extract -b SRC/pxgstrs_Bglobal.c.base -o ../output/SRC/pdgstrs_Bglobal.c precision=DOUBLE
 ./extract -b SRC/pxgstrs1.c.base -o ../output/SRC/pdgstrs1.c precision=DOUBLE
 ./extract -b SRC/pxsymbfact_distdata.c.base -o ../output/SRC/pdsymbfact_distdata.c precision=DOUBLE
@@ -37,6 +40,8 @@ sed -i 's/[[:blank:]]*$//' TEST/*.*
 ./extract -b SRC/xstatic_schedule.c.base -o ../output/SRC/dstatic_schedule.c precision=DOUBLE
 ./extract -b SRC/pxlangs.c.base -o ../output/SRC/pdlangs.c precision=DOUBLE
 ./extract -b SRC/pxlaqgs.c.base -o ../output/SRC/pdlaqgs.c precision=DOUBLE
+./extract -b SRC/xssvx3dAux.c.base -o ../output/SRC/dssvx3dAux.c precision=DOUBLE
+./extract -b SRC/xsuperlu_gpu.cu.base -o ../output/SRC/dsuperlu_gpu.cu precision=DOUBLE
 
 ./extract -b EXAMPLE/pxdrive.c.base -o ../output/EXAMPLE/pddrive.c precision=DOUBLE
 ./extract -b EXAMPLE/pxdrive_ABglobal.c.base -o ../output/EXAMPLE/pddrive_ABglobal.c precision=DOUBLE
@@ -78,7 +83,7 @@ sed -i 's/[[:blank:]]*$//' TEST/*.*
 ./extract -b SRC/xutil_dist.c.base -o ../output/SRC/zutil_dist.c precision=DCOMPLEX
 ./extract -b SRC/xmemory_dist.c.base -o ../output/SRC/zmemory_dist.c precision=DCOMPLEX
 ./extract -b SRC/pxgssvx_ABglobal.c.base -o ../output/SRC/pzgssvx_ABglobal.c precision=DCOMPLEX
-
+./extract -b SRC/xsuperlu_gpu.cu.base -o ../output/SRC/zsuperlu_gpu.cu precision=DCOMPLEX
 
 ./extract -b EXAMPLE/pxdrive.c.base -o ../output/EXAMPLE/pzdrive.c precision=DCOMPLEX
 ./extract -b EXAMPLE/pxdrive_ABglobal.c.base -o ../output/EXAMPLE/pzdrive_ABglobal.c precision=DCOMPLEX
@@ -96,3 +101,5 @@ sed -i 's/[[:blank:]]*$//' TEST/*.*
 ./extract -b EXAMPLE/xreadtriple.c.base -o ../output/EXAMPLE/zreadtriple.c precision=DCOMPLEX
 
 ./extract -b TEST/pxtest.c.base -o ../output/TEST/pztest.c precision=DCOMPLEX
+
+./extract -b SRC/xsuperlu_gpu.cu.base -o ../output/SRC/ssuperlu_gpu.cu precision=SINGLE

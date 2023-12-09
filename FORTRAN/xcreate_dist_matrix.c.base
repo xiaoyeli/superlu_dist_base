@@ -3,7 +3,7 @@
  * \brief Distribute the input matrix in a distributed compressed row format.
  *
  * <pre>
- * -- Distributed SuperLU routine (version 3.2) --
+ * -- Distributed SuperLU routine (version 9.0) --
  * Lawrence Berkeley National Lab, Univ. of California Berkeley.
  * October 2012
  *

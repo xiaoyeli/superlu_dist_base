@@ -13,7 +13,7 @@
 !! \brief The driver program to solve a linear system with default options.
 !!
 !! <pre>
-!! -- Distributed SuperLU routine (version 7.0) --
+!! -- Distributed SuperLU routine (version 9.0) --
 !! Lawrence Berkeley National Lab, Univ. of California Berkeley.
 !! September 10, 2021
 !! </pre>
