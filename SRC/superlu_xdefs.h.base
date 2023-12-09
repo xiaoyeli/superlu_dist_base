@@ -1103,7 +1103,7 @@ extern int @(pre)create_block_diag_3d(SuperMatrix *A, int batchCount, int nrhs, 
 extern void @(pre)GatherNRformat_loc3d(fact_t Fact, NRformat_loc *A, @(type) *B,
 				   int ldb, int nrhs, gridinfo3d_t *grid3d,
 				   NRformat_loc3d **);
-extern void @(pre)GatherNRformat_loc3_allgrid(fact_t Fact, NRformat_loc *A, @(type) *B,
+extern void @(pre)GatherNRformat_loc3d_allgrid(fact_t Fact, NRformat_loc *A, @(type) *B,
 				   int ldb, int nrhs, gridinfo3d_t *grid3d,
 				   NRformat_loc3d **);
 extern int @(pre)Scatter_B3d(NRformat_loc3d *A3d, gridinfo3d_t *grid3d);
@@ -1221,10 +1221,10 @@ extern void @(pre)newTrfPartitionInit(int_t nsupers,  @(pre)LUstruct_t *LUstruct
 extern @(pre)trf3Dpartition_t* @(pre)initTrf3Dpartition(int_t nsupers,
 					     superlu_dist_options_t *options,
 					     @(pre)LUstruct_t *LUstruct, gridinfo3d_t * grid3d);
-extern @(pre)trf3Dpartition_t* @(pre)initTrf3Dpartition_allgrid(int_t nsupers,
+extern @(pre)trf3Dpartition_t* @(pre)initTrf3Dpartition_allgrid(int_t n,
 					     superlu_dist_options_t *options,
 					     @(pre)LUstruct_t *LUstruct, gridinfo3d_t * grid3d);
-extern @(pre)trf3Dpartition_t* @(pre)initTrf3DpartitionLUstructgrid0(int_t nsupers,
+extern @(pre)trf3Dpartition_t* @(pre)initTrf3DpartitionLUstructgrid0(int_t n,
 					     superlu_dist_options_t *options,
 					     @(pre)LUstruct_t *LUstruct, gridinfo3d_t * grid3d);
 extern void @(pre)Destroy_trf3Dpartition(@(pre)trf3Dpartition_t *trf3Dpartition);
