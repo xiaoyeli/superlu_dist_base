@@ -1,20 +1,20 @@
 /*! \file
 Copyright (c) 2003, The Regents of the University of California, through
-Lawrence Berkeley National Laboratory (subject to receipt of any required 
-approvals from U.S. Dept. of Energy) 
+Lawrence Berkeley National Laboratory (subject to receipt of any required
+approvals from U.S. Dept. of Energy)
 
-All rights reserved. 
+All rights reserved.
 
 The source code is distributed under BSD license, see the file License.txt
 at the top-level directory.
 */
 
 
-/*! @file 
+/*! @file
  * \brief Read the matrix from data file
  *
  * <pre>
- * -- Distributed SuperLU routine (version 2.0) --
+ * -- Distributed SuperLU routine (version 9.0) --
  * Lawrence Berkeley National Lab, Univ. of California Berkeley.
  * March 15, 2003
  * </pre>
@@ -27,18 +27,18 @@ at the top-level directory.
  * <pre>
  * Purpose
  * =======
- * 
+ *
  * DCREATE_MATRIX read the matrix from data file in Harwell-Boeing format,
  * and distribute it to processors in a distributed compressed row format.
  * It also generate the distributed true solution X and the right-hand
  * side RHS.
  *
  *
- * Arguments   
- * =========      
+ * Arguments
+ * =========
  *
  * A     (output) SuperMatrix*
- *       Local matrix A in NR_loc format. 
+ *       Local matrix A in NR_loc format.
  *
  * NRHS  (input) int_t
  *       Number of right-hand sides.
@@ -76,7 +76,7 @@ int dcreate_matrix(SuperMatrix *A, int nrhs, double **rhs,
     int_t    m, n, nnz;
     int_t    m_loc, fst_row, nnz_loc;
     int_t    m_loc_fst; /* Record m_loc of the first p-1 processors,
-			   when mod(m, p) is not zero. */ 
+			   when mod(m, p) is not zero. */
     int_t    row, col, i, j, relpos;
     int      iam;
     char     trans[1];
@@ -118,7 +118,7 @@ int dcreate_matrix(SuperMatrix *A, int nrhs, double **rhs,
 #endif
 
     /* Compute the number of rows to be distributed to local process */
-    m_loc = m / (grid->nprow * grid->npcol); 
+    m_loc = m / (grid->nprow * grid->npcol);
     m_loc_fst = m_loc;
     /* When m / procs is not an integer */
     if ((m_loc * grid->nprow * grid->npcol) != m) {
@@ -182,7 +182,7 @@ int dcreate_matrix(SuperMatrix *A, int nrhs, double **rhs,
 
 #if ( DEBUGlevel>=2 )
     if ( !iam ) dPrint_CompCol_Matrix_dist(&GA);
-#endif   
+#endif
 
     /* Destroy GA */
     Destroy_CompCol_Matrix_dist(&GA);
@@ -195,7 +195,7 @@ int dcreate_matrix(SuperMatrix *A, int nrhs, double **rhs,
     dCreate_CompRowLoc_Matrix_dist(A, m, n, nnz_loc, m_loc, fst_row,
 				   nzval_loc, colind, rowptr,
 				   SLU_NR_loc, SLU_D, SLU_GE);
-    
+
     /* Get the local B */
     if ( !((*rhs) = doubleMalloc_dist(m_loc*nrhs)) )
         ABORT("Malloc fails for rhs[]");
@@ -207,7 +207,7 @@ int dcreate_matrix(SuperMatrix *A, int nrhs, double **rhs,
     }
     *ldb = m_loc;
 
-    /* Set the true X */    
+    /* Set the true X */
     *ldx = m_loc;
     if ( !((*x) = doubleMalloc_dist(*ldx * nrhs)) )
         ABORT("Malloc fails for x_loc[]");
