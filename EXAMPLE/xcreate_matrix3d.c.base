@@ -14,7 +14,7 @@ at the top-level directory.
  * \brief Read the matrix from data file
  *
  * <pre>
- * -- Distributed SuperLU routine (version 7.0) --
+ * -- Distributed SuperLU routine (version 9.0) --
  * Lawrence Berkeley National Lab, Univ. of California Berkeley,
  * Oak Ridge National Lab.
  * May 12, 2021
@@ -101,7 +101,7 @@ int @(pre)create_matrix_postfix3d(SuperMatrix *A, int nrhs, @(type) **rhs,
         if (!strcmp(postfix, "rua"))
 @precision SCOMPLEX DCOMPLEX
         if(!strcmp(postfix,"cua"))
-@precision !	
+@precision !
         {
             /* Read the matrix stored on disk in Harwell-Boeing format. */
             @(pre)readhb_dist(iam, fp, &m, &n, &nnz, &nzval, &rowind, &colptr);
@@ -198,8 +198,8 @@ int @(pre)create_matrix_postfix3d(SuperMatrix *A, int nrhs, @(type) **rhs,
         MPI_Bcast( xtrue_global, n*nrhs, @(MPI_TYPE), 0, grid3d->comm );
         MPI_Bcast( b_global, m*nrhs, @(MPI_TYPE), 0, grid3d->comm );
     }
-	
-    
+
+
 
     /*************************************************
      * Change GA to a local A with NR_loc format     *

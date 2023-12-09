@@ -1,9 +1,9 @@
 /*! \file
 Copyright (c) 2003, The Regents of the University of California, through
-Lawrence Berkeley National Laboratory (subject to receipt of any required 
-approvals from U.S. Dept. of Energy) 
+Lawrence Berkeley National Laboratory (subject to receipt of any required
+approvals from U.S. Dept. of Energy)
 
-All rights reserved. 
+All rights reserved.
 
 The source code is distributed under BSD license, see the file License.txt
 at the top-level directory.
@@ -13,14 +13,14 @@ at the top-level directory.
  * \brief Driver program for P@(PRE)GSSVX3D example
  *
  * <pre>
- * -- Distributed SuperLU routine (version 8.1.0) --
+ * -- Distributed SuperLU routine (version 9.0) --
  * Lawrence Berkeley National Lab, Georgia Institute of Technology,
- * Oak Ridge National Lab 
+ * Oak Ridge National Lab
  * May 12, 2021
  * August 27, 2022  Add batch option
  *
  */
-#include "superlu_@(pre)defs.h"  
+#include "superlu_@(pre)defs.h"
 
 /*! \brief
  *
@@ -48,7 +48,7 @@ at the top-level directory.
  *
  * </pre>
  */
- 
+
 static void matCheck(int n, int m, @(type)* A, int LDA,
        @(type)* B, int LDB)
 {
@@ -59,7 +59,7 @@ static void matCheck(int n, int m, @(type)* A, int LDA,
 @precision SCOMPLEX DCOMPLEX
 	    assert( (A[i+ LDA*j].r == B[i+ LDB*j].r)
 	    	    && (A[i+ LDA*j].i == B[i+ LDB*j].i) );
-@precision !		    
+@precision !
 	}
     printf("B check passed\n");
     return;
@@ -95,7 +95,7 @@ static void checkNRFMT(NRformat_loc*A, NRformat_loc*B)
         assert( Aval[i] == Bval[i] );
 @precision SCOMPLEX DCOMPLEX
         assert( (Aval[i].r == Bval[i].r) && (Aval[i].i == Bval[i].i) );
-@precision !		    
+@precision !
         assert((A->colind)[i] == (B->colind)[i]);
 	printf("colind[] correct\n");
     }
@@ -114,7 +114,7 @@ main (int argc, char *argv[])
 {
     superlu_dist_options_t options;
     SuperLUStat_t stat;
-    SuperMatrix A;  // Now, A is on all 3D processes  
+    SuperMatrix A;  // Now, A is on all 3D processes
     @(pre)ScalePermstruct_t ScalePermstruct;
     @(pre)LUstruct_t LUstruct;
     @(pre)SOLVEstruct_t SOLVEstruct;
@@ -148,7 +148,7 @@ main (int argc, char *argv[])
     rowperm = -1;
     ir = -1;
     batch = 0;
-    
+
     /* ------------------------------------------------------------
        INITIALIZE MPI ENVIRONMENT.
        ------------------------------------------------------------ */
@@ -216,14 +216,14 @@ main (int argc, char *argv[])
     if ( batch ) { /* in the batch mode: create multiple SuperLU grids,
 		      each grid solving one linear system. */
 	/* ------------------------------------------------------------
-	   INITIALIZE MULTIPLE SUPERLU PROCESS GRIDS. 
+	   INITIALIZE MULTIPLE SUPERLU PROCESS GRIDS.
 	   ------------------------------------------------------------*/
 	MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 	usermap = SUPERLU_MALLOC(nprow*npcol*npdep * sizeof(int));
 	int color = myrank/(nprow*npcol*npdep); /* Assuming each grid uses the same number of nprow, npcol and npdep */
 	MPI_Comm_split(MPI_COMM_WORLD, color, myrank, &SubComm);
 	p = 0;
-	for (int k = 0; k < npdep; ++k) 
+	for (int k = 0; k < npdep; ++k)
 	    for (int i = 0; i < nprow; ++i)
 		for (int j = 0; j < npcol; ++j) usermap[i + j*nprow + k*nprow*npcol] = p++;
 	superlu_gridmap3d(SubComm, nprow, npcol, npdep, usermap, &grid);
@@ -256,7 +256,7 @@ main (int argc, char *argv[])
 
 	// printf("grid.iam %5d, myrank %5d\n",grid.iam,myrank);
 	// fflush(stdout);
-	
+
     } else {
         /* ------------------------------------------------------------
            INITIALIZE THE SUPERLU PROCESS GRID.
@@ -300,7 +300,7 @@ main (int argc, char *argv[])
 	}
         fflush(stdout);
     }
-	
+
     /* Bail out if I do not belong in the grid. */
     iam = grid.iam;
     if (iam == -1)     goto out;
@@ -338,13 +338,13 @@ main (int argc, char *argv[])
 #ifndef NRFRMT
     if ( grid.zscp.Iam == 0 )  // only in process layer 0
 	@(pre)create_matrix_postfix(&A, nrhs, &b, &ldb, &xtrue, &ldx, fp, suffix, &(grid.grid2d));
-	
+
 #else
     // *fp0 = *fp;
     @(pre)create_matrix_postfix3d(&A, nrhs, &b, &ldb,
                              &xtrue, &ldx, fp, suffix, &(grid));
     //printf("ldx %d, ldb %d\n", ldx, ldb);
-    
+
 #if 0  // following code is only for checking *Gather* routine
     NRformat_loc *Astore, *Astore0;
     @(type)* B2d;
@@ -358,20 +358,20 @@ main (int argc, char *argv[])
     if ( grid.zscp.Iam == 0 )  // only in process layer 0
     {
         @(pre)create_matrix_postfix(&Aref, nrhs, &bref, &ldb,
-                               &xtrueref, &ldx, fp0, 
+                               &xtrueref, &ldx, fp0,
                                suffix, &(grid.grid2d));
         Astore0 = (NRformat_loc *) Aref.Store;
 
 	/*
 	if ( (grid.grid2d).iam == 0 ) {
-	    printf(" iam %d\n", 0); 
+	    printf(" iam %d\n", 0);
 	    checkNRFMT(Astore, Astore0);
 	} else if ((grid.grid2d).iam == 1 ) {
-	    printf(" iam %d\n", 1); 
+	    printf(" iam %d\n", 1);
 	    checkNRFMT(Astore, Astore0);
-	} 
+	}
 	*/
-    
+
 	// bref, xtrueref are created on 2D
         matCheck(Astore->m_loc, nrhs, B2d, Astore->m_loc, bref, ldb);
     }
@@ -405,7 +405,7 @@ main (int argc, char *argv[])
      */
     set_default_options_dist (&options);
     options.Algo3d = YES;
-@precision SINGLE SCOMOPLEX    
+@precision SINGLE SCOMOPLEX
     options.IterRefine = SLU_SINGLE;
 @precision !
 #if 0
@@ -420,7 +420,7 @@ main (int argc, char *argv[])
     if (colperm != -1) options.ColPerm = colperm;
     if (lookahead != -1) options.num_lookaheads = lookahead;
     if (ir != -1) options.IterRefine = ir;
-    
+
     if (!iam) {
     	//print_sp_ienv_dist(&options);
 	print_options_dist(&options);
@@ -439,7 +439,7 @@ main (int argc, char *argv[])
     // broadcast m, n to all the process layers;
     MPI_Bcast( &m, 1, mpi_int_t, 0,  grid.zscp.comm);
     MPI_Bcast( &n, 1, mpi_int_t, 0,  grid.zscp.comm);
-#endif    
+#endif
 
     /* Initialize ScalePermstruct and LUstruct. */
     @(pre)ScalePermstructInit (m, n, &ScalePermstruct);
@@ -477,7 +477,7 @@ main (int argc, char *argv[])
         @(pre)DeAllocLlu_3d(n, &LUstruct, &grid);
         @(pre)DeAllocGlu_3d(&LUstruct);
     }
-    
+
     @(pre)Destroy_A3d_gathered_on_2d(&SOLVEstruct, &grid);
 
     Destroy_CompRowLoc_Matrix_dist (&A);
@@ -487,16 +487,16 @@ main (int argc, char *argv[])
     @(pre)ScalePermstructFree (&ScalePermstruct);
     @(pre)LUstructFree (&LUstruct);
     fclose(fp);
-    
+
     /* ------------------------------------------------------------
        RELEASE THE SUPERLU PROCESS GRID.
        ------------------------------------------------------------ */
 out:
     if ( batch ) {
-	result_min[0] = stat.utime[FACT];   
-	result_min[1] = stat.utime[SOLVE];  
-	result_max[0] = stat.utime[FACT];   
-	result_max[1] = stat.utime[SOLVE];    
+	result_min[0] = stat.utime[FACT];
+	result_min[1] = stat.utime[SOLVE];
+	result_max[0] = stat.utime[FACT];
+	result_max[1] = stat.utime[SOLVE];
 	MPI_Allreduce(MPI_IN_PLACE, result_min, 2, MPI_FLOAT,MPI_MIN, MPI_COMM_WORLD);
 	MPI_Allreduce(MPI_IN_PLACE, result_max, 2, MPI_FLOAT,MPI_MAX, MPI_COMM_WORLD);
 	if (!myrank) {
@@ -510,7 +510,7 @@ out:
 
     superlu_gridexit3d (&grid);
     if ( iam != -1 )PStatFree (&stat);
-    
+
     /* ------------------------------------------------------------
        TERMINATES THE MPI EXECUTION ENVIRONMENT.
        ------------------------------------------------------------ */
