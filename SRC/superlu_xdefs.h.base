@@ -596,7 +596,7 @@ extern int_t p@(pre)gstrs_init(int_t, int_t, int_t, int_t,
 	                  Glu_persist_t *, @(pre)SOLVEstruct_t *);
 extern int_t p@(pre)gstrs_init_device_lsum_x(superlu_dist_options_t *, int_t , int_t , int_t , gridinfo_t *,
 	     @(pre)LUstruct_t *, @(pre)SOLVEstruct_t *, int*);
-extern int_t pdgstrs_delete_device_lsum_x(@(pre)SOLVEstruct_t *);
+extern int_t p@(pre)gstrs_delete_device_lsum_x(@(pre)SOLVEstruct_t *);
 extern void pxgstrs_finalize(pxgstrs_comm_t *);
 extern int  @(pre)ldperm_dist(int, int, int_t, int_t [], int_t [],
 		    @(type) [], int_t *, @(mod_type) [], @(mod_type) []);
@@ -677,7 +677,7 @@ extern void p@(pre)convertU(superlu_dist_options_t *, gridinfo_t *, @(pre)LUstru
 extern void @(pre)lsum_fmod_inv_gpu_wrap(int_t, int_t, int_t, int_t, @(type) *, @(type) *, int, int, int_t , int *fmod, C_Tree  *, C_Tree  *, int_t *, int_t *, int64_t *, @(type) *, int64_t *, @(type) *, int64_t *, int_t *, int64_t *, int_t *, int *, gridinfo_t *,
 int_t , uint64_t* ,uint64_t* ,@(type)* ,@(type)* ,int* ,int* ,int* ,int* ,int* ,int* ,int* ,int* ,int* ,int* ,int* ,int* ,int* ,int* ,int* ,int* ,int* ,int* ,int);
 
-extern void dlsum_bmod_inv_gpu_wrap(superlu_dist_options_t *, int_t, int_t, int_t, int_t, @(type) *, @(type) *,int,int, int_t , int *, C_Tree  *, C_Tree  *, int_t *, int_t *, int64_t *,int_t *, int64_t *, int_t *, int64_t *, double *, int64_t *, double *, int64_t *, @(type)  *, int64_t *, int_t *, int64_t *, int_t *,gridinfo_t *,
+extern void @(pre)lsum_bmod_inv_gpu_wrap(superlu_dist_options_t *, int_t, int_t, int_t, int_t, @(type) *, @(type) *,int,int, int_t , int *, C_Tree  *, C_Tree  *, int_t *, int_t *, int64_t *,int_t *, int64_t *, int_t *, int64_t *, @(type) *, int64_t *, @(type) *, int64_t *, @(type)  *, int64_t *, int_t *, int64_t *, int_t *,gridinfo_t *,
                                     int_t, uint64_t*, uint64_t*, @(type)*, @(type)*,
                                     int*, int*, int*, int*,
                                     int*, int*, int*, int*, int*,
@@ -833,7 +833,7 @@ extern void @(pre)lsum_bmod_GG
     MPI_Request send_req[], /* input/output */
     SuperLUStat_t *stat, xtrsTimer_t *xtrsTimer);
 
-extern void dlsum_bmod_GG_newsolve (
+extern void @(pre)lsum_bmod_GG_newsolve (
     @(pre)trf3Dpartition_t*  trf3Dpartition,
     @(type) *lsum,        /* Sum of local modifications.                    */
     @(type) *x,           /* X array (local).                               */
@@ -1578,8 +1578,8 @@ extern int_t ancestorFactor(
 
 /*== end 3D prototypes ===================*/
 
-extern double *@(pre)ready_x;
-extern double *@(pre)ready_lsum;
+extern @(type) *@(pre)ready_x;
+extern @(type) *@(pre)ready_lsum;
 
 #ifdef __cplusplus
   }

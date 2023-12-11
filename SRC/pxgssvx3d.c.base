@@ -561,7 +561,7 @@ static int @(pre)checkArr(@(type) *A, @(type) *B, int n)
 @precision SCOMPLEX DCOMPLEX
 		@(type) temp;
         @(pre)_sub(&temp, &A[i], &B[i]);
-		assert(slud_@(pre)_abs(temp) <= EPSILON * SUPERLU_MIN(slud_@(pre)_abs(A[i]), slud_@(pre)_abs(B[i])));
+		assert(slud_@(pre)_abs(&temp) <= EPSILON * SUPERLU_MIN(slud_@(pre)_abs(&A[i]), slud_@(pre)_abs(&B[i])));
 @precision !
 	}
 
@@ -1178,7 +1178,12 @@ void p@(pre)gssvx3d(superlu_dist_options_t *options, SuperMatrix *A,
 			int ready_lsum_size = 2*maxrecvsz*nr;
 			if (get_acc_solve()){
 			nv_init_wrapper(grid->comm);
-			@(pre)prepare_multiGPU_buffers(flag_bc_size,flag_rd_size,ready_x_size,ready_lsum_size,my_flag_bc_size,my_flag_rd_size);
+@precision DOUBLE
+		    @(pre)prepare_multiGPU_buffers(flag_bc_size,flag_rd_size,ready_x_size,ready_lsum_size,my_flag_bc_size,my_flag_rd_size);
+@precision SCOMPLEX DCOMPLEX SINGLE
+		    //TODO: @(pre)prepare_multiGPU_buffers hasn't been created
+@precision !
+
 			}
 		#endif
 
@@ -1220,6 +1225,7 @@ void p@(pre)gssvx3d(superlu_dist_options_t *options, SuperMatrix *A,
 			double s_eps = smach_dist("Epsilon");
 			double thresh = s_eps * anorm;
 
+@precision DOUBLE
 			/* call constructor in C++ code */
 			LUgpu = @(pre)CreateLUgpuHandle(nsupers, ldt, trf3Dpartition, LUstruct, grid3d,
 						  SCT, options, stat, thresh, info);
@@ -1229,6 +1235,10 @@ void p@(pre)gssvx3d(superlu_dist_options_t *options, SuperMatrix *A,
 
 			@(pre)CopyLUGPU2Host(LUgpu, LUstruct);
 			@(pre)DestroyLUgpuHandle(LUgpu);
+@precision SCOMPLEX DCOMPLEX SINGLE
+		    //TODO: @(pre)CreateLUgpuHandle,p@(pre)gstrf3d_LUpackedInterface,@(pre)CopyLUGPU2Host,@(pre)DestroyLUgpuHandle haven't been created
+@precision !
+
 
 			// print other stuff
 			// if (!grid3d->zscp.Iam)
@@ -1652,7 +1662,11 @@ if (get_acc_solve()){
 						irow = fst_row;
 						for (i = 0; i < m_loc; ++i)
 						{
+@precision SINGLE DOUBLE
 							b_col[i] *= R[irow];
+@precision SCOMPLEX DCOMPLEX
+                        	@(pre)@(mod_pre)_mult(&b_col[i], &b_col[i], R[irow]);
+@precision !
 							++irow;
 						}
 						b_col += ldb;
@@ -1667,7 +1681,11 @@ if (get_acc_solve()){
 					irow = fst_row;
 					for (i = 0; i < m_loc; ++i)
 					{
+@precision SINGLE DOUBLE
 						b_col[i] *= C[irow];
+@precision SCOMPLEX DCOMPLEX
+						@(pre)@(mod_pre)_mult(&b_col[i], &b_col[i], C[irow]);
+@precision !
 						++irow;
 					}
 					b_col += ldb;
@@ -1823,7 +1841,11 @@ if (get_acc_solve()){
 						irow = fst_row;
 						for (i = 0; i < m_loc; ++i)
 						{
+@precision SINGLE DOUBLE
 							b_col[i] *= R[irow];
+@precision SCOMPLEX DCOMPLEX
+                        	@(pre)@(mod_pre)_mult(&b_col[i], &b_col[i], R[irow]);
+@precision !
 							++irow;
 						}
 						b_col += ldb;
@@ -1838,7 +1860,11 @@ if (get_acc_solve()){
 					irow = fst_row;
 					for (i = 0; i < m_loc; ++i)
 					{
+@precision SINGLE DOUBLE
 						b_col[i] *= C[irow];
+@precision SCOMPLEX DCOMPLEX
+						@(pre)@(mod_pre)_mult(&b_col[i], &b_col[i], C[irow]);
+@precision !
 						++irow;
 					}
 					b_col += ldb;
@@ -2006,7 +2032,11 @@ if (grid3d->zscp.Iam == 0)  /* on 2D grid-0 */
 						irow = fst_row;
 						for (i = 0; i < m_loc; ++i)
 						{
+@precision SINGLE DOUBLE
 							b_col[i] *= C[irow];
+@precision SCOMPLEX DCOMPLEX
+							@(pre)@(mod_pre)_mult(&b_col[i], &b_col[i], C[irow]);
+@precision !
 							++irow;
 						}
 						b_col += ldb;
@@ -2021,7 +2051,11 @@ if (grid3d->zscp.Iam == 0)  /* on 2D grid-0 */
 				irow = fst_row;
 				for (i = 0; i < m_loc; ++i)
 				    {
+@precision SINGLE DOUBLE
 					b_col[i] *= R[irow];
+@precision SCOMPLEX DCOMPLEX
+					@(pre)@(mod_pre)_mult(&b_col[i], &b_col[i], R[irow]);
+@precision !
 					++irow;
 				    }
 				b_col += ldb;

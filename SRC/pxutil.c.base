@@ -590,7 +590,11 @@ if (get_acc_solve()){
     #ifdef HAVE_NVSHMEM
     /* nvshmem related*/
     if (get_acc_solve()){
-    @(pre)delete_multiGPU_buffers();
+@precision DOUBLE
+        @(pre)delete_multiGPU_buffers();
+@precision SCOMPLEX DCOMPLEX SINGLE
+        //TODO: @(pre)delete_multiGPU_buffers() hasn't been created
+@precision !
     }
 
     SUPERLU_FREE(mystatus);
@@ -827,7 +831,12 @@ p@(pre)gstrs_init_device_lsum_x(superlu_dist_options_t *options, int_t n, int_t 
         {
             int_t lk = LBi (k, grid); /* Local block number. */
             int_t il = LSUM_BLK (lk);
-            lsum[il - LSUM_H] = k;  /* Block number prepended in the header. */
+@precision SINGLE DOUBLE
+	        lsum[il - LSUM_H] = k; /* Block number prepended in the header. */
+@precision SCOMPLEX DCOMPLEX
+            lsum[il - LSUM_H].r = k;/* Block number prepended in the header. */
+            lsum[il - LSUM_H].i = 0;
+@precision !
         }
         ii += knsupc;
     }
@@ -1067,7 +1076,7 @@ p@(pre)gstrs_init_device_lsum_x(superlu_dist_options_t *options, int_t n, int_t 
 
 
 int_t
-pdgstrs_delete_device_lsum_x(dSOLVEstruct_t *SOLVEstruct)
+p@(pre)gstrs_delete_device_lsum_x(@(pre)SOLVEstruct_t *SOLVEstruct)
 {
 #if ( defined(GPU_ACC) && defined(GPU_SOLVE) )
     checkGPU (gpuFree (SOLVEstruct->d_x));
@@ -1102,7 +1111,7 @@ pdgstrs_delete_device_lsum_x(dSOLVEstruct_t *SOLVEstruct)
 
 #endif
     return 0;
-} /* pdgstrs_delete_device_lsum_x */
+} /* p@(pre)gstrs_delete_device_lsum_x */
 
 
 

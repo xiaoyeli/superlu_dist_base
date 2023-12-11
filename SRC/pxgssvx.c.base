@@ -1469,7 +1469,11 @@ p@(pre)gssvx(superlu_dist_options_t *options, SuperMatrix *A,
 		int ready_lsum_size = 2*maxrecvsz*nr;
 		if (get_acc_solve()){
 		nv_init_wrapper(grid->comm);
+@precision DOUBLE
 		@(pre)prepare_multiGPU_buffers(flag_bc_size,flag_rd_size,ready_x_size,ready_lsum_size,my_flag_bc_size,my_flag_rd_size);
+@precision SCOMPLEX DCOMPLEX SINGLE
+		//TODO: @(pre)prepare_multiGPU_buffers hasn't been created
+@precision !
 		}
 	#endif
 
@@ -2416,7 +2420,7 @@ int64_t nnz_val;
 Glu_persist_t *Glu_persist = LUstruct->Glu_persist;
 int_t nsupers,nsupers_j,nsupers_i,ncol,ncol_loc,nrow;
 int_t lk,ik,ub,nub,i,il,gik,k,uptr,jj,ii,fnz,irow,jb;
-dLocalLU_t *Llu = LUstruct->Llu;
+@(pre)LocalLU_t *Llu = LUstruct->Llu;
 int_t  *Urbs = Llu->Urbs;
 int_t  **Ucb_valptr = Llu->Ucb_valptr;      /* Vertical linked list pointing to Unzval[] */
 Ucb_indptr_t **Ucb_indptr = Llu->Ucb_indptr;/* Vertical linked list pointing to Uindex[] */
@@ -2628,7 +2632,7 @@ int_t p@(pre)flatten_LDATA(superlu_dist_options_t *options, int_t n, @(pre)LUstr
 	C_Tree  *URtree_ptr;		  /* size ceil(NSUPERS/Pr)                */
 	int msgsize;
 
-    dLocalLU_t *Llu = LUstruct->Llu;
+    @(pre)LocalLU_t *Llu = LUstruct->Llu;
     int_t* xsup = Glu_persist->xsup;
     int_t  *Urbs = Llu->Urbs; /* Number of row blocks in each block column of U. */
     Ucb_indptr_t **Ucb_indptr = Llu->Ucb_indptr;/* Vertical linked list pointing to Uindex[] */

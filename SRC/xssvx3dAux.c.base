@@ -293,7 +293,13 @@ void @(pre)scale_distributed_matrix(int_t rowequ, int_t colequ, int_t m, int_t n
     for (int j = 0; j < m_loc; ++j) {
         for (int i = rowptr[j]; i < rowptr[j + 1]; ++i) {
             int columnIndex = colind[i];
+@precision SINGLE DOUBLE
             a[i] *= R1[rowIndex] * C1[columnIndex];
+@precision SCOMPLEX DCOMPLEX
+            @(pre)@(mod_pre)_mult(&a[i], &a[i], R1[rowIndex]); /* Scale rows */
+            @(pre)@(mod_pre)_mult(&a[i], &a[i], C1[columnIndex]); /* Scale columns */
+@precision !
+
 #if 0
 // this is not support as dmin, dsum and dprod are not used later in pdgssvx3d
 #if (PRNTlevel >= 2)
@@ -388,7 +394,7 @@ void @(pre)permute_global_A(int_t m, int_t n, int_t *colptr, int_t *rowind, int_
  */
 void @(pre)perform_LargeDiag_MC64(
     superlu_dist_options_t *options, fact_t Fact,
-    @(pre)ScalePermstruct_t *ScalePermstruct, dLUstruct_t *LUstruct,
+    @(pre)ScalePermstruct_t *ScalePermstruct, @(pre)LUstruct_t *LUstruct,
     int_t m, int_t n, gridinfo_t *grid,
     SuperMatrix *A, SuperMatrix *GA, SuperLUStat_t *stat, int_t job,
     int_t Equil, int_t *rowequ, int_t *colequ, int_t *iinfo) {

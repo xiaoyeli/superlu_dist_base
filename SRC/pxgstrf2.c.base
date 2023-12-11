@@ -477,7 +477,11 @@ void @(pre)gstrf2(int_t k, @(type)* diagBlk, int_t LDA, @(type)* BlockUfactor, i
         /* Not to replace zero pivot.  */
         if (options->ReplaceTinyPivot == YES)
         {
+        @precision SINGLE DOUBLE
             if (fabs(diagBlk[i]) < thresh)
+        @precision SCOMPLEX DCOMPLEX
+            if (slud_z_abs1(&diagBlk[i]) < thresh)
+        @precision !
             { /* Diagonal */
 
 #if (PRNTlevel >= 2)
@@ -512,21 +516,33 @@ void @(pre)gstrf2(int_t k, @(type)* diagBlk, int_t LDA, @(type)* BlockUfactor, i
             ublk_ptr[st + l * LDU] = diagBlk[i]; /* copy one row of U */
         }
         @precision SINGLE DOUBLE
-            @(type) alpha = -1, zero = 0.0;
+            @(type) alpha = -1, zero = 0.0, one = 1.0;
         @precision SCOMPLEX DCOMPLEX
-            @(type) alpha = {-1.0, 0.0}, zero = {0.0, 0.0};
+            @(type) alpha = {-1.0, 0.0}, zero = {0.0, 0.0}, one = {1.0, 0.0};
         @precision !
-        if (ujrow[0] == zero) /* Test for singularity. */
+@precision SINGLE DOUBLE
+        if ( ujrow[0] == zero )  /* Test for singularity. */
+@precision SCOMPLEX DCOMPLEX
+        /* Test for singularity. */
+        if ( ujrow[0].r == 0.0 && ujrow[0].i == 0.0 )
+@precision !
         {
             *info = j + jfst + 1;
         }
         else /* Scale the j-th column. */
         {
             @(type) temp;
+@precision SINGLE DOUBLE
             temp = 1.0 / ujrow[0];
-            for (int_t i = luptr + 1; i < luptr - j + nsupc; ++i)
+            for (i = luptr + 1; i < luptr - j + nsupc; ++i)
                 diagBlk[i] *= temp;
             stat->ops[FACT] += nsupc - j - 1;
+@precision SCOMPLEX DCOMPLEX
+            slud_z_div(&temp, &one, &ujrow[0]);
+            for (i = luptr + 1; i < luptr - j + nsupc; ++i)
+                zz_mult(&diagBlk[i], &diagBlk[i], &temp);
+            stat->ops[FACT] += 6*(nsupc-j-1) + 10;
+@precision !
         }
 
         /* Rank-1 update of the trailing submatrix. */

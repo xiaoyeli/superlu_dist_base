@@ -725,7 +725,7 @@ int_t @(pre)SchurComplementSetupGPU(
 
     //PrintInt10("inittrf3Dpartition: ldts", mxLeafNode, ldts);
 
-    dtrf3Dpartition_t*  trf3Dpartition = SUPERLU_MALLOC(sizeof(dtrf3Dpartition_t));
+    @(pre)trf3Dpartition_t*  trf3Dpartition = SUPERLU_MALLOC(sizeof(@(pre)trf3Dpartition_t));
 
     trf3Dpartition->gEtreeInfo = gEtreeInfo;
     trf3Dpartition->iperm_c_supno = iperm_c_supno;
@@ -909,7 +909,7 @@ int_t @(pre)SchurComplementSetupGPU(
 
     //PrintInt10("inittrf3Dpartition: ldts", mxLeafNode, ldts);
 
-    dtrf3Dpartition_t*  trf3Dpartition = SUPERLU_MALLOC(sizeof(dtrf3Dpartition_t));
+    @(pre)trf3Dpartition_t*  trf3Dpartition = SUPERLU_MALLOC(sizeof(@(pre)trf3Dpartition_t));
 
     trf3Dpartition->gEtreeInfo = gEtreeInfo;
     trf3Dpartition->iperm_c_supno = iperm_c_supno;
