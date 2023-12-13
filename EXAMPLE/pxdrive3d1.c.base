@@ -421,13 +421,9 @@ main (int argc, char *argv[])
     if ( grid.zscp.Iam == 0 ) { // process layer 0
 
 	PStatPrint (&options, &stat, &(grid.grid2d)); /* Print 2D statistics.*/
-
-        @(pre)Destroy_LU (n, &(grid.grid2d), &LUstruct);
-        @(pre)SolveFinalize (&options, &SOLVEstruct);
-    } else { // Process layers not equal 0
-        @(pre)DeAllocLlu_3d(n, &LUstruct, &grid);
-        @(pre)DeAllocGlu_3d(&LUstruct);
     }
+        @(pre)SolveFinalize (&options, &SOLVEstruct);
+        @(pre)Destroy_LU (n, &(grid.grid2d), &LUstruct);
 
     @(pre)Destroy_A3d_gathered_on_2d(&SOLVEstruct, &grid);
 

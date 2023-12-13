@@ -77,6 +77,10 @@ sed -i 's/[[:blank:]]*$//' TEST/*.*
 
 
 ./extract -b EXAMPLE/pxdrive.c.base -o ../output/EXAMPLE/pddrive.c precision=DOUBLE
+./extract -b EXAMPLE/pxdrive3d.c.base -o ../output/EXAMPLE/pddrive3d.c precision=DOUBLE
+./extract -b EXAMPLE/pxdrive3d1.c.base -o ../output/EXAMPLE/pddrive3d1.c precision=DOUBLE
+./extract -b EXAMPLE/pxdrive3d2.c.base -o ../output/EXAMPLE/pddrive3d2.c precision=DOUBLE
+./extract -b EXAMPLE/pxdrive3d3.c.base -o ../output/EXAMPLE/pddrive3d3.c precision=DOUBLE
 ./extract -b EXAMPLE/pxdrive_ABglobal.c.base -o ../output/EXAMPLE/pddrive_ABglobal.c precision=DOUBLE
 ./extract -b EXAMPLE/pxdrive1.c.base -o ../output/EXAMPLE/pddrive1.c precision=DOUBLE
 ./extract -b EXAMPLE/pxdrive1_ABglobal.c.base -o ../output/EXAMPLE/pddrive1_ABglobal.c precision=DOUBLE
@@ -188,7 +192,10 @@ sed -i 's/[[:blank:]]*$//' TEST/*.*
 
 
 
-
+./extract -b EXAMPLE/pxdrive3d.c.base -o ../output/EXAMPLE/pzdrive3d.c precision=DCOMPLEX
+./extract -b EXAMPLE/pxdrive3d1.c.base -o ../output/EXAMPLE/pzdrive3d1.c precision=DCOMPLEX
+./extract -b EXAMPLE/pxdrive3d2.c.base -o ../output/EXAMPLE/pzdrive3d2.c precision=DCOMPLEX
+./extract -b EXAMPLE/pxdrive3d3.c.base -o ../output/EXAMPLE/pzdrive3d3.c precision=DCOMPLEX
 ./extract -b EXAMPLE/pxdrive.c.base -o ../output/EXAMPLE/pzdrive.c precision=DCOMPLEX
 ./extract -b EXAMPLE/pxdrive_ABglobal.c.base -o ../output/EXAMPLE/pzdrive_ABglobal.c precision=DCOMPLEX
 ./extract -b EXAMPLE/pxdrive1.c.base -o ../output/EXAMPLE/pzdrive1.c precision=DCOMPLEX

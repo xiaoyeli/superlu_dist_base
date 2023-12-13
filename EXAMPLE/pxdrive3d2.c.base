@@ -353,12 +353,9 @@ main (int argc, char *argv[])
     Destroy_CompRowLoc_Matrix_dist (&A);
     if ( grid.zscp.Iam == 0 ) { // process layer 0
 	PStatPrint (&options, &stat, &(grid.grid2d)); /* Print 2D statistics.*/
-        /* Deallocate storage associated with the L and U matrices.*/
-	@(pre)Destroy_LU(n, &(grid.grid2d), &LUstruct);
-    } else { // Process layers not equal 0
-        @(pre)DeAllocLlu_3d(n, &LUstruct, &grid);
-        @(pre)DeAllocGlu_3d(&LUstruct);
     }
+    /* Deallocate storage associated with the L and U matrices.*/
+	@(pre)Destroy_LU(n, &(grid.grid2d), &LUstruct);
 
     PStatFree(&stat);
     SUPERLU_FREE(b);     /* Free storage of right-hand side.*/
@@ -400,13 +397,11 @@ main (int argc, char *argv[])
     if ( grid.zscp.Iam == 0 ) { // process layer 0
 
 	PStatPrint (&options, &stat, &(grid.grid2d)); /* Print 2D statistics.*/
-
-        @(pre)Destroy_LU (n, &(grid.grid2d), &LUstruct);
-        @(pre)SolveFinalize (&options, &SOLVEstruct);
-    } else { // Process layers not equal 0
-        @(pre)DeAllocLlu_3d(n, &LUstruct, &grid);
-        @(pre)DeAllocGlu_3d(&LUstruct);
     }
+    @(pre)SolveFinalize (&options, &SOLVEstruct);
+    @(pre)Destroy_LU (n, &(grid.grid2d), &LUstruct);
+
+
 
     @(pre)Destroy_A3d_gathered_on_2d(&SOLVEstruct, &grid); // After all factorization
 
