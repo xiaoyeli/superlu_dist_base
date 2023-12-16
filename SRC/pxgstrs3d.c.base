@@ -1908,9 +1908,9 @@ int_t @(pre)lsumForestFsolve(int_t k,
 		{
 			int_t irow = lsub[lptr++] - rel; /* Relative row. */
 			for (int_t j = 0; j < nrhs; ++j)
-@precision DOUBLE
+@precision SINGLE DOUBLE
                 dest[irow + j * iknsupc] -= rtemp[i + j * nbrow];
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
                 z_sub(&dest[irow + j * iknsupc], &dest[irow + j * iknsupc], &rtemp[i + j * nbrow]);
 @precision !
 		}
@@ -2293,9 +2293,9 @@ void @(pre)lsum_fmod_leaf (
 		{
 			irow = lsub[lptr++] - rel; /* Relative row. */
 			RHS_ITERATE(j)
-@precision DOUBLE
+@precision SINGLE DOUBLE
             dest[irow + j * iknsupc] -= rtemp[i + j * nbrow];
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
             z_sub(&dest[irow + j * iknsupc], &dest[irow + j * iknsupc], &rtemp[i + j * nbrow]);
 @precision !
 		}
@@ -3908,9 +3908,9 @@ void @(pre)lsum_fmod_leaf_newsolve (
 		{
 			irow = lsub[lptr++] - rel; /* Relative row. */
 			RHS_ITERATE(j)
-@precision DOUBLE
+@precision SINGLE DOUBLE
                 dest[irow + j * iknsupc] -= rtemp[i + j * nbrow];
-@precision DCOMPLEX
+@precision SCOMPLEX DCOMPLEX
                 z_sub(&dest[irow + j * iknsupc], &dest[irow + j * iknsupc], &rtemp[i + j * nbrow]);
 @precision !
 		}

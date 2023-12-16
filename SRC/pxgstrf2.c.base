@@ -455,7 +455,7 @@ int_t LpanelUpdate(int off0,  int nsupc, @(type)* ublk_ptr, int ld_ujrow,
 
 
 void @(pre)gstrf2(int_t k, @(type)* diagBlk, int_t LDA, @(type)* BlockUfactor, int_t LDU,
-    @(mod_type) thresh, int_t* xsup,
+    double thresh, int_t* xsup,
     superlu_dist_options_t *options,
     SuperLUStat_t *stat, int *info
  )
