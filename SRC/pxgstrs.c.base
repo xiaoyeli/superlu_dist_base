@@ -1998,8 +1998,11 @@ t1 = SuperLU_timer_();
 	/* the following transfer is not needed at the U solve works on the d_x directly */
 	// checkGPU(gpuMemcpy(x, d_x, (ldalsum * nrhs + nlb * XK_H) * sizeof(@(type)), gpuMemcpyDeviceToHost));
 
-
+@precision SINGLE DOUBLE
 	stat_loc[0]->ops[SOLVE]+=Llu->Lnzval_bc_cnt*nrhs*2; // YL: this is a rough estimate
+@precision SCOMPLEX DCOMPLEX
+	stat_loc[0]->ops[SOLVE]+=Llu->Lnzval_bc_cnt*nrhs*8; // YL: this is a rough estimate
+@precision !
 
 #endif
 #endif
@@ -2829,8 +2832,11 @@ if (get_acc_solve()){  /* GPU trisolve*/
 
 	checkGPU(gpuMemcpy(x, d_x, (ldalsum * nrhs + nlb * XK_H) * sizeof(@(type)), gpuMemcpyDeviceToHost));
 
-
+@precision SINGLE DOUBLE
 	stat_loc[0]->ops[SOLVE]+=Llu->Unzval_br_cnt*nrhs*2; // YL: this is a rough estimate
+@precision SCOMPLEX DCOMPLEX
+	stat_loc[0]->ops[SOLVE]+=Llu->Unzval_br_cnt*nrhs*8; // YL: this is a rough estimate
+@precision !
 
 #endif
 }else{  /* CPU trisolve*/
