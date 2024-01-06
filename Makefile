@@ -105,11 +105,12 @@ single:	\
 	$(TGTSRC)/streeFactorization.c \
 	$(TGTSRC)/streeFactorizationGPU.c \
 	$(TGTSRC)/psgstrf3d.c \
-	$(TGTSRC)/psgstrf3d.c \
+	$(TGTSRC)/psgstrs3d.c \
 	$(TGTSRC)/psgssvx3d.c \
 	$(TGTSRC)/snrformat_loc3d.c \
 	$(TGTSRC)/ssuperlu_blas.c \
 	$(TGTSRC)/s_c2cpp_GetHWPM.cpp \
+	$(TGTSRC)/sssvx3dAux.c
 
 $(TGTSRC)/slustruct_gpu.h:	$(SRC)/xlustruct_gpu.h.base
 	extract -b $? -o $@ precision=single
@@ -213,6 +214,8 @@ $(TGTSRC)/streeFactorizationGPU.c: $(SRC)/xtreeFactorizationGPU.c.base
 	extract -b $? -o $@ precision=single
 $(TGTSRC)/psgstrf3d.c:	$(SRC)/pxgstrf3d.c.base
 	extract -b $? -o $@ precision=single
+$(TGTSRC)/psgstrs3d.c:	$(SRC)/pxgstrs3d.c.base
+	extract -b $? -o $@ precision=single
 $(TGTSRC)/psgssvx3d.c:	$(SRC)/pxgssvx3d.c.base
 	extract -b $? -o $@ precision=single
 $(TGTSRC)/snrformat_loc3d.c:	$(SRC)/xnrformat_loc3d.c.base
@@ -264,6 +267,8 @@ $(TGTTST)/pstest.c:	$(TST)/pxtest.c.base
 $(TGTTST)/pscompute_resid.c:	$(TST)/pxcompute_resid.c.base
 	extract -b $? -o $@ precision=single
 $(TGTSRC)/s_c2cpp_GetHWPM.cpp: $(SRC)/x_c2cpp_GetHWPM.cpp.base
+	extract -b $? -o $@ precision=single
+$(TGTSRC)/sssvx3dAux.c: $(SRC)/xssvx3dAux.c.base
 	extract -b $? -o $@ precision=single
 
 double:	\
@@ -341,10 +346,12 @@ double:	\
 	$(TGTSRC)/dtreeFactorization.c \
 	$(TGTSRC)/dtreeFactorizationGPU.c \
 	$(TGTSRC)/pdgstrf3d.c \
+	$(TGTSRC)/pdgstrs3d.c \
 	$(TGTSRC)/pdgssvx3d.c \
 	$(TGTSRC)/dnrformat_loc3d.c \
 	$(TGTSRC)/dsuperlu_blas.c \
 	$(TGTSRC)/d_c2cpp_GetHWPM.cpp \
+	$(TGTSRC)/dssvx3dAux.c
 
 
 $(TGTSRC)/dlustruct_gpu.h:	$(SRC)/xlustruct_gpu.h.base
@@ -449,6 +456,8 @@ $(TGTSRC)/dtreeFactorizationGPU.c: $(SRC)/xtreeFactorizationGPU.c.base
 	extract -b $? -o $@ precision=double
 $(TGTSRC)/pdgstrf3d.c:	$(SRC)/pxgstrf3d.c.base
 	extract -b $? -o $@ precision=double
+$(TGTSRC)/pdgstrs3d.c:	$(SRC)/pxgstrs3d.c.base
+	extract -b $? -o $@ precision=double
 $(TGTSRC)/pdgssvx3d.c:	$(SRC)/pxgssvx3d.c.base
 	extract -b $? -o $@ precision=double
 $(TGTSRC)/dnrformat_loc3d.c:	$(SRC)/xnrformat_loc3d.c.base
@@ -502,6 +511,8 @@ $(TGTTST)/pdtest.c:	$(TST)/pxtest.c.base
 $(TGTTST)/pdcompute_resid.c:	$(TST)/pxcompute_resid.c.base
 	extract -b $? -o $@ precision=double
 $(TGTSRC)/d_c2cpp_GetHWPM.cpp:	$(SRC)/x_c2cpp_GetHWPM.cpp.base
+	extract -b $? -o $@ precision=double
+$(TGTSRC)/dssvx3dAux.c:	$(SRC)/xssvx3dAux.c.base
 	extract -b $? -o $@ precision=double
 
 dcomplex: \
@@ -579,10 +590,12 @@ dcomplex: \
 	$(TGTSRC)/ztreeFactorization.c \
 	$(TGTSRC)/ztreeFactorizationGPU.c \
 	$(TGTSRC)/pzgstrf3d.c \
+	$(TGTSRC)/pzgstrs3d.c \
 	$(TGTSRC)/pzgssvx3d.c \
 	$(TGTSRC)/znrformat_loc3d.c \
 	$(TGTSRC)/zsuperlu_blas.c \
 	$(TGTSRC)/z_c2cpp_GetHWPM.cpp \
+	$(TGTSRC)/zssvx3dAux.c \
 
 $(TGTSRC)/zlustruct_gpu.h:	$(SRC)/xlustruct_gpu.h.base
 	extract -b $? -o $@ precision=dcomplex
@@ -686,6 +699,8 @@ $(TGTSRC)/ztreeFactorizationGPU.c: $(SRC)/xtreeFactorizationGPU.c.base
 	extract -b $? -o $@ precision=dcomplex
 $(TGTSRC)/pzgstrf3d.c: $(SRC)/pxgstrf3d.c.base
 	extract -b $? -o $@ precision=dcomplex
+$(TGTSRC)/pzgstrs3d.c: $(SRC)/pxgstrs3d.c.base
+	extract -b $? -o $@ precision=dcomplex
 $(TGTSRC)/znrformat_loc3d.c: $(SRC)/xnrformat_loc3d.c.base
 	extract -b $? -o $@ precision=dcomplex
 $(TGTSRC)/pzgssvx3d.c: $(SRC)/pxgssvx3d.c.base
@@ -739,4 +754,6 @@ $(TGTTST)/pztest.c:	$(TST)/pxtest.c.base
 $(TGTTST)/pzcompute_resid.c:	$(TST)/pxcompute_resid.c.base
 	extract -b $? -o $@ precision=dcomplex
 $(TGTSRC)/z_c2cpp_GetHWPM.cpp:	$(SRC)/x_c2cpp_GetHWPM.cpp.base
+	extract -b $? -o $@ precision=dcomplex
+$(TGTSRC)/zssvx3dAux.c:	$(SRC)/xssvx3dAux.c.base
 	extract -b $? -o $@ precision=dcomplex

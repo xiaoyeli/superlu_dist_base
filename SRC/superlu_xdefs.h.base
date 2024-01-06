@@ -977,6 +977,20 @@ extern void  @(pre)readMM_dist(FILE *, int_t *, int_t *, int_t *,
 	                  @(type) **, int_t **, int_t **);
 extern int  @(pre)read_binary(FILE *, int_t *, int_t *, int_t *,
 	                  @(type) **, int_t **, int_t **);
+			  
+extern void validateInput_p@(pre)gssvx3d(superlu_dist_options_t *, SuperMatrix *A,
+       int ldb, int nrhs, gridinfo3d_t *, int *info);
+extern void @(pre)allocScalePermstruct_RC(@(pre)ScalePermstruct_t *, int_t m, int_t n);
+extern void @(pre)scaleMatrixDiagonally(fact_t Fact, @(pre)ScalePermstruct_t *, SuperMatrix *,
+       	    		SuperLUStat_t *, gridinfo_t *, int *rowequ, int *colequ, int_t*iinfo);
+extern void @(pre)perform_row_permutation(superlu_dist_options_t *, fact_t Fact,
+           @(pre)ScalePermstruct_t *, @(pre)LUstruct_t *LUstruct, int_t m, int_t n,
+	       gridinfo_t *, SuperMatrix *A, SuperMatrix *GA, SuperLUStat_t *,
+	       int job, int_t Equil, int *rowequ, int *colequ, int_t *iinfo);
+extern @(mod_type) @(pre)computeA_Norm(int notran, SuperMatrix *, gridinfo_t *);
+extern int @(pre)trs_compute_communication_structure(superlu_dist_options_t *options,
+       int_t n, @(pre)LUstruct_t *, @(pre)ScalePermstruct_t * ScalePermstruct,
+       int* supernodeMask, gridinfo_t *, SuperLUStat_t *);
 
 /* Distribute the data for numerical factorization */
 extern float @(pre)dist_psymbtonum(superlu_dist_options_t *, int_t, SuperMatrix *,
