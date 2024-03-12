@@ -261,11 +261,15 @@ static void @(pre)readrhs(int m, @(type) *b)
 	exit(-1);
     }
     for (i = 0; i < m; ++i)
-@precision SINGLE DOUBLE
-      i = fscanf(fp, "%lf\n", &b[i]);
+@precision SINGLE
+      i = fscanf(fp, "%f\n", &b[i]);
       /*fscanf(fp, "%d%lf\n", &j, &b[i]);*/
     /*        readpair_(j, &b[i]);*/
-@precision SCOMPLEX DCOMPLEX
+@precision DOUBLE
+      i = fscanf(fp, "%lf\n", &b[i]);
+@precision SCOMPLEX
+      i = fscanf(fp, "%f%f\n", &b[i].r, &b[i].i);
+@precision DCOMPLEX
       i = fscanf(fp, "%lf%lf\n", &b[i].r, &b[i].i);
 @precision !
     fclose(fp);

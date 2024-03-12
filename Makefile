@@ -110,7 +110,11 @@ single:	\
 	$(TGTSRC)/snrformat_loc3d.c \
 	$(TGTSRC)/ssuperlu_blas.c \
 	$(TGTSRC)/s_c2cpp_GetHWPM.cpp \
-	$(TGTSRC)/sssvx3dAux.c
+	$(TGTSRC)/sssvx3dAux.c \
+	$(TGTSRC)/s3DPartition.c \
+	$(TGTSRC)/psgssvx3d_csc_batch.c \
+	$(TGTSRC)/sequil_batch.c \
+	$(TGTSRC)/spivot_batch.c \
 
 $(TGTSRC)/slustruct_gpu.h:	$(SRC)/xlustruct_gpu.h.base
 	extract -b $? -o $@ precision=single
@@ -270,6 +274,14 @@ $(TGTSRC)/s_c2cpp_GetHWPM.cpp: $(SRC)/x_c2cpp_GetHWPM.cpp.base
 	extract -b $? -o $@ precision=single
 $(TGTSRC)/sssvx3dAux.c: $(SRC)/xssvx3dAux.c.base
 	extract -b $? -o $@ precision=single
+$(TGTSRC)/s3DPartition.c: $(SRC)/x3DPartition.c.base
+	extract -b $? -o $@ precision=single
+$(TGTSRC)/psgssvx3d_csc_batch.c: $(SRC)/pxgssvx3d_csc_batch.c.base
+	extract -b $? -o $@ precision=single
+$(TGTSRC)/sequil_batch.c: $(SRC)/xequil_batch.c.base
+	extract -b $? -o $@ precision=single
+$(TGTSRC)/spivot_batch.c: $(SRC)/xpivot_batch.c.base
+	extract -b $? -o $@ precision=single
 
 double:	\
 	$(TGTSRC)/dlustruct_gpu.h \
@@ -351,8 +363,11 @@ double:	\
 	$(TGTSRC)/dnrformat_loc3d.c \
 	$(TGTSRC)/dsuperlu_blas.c \
 	$(TGTSRC)/d_c2cpp_GetHWPM.cpp \
-	$(TGTSRC)/dssvx3dAux.c
-
+	$(TGTSRC)/dssvx3dAux.c \
+	$(TGTSRC)/d3DPartition.c \
+	$(TGTSRC)/pdgssvx3d_csc_batch.c \
+	$(TGTSRC)/dequil_batch.c \
+	$(TGTSRC)/dpivot_batch.c \
 
 $(TGTSRC)/dlustruct_gpu.h:	$(SRC)/xlustruct_gpu.h.base
 	extract -b $? -o $@ precision=double
@@ -514,6 +529,14 @@ $(TGTSRC)/d_c2cpp_GetHWPM.cpp:	$(SRC)/x_c2cpp_GetHWPM.cpp.base
 	extract -b $? -o $@ precision=double
 $(TGTSRC)/dssvx3dAux.c:	$(SRC)/xssvx3dAux.c.base
 	extract -b $? -o $@ precision=double
+$(TGTSRC)/d3DPartition.c:	$(SRC)/x3DPartition.c.base
+	extract -b $? -o $@ precision=double
+$(TGTSRC)/pdgssvx3d_csc_batch.c: $(SRC)/pxgssvx3d_csc_batch.c.base
+	extract -b $? -o $@ precision=double
+$(TGTSRC)/dequil_batch.c: $(SRC)/xequil_batch.c.base
+	extract -b $? -o $@ precision=double
+$(TGTSRC)/dpivot_batch.c: $(SRC)/xpivot_batch.c.base
+	extract -b $? -o $@ precision=double
 
 dcomplex: \
 	$(TGTSRC)/zlustruct_gpu.h \
@@ -596,6 +619,10 @@ dcomplex: \
 	$(TGTSRC)/zsuperlu_blas.c \
 	$(TGTSRC)/z_c2cpp_GetHWPM.cpp \
 	$(TGTSRC)/zssvx3dAux.c \
+	$(TGTSRC)/z3DPartition.c \
+	$(TGTSRC)/pzgssvx3d_csc_batch.c \
+	$(TGTSRC)/zequil_batch.c \
+	$(TGTSRC)/zpivot_batch.c \
 
 $(TGTSRC)/zlustruct_gpu.h:	$(SRC)/xlustruct_gpu.h.base
 	extract -b $? -o $@ precision=dcomplex
@@ -756,4 +783,12 @@ $(TGTTST)/pzcompute_resid.c:	$(TST)/pxcompute_resid.c.base
 $(TGTSRC)/z_c2cpp_GetHWPM.cpp:	$(SRC)/x_c2cpp_GetHWPM.cpp.base
 	extract -b $? -o $@ precision=dcomplex
 $(TGTSRC)/zssvx3dAux.c:	$(SRC)/xssvx3dAux.c.base
+	extract -b $? -o $@ precision=dcomplex
+$(TGTSRC)/z3DPartition.c:	$(SRC)/x3DPartition.c.base
+	extract -b $? -o $@ precision=dcomplex
+$(TGTSRC)/pzgssvx3d_csc_batch.c: $(SRC)/pxgssvx3d_csc_batch.c.base
+	extract -b $? -o $@ precision=dcomplex
+$(TGTSRC)/zequil_batch.c: $(SRC)/xequil_batch.c.base
+	extract -b $? -o $@ precision=dcomplex
+$(TGTSRC)/zpivot_batch.c: $(SRC)/xpivot_batch.c.base
 	extract -b $? -o $@ precision=dcomplex

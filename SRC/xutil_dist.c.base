@@ -106,6 +106,45 @@ void
     SUPERLU_FREE(marker);
 }
 
+/*! \brief Convert a compressed column storage into a compressed row storage.
+ */
+void
+@(pre)CompCol_to_CompRow_dist(int_t m, int_t n, int_t nnz,
+                         @(type) *a, int_t *colptr, int_t *rowind,
+                         @(type) **at, int_t **rowptr, int_t **colind)
+{
+    int_t i, j, row, relpos;
+    int_t *marker;
+
+    /* Allocate storage for another copy of the matrix. */
+    *at = (@(type) *) @(type)Malloc_dist(nnz);
+    *colind = intMalloc_dist(nnz);
+    *rowptr = intMalloc_dist(m+1);
+    marker = intCalloc_dist(m);
+
+    /* Get counts of each row of A, and set up rowpointers */
+    for (i = 0; i < n; ++i) /* loop through each column */
+	for (j = colptr[i]; j < colptr[i+1]; ++j) ++marker[rowind[j]];
+    (*rowptr)[0] = 0;
+    for (j = 0; j < m; ++j) {
+	(*rowptr)[j+1] = (*rowptr)[j] + marker[j];
+	marker[j] = (*rowptr)[j]; /* points to the start of each row */
+    }
+
+    /* Transfer the matrix into the compressed row storage. */
+    for (i = 0; i < n; ++i) { /* loop though each column */
+	for (j = colptr[i]; j < colptr[i+1]; ++j) {
+	    row = rowind[j];
+	    relpos = marker[row];
+	    (*colind)[relpos] = i;
+	    (*at)[relpos] = a[j];
+	    ++marker[row]; /* move pointer to next empty location */
+	}
+    }
+
+    SUPERLU_FREE(marker);
+} /* end @(pre)CompCol_to_CompRow_dist */
+
 /*! \brief Copy matrix A into matrix B. */
 void
 @(pre)Copy_CompCol_Matrix_dist(SuperMatrix *A, SuperMatrix *B)
@@ -527,10 +566,11 @@ void
     double exponent, tau; /* See TOMS paper on ItRef (LAWN165); testing code:
 			     Codes/UCB-itref-xblas-etc/xiaoye/itref/driver.c  */
     double r;
+    @(mod_type) xmax = 0.0, xmin = 1.0e6;
 
     exponent = (double)rand() / (double)((unsigned)RAND_MAX + 1); /* uniform in [0,1) */
 #if 1
-    tau = pow(2.0, 12.0 * exponent);
+    tau = pow(2.0, 12.0 * exponent); // 24.0
 #else
     tau = 5.0;
 #endif
@@ -549,6 +589,8 @@ void
 #else
 	  x[i + j*ldx] = (double)rand() / (double)((unsigned)RAND_MAX + 1); /* uniform in [0,1) */
 #endif
+       	  xmax = SUPERLU_MAX( xmax, x[i + j*ldx] );
+	  xmin = SUPERLU_MIN( xmin, x[i + j*ldx] );
 @precision SCOMPLEX DCOMPLEX
 	    if ( i % 2 ) {
 	        x[i + j*ldx].r = 1.0 + (double)(i+1.)/n;
@@ -558,10 +600,20 @@ void
 	        x[i + j*ldx].r = 2.0 + (double)(i+1.)/n;
 	        x[i + j*ldx].i = 2.0;
             }
+       	  xmax = SUPERLU_MAX( xmax, slud_@(pre)_abs1(&x[i + j*ldx]) );
+	  xmin = SUPERLU_MIN( xmin, slud_@(pre)_abs1(&x[i + j*ldx]) );
 @precision !
+	} /* for i ... */
+#if ( PRNTlevel>=1 )
+	int iam;
+	MPI_Comm_rank(MPI_COMM_WORLD, &iam);
+	if (iam==0) {
+	  printf(".. @(pre)GenXtrue: xmax %e, xmin %e\n", xmax, xmin);
+	  fflush(stdout);
 	}
-    }
-}
+#endif	
+    } /* for j ... */
+} /* end @(pre)GenXtrue_dist */
 
 /*! \brief Let rhs[i] = sum of i-th row of A, so the solution vector is all 1's
  */
@@ -615,8 +667,8 @@ void @(pre)inf_norm_error_dist(int_t n, int_t nrhs, @(type) *x, int_t ldx,
 	xnorm = SUPERLU_MAX(xnorm, fabs(x_work[i]));
 @precision SCOMPLEX DCOMPLEX
         @(pre)_sub(&temp, &x_work[i], &xtrue_work[i]);
-	err = SUPERLU_MAX(err, slud_z_abs(&temp));
-	xnorm = SUPERLU_MAX(xnorm, slud_z_abs(&x_work[i]));
+	err = SUPERLU_MAX(err, slud_@(pre)_abs(&temp));
+	xnorm = SUPERLU_MAX(xnorm, slud_@(pre)_abs(&x_work[i]));
 @precision !
       }
       err = err / xnorm;
@@ -669,6 +721,103 @@ int file_PrintDoublecomplex(FILE *fp, char *name, int_t len, doublecomplex *x)
     return 0;
 }
 @precision !
+
+/*! \brief Find max(abs(L(i,j)))
+ */
+@(mod_type) @(pre)MaxAbsLij(int iam, int n, Glu_persist_t *Glu_persist,
+		 @(pre)LUstruct_t *LUstruct, gridinfo_t *grid)
+{
+    register int extra, gb, j, lb, nsupc, nsupr, ncb;
+    register int_t k, mycol, r;
+    @(pre)LocalLU_t *Llu = LUstruct->Llu;
+    int_t *xsup = Glu_persist->xsup;
+    int_t *index;
+    @(type) *nzval;
+    int nsupers = Glu_persist->supno[n-1] + 1;
+    @(mod_type) lmax = 0.0, lmax_loc = 0.0;
+
+    ncb = nsupers / grid->npcol;
+    extra = nsupers % grid->npcol;
+    mycol = MYCOL( iam, grid );
+    if ( mycol < extra ) ++ncb;
+    for (lb = 0; lb < ncb; ++lb) {
+	index = Llu->Lrowind_bc_ptr[lb];
+	if ( index ) { /* Not an empty column */
+	    nzval = Llu->Lnzval_bc_ptr[lb];
+	    nsupr = index[1];
+	    gb = lb * grid->npcol + mycol;
+	    nsupc = SuperSize( gb );
+	    for (j = 0; j < nsupc; ++j) {
+                for (r = 0; r < nsupr; ++r) {
+@precision SINGLE DOUBLE
+		    lmax_loc = SUPERLU_MAX(lmax_loc, fabs(nzval[r + j*nsupr]));
+@precision SCOMPLEX DCOMPLEX
+		    lmax_loc = SUPERLU_MAX( lmax_loc, slud_@(pre)_abs1(&nzval[r + j*nsupr]) );
+@precision !
+		}
+            }
+	}
+    } /* end for */
+
+    /* Reduce max(abs(Uij)) from all processes, to process 0 */
+    MPI_Reduce (&lmax_loc, &lmax, 1, @(MPI_MOD_TYPE), MPI_MAX, 0, grid->comm);
+
+    /* Reduce sum of the row counts from each process. */
+
+    return (lmax);
+} /* end @(pre)MaxAbsLij */
+
+/*! \brief Find max(abs(U(i,j)))
+ */
+@(mod_type) @(pre)MaxAbsUij(int iam, int n, Glu_persist_t *Glu_persist,
+		 @(pre)LUstruct_t *LUstruct, gridinfo_t *grid)
+{
+    @(pre)LocalLU_t *Llu = LUstruct->Llu;
+    register int c, extra, jb, k, lb, len, nb, nrb, nsupc;
+    register int myrow, r, j, nsupers;
+    int_t *xsup = Glu_persist->xsup;
+    int_t *index;
+    @(type) *nzval;
+    @(mod_type) umax = 0.0, umax_loc = 0.0;
+
+    nsupers = Glu_persist->supno[n-1] + 1;
+    nrb = nsupers / grid->nprow;
+    extra = nsupers % grid->nprow;
+    myrow = MYROW( iam, grid );
+    if ( myrow < extra ) ++nrb;
+
+    // Sherry: Can also compute the maximum row count ...
+    for (lb = 0; lb < nrb; ++lb) {
+	index = Llu->Ufstnz_br_ptr[lb];
+	if ( index ) { /* Not an empty block row */
+	    nzval = Llu->Unzval_br_ptr[lb];
+	    nb = index[0]; /* number of blocks */
+	    r  = 0;
+	    for (c = 0, k = BR_HEADER; c < nb; ++c) {
+	        jb = index[k];    /* block number */
+		len = index[k+1]; /* number of nonzeros in the block */
+		nsupc = SuperSize( jb );
+		for (j = r; j < r + len; ++j) 
+@precision SINGLE DOUBLE
+		    umax_loc = SUPERLU_MAX(umax_loc, fabs(nzval[j]));
+@precision SCOMPLEX DCOMPLEX
+		    umax_loc = SUPERLU_MAX(umax_loc, slud_@(pre)_abs1(&nzval[j]));
+@precision !
+		k += UB_DESCRIPTOR + nsupc;
+		r += len;
+	    }
+	}
+    }
+    
+    /* Reduce max(abs(Uij)) from all processes, to process 0 */
+    MPI_Reduce (&umax_loc, &umax, 1, @(MPI_MOD_TYPE), MPI_MAX, 0, grid->comm);
+
+    /* Reduce sum of the row counts from each process. */
+
+    return (umax);
+
+} /* end @(pre)MaxAbsUij */
+
 
 /*! \brief Print the blocks in the factored matrix L.
  */
