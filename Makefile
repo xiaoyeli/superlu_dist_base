@@ -1,3 +1,4 @@
+
 SRC = ./SRC
 # TST = ./TESTING
 TST = ./TEST
@@ -115,6 +116,7 @@ single:	\
 	$(TGTSRC)/psgssvx3d_csc_batch.c \
 	$(TGTSRC)/sequil_batch.c \
 	$(TGTSRC)/spivot_batch.c \
+	$(TGTSRC)/psgstrs_lsum_cuda.cu \
 
 $(TGTSRC)/slustruct_gpu.h:	$(SRC)/xlustruct_gpu.h.base
 	extract -b $? -o $@ precision=single
@@ -282,6 +284,8 @@ $(TGTSRC)/sequil_batch.c: $(SRC)/xequil_batch.c.base
 	extract -b $? -o $@ precision=single
 $(TGTSRC)/spivot_batch.c: $(SRC)/xpivot_batch.c.base
 	extract -b $? -o $@ precision=single
+$(TGTSRC)/psgstrs_lsum_cuda.cu: $(SRC)/pxgstrs_lsum_cuda.cu.base
+	extract -b $? -o $@ precision=single
 
 double:	\
 	$(TGTSRC)/dlustruct_gpu.h \
@@ -368,6 +372,7 @@ double:	\
 	$(TGTSRC)/pdgssvx3d_csc_batch.c \
 	$(TGTSRC)/dequil_batch.c \
 	$(TGTSRC)/dpivot_batch.c \
+	$(TGTSRC)/pdgstrs_lsum_cuda.cu \
 
 $(TGTSRC)/dlustruct_gpu.h:	$(SRC)/xlustruct_gpu.h.base
 	extract -b $? -o $@ precision=double
@@ -537,6 +542,8 @@ $(TGTSRC)/dequil_batch.c: $(SRC)/xequil_batch.c.base
 	extract -b $? -o $@ precision=double
 $(TGTSRC)/dpivot_batch.c: $(SRC)/xpivot_batch.c.base
 	extract -b $? -o $@ precision=double
+$(TGTSRC)/pdgstrs_lsum_cuda.cu: $(SRC)/pxgstrs_lsum_cuda.cu.base
+	extract -b $? -o $@ precision=double
 
 dcomplex: \
 	$(TGTSRC)/zlustruct_gpu.h \
@@ -623,6 +630,7 @@ dcomplex: \
 	$(TGTSRC)/pzgssvx3d_csc_batch.c \
 	$(TGTSRC)/zequil_batch.c \
 	$(TGTSRC)/zpivot_batch.c \
+	$(TGTSRC)/pzgstrs_lsum_cuda.cu \
 
 $(TGTSRC)/zlustruct_gpu.h:	$(SRC)/xlustruct_gpu.h.base
 	extract -b $? -o $@ precision=dcomplex
@@ -791,4 +799,6 @@ $(TGTSRC)/pzgssvx3d_csc_batch.c: $(SRC)/pxgssvx3d_csc_batch.c.base
 $(TGTSRC)/zequil_batch.c: $(SRC)/xequil_batch.c.base
 	extract -b $? -o $@ precision=dcomplex
 $(TGTSRC)/zpivot_batch.c: $(SRC)/xpivot_batch.c.base
+	extract -b $? -o $@ precision=dcomplex
+$(TGTSRC)/pzgstrs_lsum_cuda.cu: $(SRC)/pxgstrs_lsum_cuda.cu.base
 	extract -b $? -o $@ precision=dcomplex
