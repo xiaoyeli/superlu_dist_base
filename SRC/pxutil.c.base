@@ -778,7 +778,7 @@ int_t
 p@(pre)gstrs_init_device_lsum_x(superlu_dist_options_t *options, int_t n, int_t m_loc, int_t nrhs, gridinfo_t *grid,
 	     @(pre)LUstruct_t *LUstruct, @(pre)SOLVEstruct_t *SOLVEstruct, int* supernodeMask)
 {
-#if ( defined(GPU_ACC) && defined(GPU_SOLVE) )
+#if ( defined(GPU_ACC) )
 @precision SINGLE DOUBLE
     @(type) zero = 0.0;
 @precision SCOMPLEX DCOMPLEX
@@ -1074,7 +1074,7 @@ p@(pre)gstrs_init_device_lsum_x(superlu_dist_options_t *options, int_t n, int_t 
 int_t
 p@(pre)gstrs_delete_device_lsum_x(@(pre)SOLVEstruct_t *SOLVEstruct)
 {
-#if ( defined(GPU_ACC) && defined(GPU_SOLVE) )
+#if ( defined(GPU_ACC) )
     checkGPU (gpuFree (SOLVEstruct->d_x));
     checkGPU (gpuFree (SOLVEstruct->d_lsum));
     checkGPU (gpuFree (SOLVEstruct->d_lsum_save));

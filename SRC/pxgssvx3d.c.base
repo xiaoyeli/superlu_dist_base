@@ -1220,25 +1220,25 @@ void p@(pre)gssvx3d(superlu_dist_options_t *options, SuperMatrix *A,
 			double s_eps = smach_dist("Epsilon");
 			double thresh = s_eps * anorm;
 
-#define TEMPLATED_VERSION 
+#define TEMPLATED_VERSION
 #ifdef TEMPLATED_VERSION
 @(pre)LUgpu_Handle @(pre)LUgpu = @(pre)CreateLUgpuHandle(nsupers, ldt, trf3Dpartition, LUstruct, grid3d,
 						  SCT, options, stat, thresh, info);
-			
+
 			/* call p@(pre)gstrf3d() in C++ code */
 			p@(pre)gstrf3d_LUv1(@(pre)LUgpu);
-			
+
 			@(pre)CopyLUGPU2Host(@(pre)LUgpu, LUstruct);
 			@(pre)DestroyLUgpuHandle(@(pre)LUgpu);
 		    //TODO: @(pre)CreateLUgpuHandle,p@(pre)gstrf3d_LUpackedInterface,@(pre)CopyLUGPU2Host,@(pre)DestroyLUgpuHandle haven't been created
-#else 
+#else
 			/* call constructor in C++ code */
 			LUgpu = @(pre)CreateLUgpuHandle(nsupers, ldt, trf3Dpartition, LUstruct, grid3d,
 						  SCT, options, stat, thresh, info);
 
 			/* call p@(pre)gstrf3d() in C++ code */
 			p@(pre)gstrf3d_LUpackedInterface(LUgpu);
-			
+
 			copyLUGPU2Host(LUgpu, LUstruct);
 			destroyLUgpuHandle(LUgpu);
 #endif /* TEMPLATED_VERSION */
@@ -1451,7 +1451,7 @@ void p@(pre)gssvx3d(superlu_dist_options_t *options, SuperMatrix *A,
 
 				// The following #ifdef GPU_ACC block frees and reallocates GPU data for trisolve. The data seems to be overwritten by p@(pre)gstrf3d.
 				int_t nsupers = getNsupers(n, LUstruct->Glu_persist);
-#if (defined(GPU_ACC) && defined(GPU_SOLVE))
+#if defined(GPU_ACC)
 
 				p@(pre)convertU(options, grid, LUstruct, stat, n);
 
@@ -1534,8 +1534,8 @@ if (get_acc_solve()){
 			}
 			}
 
-#if (defined(GPU_ACC) && defined(GPU_SOLVE))
-			if (options->DiagInv == NO)
+#if (defined(GPU_ACC))
+			if (options->DiagInv == NO && get_acc_solve())
 			{
 				if (iam == 0)
 				{

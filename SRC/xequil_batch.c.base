@@ -60,7 +60,7 @@ int
     int factored = (Fact == FACTORED);
     int Equil = (!factored && options->Equil == YES);
     int notran = (options->Trans == NOTRANS);
-    
+
 #if (DEBUGlevel >= 1)
     CHECK_MALLOC(0, "Enter dequil_batch()");
 #endif
@@ -72,12 +72,12 @@ int
 
     /* Loop through each matrix in the batch */
     for (int k = 0; k < batchCount; ++k) {
-	
+
 	NCformat *Astore = (NCformat *) A[k]->Store;
 	@(type) *a = (@(type) *) Astore->nzval;
 	int_t *colptr = Astore->colptr;
 	int_t *rowind = Astore->rowind;
-	
+
 	/* Assuming each matrix is in CSC format
 	 * Otherwise, convert to CSC first -- use the code in dvpivot_batch.c
 	 * ...
@@ -86,7 +86,7 @@ int
 	/* The following arrays are replicated on all processes. */
 	@(mod_type) *R = ReqPtr[k];
 	@(mod_type) *C = CeqPtr[k];
-	
+
 	/* Allocate stoage if not factored & ask for equilibration */
 	if (Equil && Fact != SamePattern_SameRowPerm) {
 	    /* Allocate storage if not done so before. */
@@ -159,16 +159,16 @@ int
 			}
 			break;
 		} /* end switch DiagScale[k] ... */
-		
+
 	    } else { /* Compute R[] & C[] from scratch */
-		
+
 		int iinfo;
 		char equed[1];
 		@(mod_type) amax, anorm, colcnd, rowcnd;
-		
+
 		/* Compute the row and column scalings. */
 		@(pre)gsequ_dist(A[k], R, C, &rowcnd, &colcnd, &amax, &iinfo);
-		
+
 		if (iinfo > 0) {
 		    if (iinfo <= m) {
 #if (PRNTlevel >= 1)
@@ -205,7 +205,7 @@ int
 	    } /* end if-else Fact ... */
 
 	} /* end if Equil ... LAPACK style, not involving MC64 */
-	
+
     } /* end for k ... batchCount */
 
 #if (DEBUGlevel >= 1)
