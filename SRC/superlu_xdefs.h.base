@@ -547,12 +547,12 @@ extern void   @(pre)ScalePermstructFree(@(pre)ScalePermstruct_t *);
 
 /* Driver related */
 extern void    @(pre)gsequ_dist (SuperMatrix *, @(mod_type) *, @(mod_type) *, @(mod_type) *,
-			    @(mod_type) *, @(mod_type) *, int_t *);
+			    @(mod_type) *, @(mod_type) *, int *);
 extern @(mod_type)  @(pre)langs_dist (char *, SuperMatrix *);
 extern void    @(pre)laqgs_dist (SuperMatrix *, @(mod_type) *, @(mod_type) *, @(mod_type),
 			    @(mod_type), @(mod_type), char *);
 extern void    p@(pre)gsequ (SuperMatrix *, @(mod_type) *, @(mod_type) *, @(mod_type) *,
-			@(mod_type) *, @(mod_type) *, int_t *, gridinfo_t *);
+			@(mod_type) *, @(mod_type) *, int *, gridinfo_t *);
 extern @(mod_type)  p@(pre)langs (char *, SuperMatrix *, gridinfo_t *);
 extern void    p@(pre)laqgs (SuperMatrix *, @(mod_type) *, @(mod_type) *, @(mod_type),
 			@(mod_type), @(mod_type), char *);
@@ -678,10 +678,10 @@ extern void @(pre)ComputeLevelsets(int , int_t , gridinfo_t *,
 #ifdef GPU_ACC
 extern void p@(pre)convertU(superlu_dist_options_t *, gridinfo_t *, @(pre)LUstruct_t *, SuperLUStat_t *, int);
 
-extern void @(pre)lsum_fmod_inv_gpu_wrap(int_t, int_t, int_t, int_t, @(type) *, @(type) *, int, int, int_t , int *fmod, C_Tree  *, C_Tree  *, int_t *, int_t *, int64_t *, @(type) *, int64_t *, @(type) *, int64_t *, int_t *, int64_t *, int_t *, int *, gridinfo_t *,
+extern void @(pre)lsum_fmod_inv_gpu_wrap(int, int, int, int, @(type) *, @(type) *, int, int, int_t , int *fmod, C_Tree  *, C_Tree  *, int_t *, int_t *, int64_t *, @(type) *, int64_t *, @(type) *, int64_t *, int_t *, int64_t *, int_t *, int *, gridinfo_t *,
 int_t , uint64_t* ,uint64_t* ,@(type)* ,@(type)* ,int* ,int* ,int* ,int* ,int* ,int* ,int* ,int* ,int* ,int* ,int* ,int* ,int* ,int* ,int* ,int* ,int* ,int* ,int);
 
-extern void @(pre)lsum_bmod_inv_gpu_wrap(superlu_dist_options_t *, int_t, int_t, int_t, int_t, @(type) *, @(type) *,int,int, int_t , int *, C_Tree  *, C_Tree  *, int_t *, int_t *, int64_t *,int_t *, int64_t *, int_t *, int64_t *, @(type) *, int64_t *, @(type) *, int64_t *, @(type)  *, int64_t *, int_t *, int64_t *, int_t *,gridinfo_t *,
+extern void @(pre)lsum_bmod_inv_gpu_wrap(superlu_dist_options_t *, int, int, int, int, @(type) *, @(type) *,int,int, int_t , int *, C_Tree  *, C_Tree  *, int_t *, int_t *, int64_t *,int_t *, int64_t *, int_t *, int64_t *, @(type) *, int64_t *, @(type) *, int64_t *, @(type)  *, int64_t *, int_t *, int64_t *, int_t *,gridinfo_t *,
                                     int_t, uint64_t*, uint64_t*, @(type)*, @(type)*,
                                     int*, int*, int*, int*,
                                     int*, int*, int*, int*, int*,
@@ -990,11 +990,11 @@ extern void validateInput_p@(pre)gssvx3d(superlu_dist_options_t *, SuperMatrix *
        int ldb, int nrhs, gridinfo3d_t *, int *info);
 extern void @(pre)allocScalePermstruct_RC(@(pre)ScalePermstruct_t *, int_t m, int_t n);
 extern void @(pre)scaleMatrixDiagonally(fact_t Fact, @(pre)ScalePermstruct_t *, SuperMatrix *,
-       	    		SuperLUStat_t *, gridinfo_t *, int *rowequ, int *colequ, int_t*iinfo);
+       	    		SuperLUStat_t *, gridinfo_t *, int *rowequ, int *colequ, int *iinfo);
 extern void @(pre)perform_row_permutation(superlu_dist_options_t *, fact_t Fact,
            @(pre)ScalePermstruct_t *, @(pre)LUstruct_t *LUstruct, int_t m, int_t n,
 	       gridinfo_t *, SuperMatrix *A, SuperMatrix *GA, SuperLUStat_t *,
-	       int job, int Equil, int_t *rowequ, int *colequ, int *iinfo);
+	       int job, int Equil, int *rowequ, int *colequ, int *iinfo);
 extern @(mod_type) @(pre)computeA_Norm(int notran, SuperMatrix *, gridinfo_t *);
 extern int @(pre)trs_compute_communication_structure(superlu_dist_options_t *options,
        int_t n, @(pre)LUstruct_t *, @(pre)ScalePermstruct_t * ScalePermstruct,
@@ -1554,10 +1554,10 @@ extern int_t @(pre)sparseTreeFactor_ASYNC(
 );
 extern @(pre)LUValSubBuf_t** @(pre)LluBufInitArr(int_t numLA, @(pre)LUstruct_t *LUstruct);
 extern int @(pre)LluBufFreeArr(int_t numLA, @(pre)LUValSubBuf_t **LUvsbs);
-extern @(pre)diagFactBufs_t** @(pre)initDiagFactBufsArr(int_t mxLeafNode, int_t ldt, gridinfo_t* grid);
-extern @(pre)diagFactBufs_t** @(pre)initDiagFactBufsArrMod(int_t mxLeafNode, int_t* ldts, gridinfo_t* grid);
-extern int @(pre)freeDiagFactBufsArr(int_t mxLeafNode, @(pre)diagFactBufs_t** dFBufs);
-extern int_t @(pre)initDiagFactBufs(int_t ldt, @(pre)diagFactBufs_t* dFBuf);
+extern @(pre)diagFactBufs_t** @(pre)initDiagFactBufsArr(int mxLeafNode, int ldt, gridinfo_t* grid);
+extern @(pre)diagFactBufs_t** @(pre)initDiagFactBufsArrMod(int mxLeafNode, int* ldts, gridinfo_t* grid);
+extern int @(pre)freeDiagFactBufsArr(int mxLeafNode, @(pre)diagFactBufs_t** dFBufs);
+extern int @(pre)initDiagFactBufs(int ldt, @(pre)diagFactBufs_t* dFBuf);
 extern int_t checkRecvUDiag(int_t k, commRequests_t *comReqs,
 			    gridinfo_t *grid, SCT_t *SCT);
 extern int_t checkRecvLDiag(int_t k, commRequests_t *comReqs, gridinfo_t *, SCT_t *);
