@@ -53,6 +53,7 @@ single:	\
 	$(TGTSRC)/psgstrs.c \
 	$(TGTSRC)/sdistribute.c \
 	$(TGTSRC)/psdistribute.c \
+	$(TGTSRC)/psdistribute-aux3d.c \
 	$(TGTSRC)/pssymbfact_distdata.c \
 	$(TGTSRC)/slangs_dist.c \
 	$(TGTSRC)/sgsequ_dist.c \
@@ -159,6 +160,8 @@ $(TGTSRC)/psgstrs.c:	$(SRC)/pxgstrs.c.base
 $(TGTSRC)/sdistribute.c:	$(SRC)/xdistribute.c.base
 	extract -b $? -o $@ precision=single
 $(TGTSRC)/psdistribute.c:	$(SRC)/pxdistribute.c.base
+	extract -b $? -o $@ precision=single
+$(TGTSRC)/psdistribute-aux3d.c:	$(SRC)/pxdistribute-aux3d.c.base
 	extract -b $? -o $@ precision=single
 $(TGTSRC)/pssymbfact_distdata.c: $(SRC)/pxsymbfact_distdata.c.base
 	extract -b $? -o $@ precision=single
@@ -308,6 +311,7 @@ double:	\
 	$(TGTSRC)/pdgstrs.c \
 	$(TGTSRC)/ddistribute.c \
 	$(TGTSRC)/pddistribute.c \
+	$(TGTSRC)/pddistribute-aux3d.c \
 	$(TGTSRC)/pdsymbfact_distdata.c \
 	$(TGTSRC)/dlangs_dist.c \
 	$(TGTSRC)/dgsequ_dist.c \
@@ -415,6 +419,8 @@ $(TGTSRC)/pdgstrs.c:	$(SRC)/pxgstrs.c.base
 $(TGTSRC)/ddistribute.c:	$(SRC)/xdistribute.c.base
 	extract -b $? -o $@ precision=double
 $(TGTSRC)/pddistribute.c:	$(SRC)/pxdistribute.c.base
+	extract -b $? -o $@ precision=double
+$(TGTSRC)/pddistribute-aux3d.c:	$(SRC)/pxdistribute-aux3d.c.base
 	extract -b $? -o $@ precision=double
 $(TGTSRC)/pdsymbfact_distdata.c: $(SRC)/pxsymbfact_distdata.c.base
 	extract -b $? -o $@ precision=double
@@ -566,6 +572,7 @@ dcomplex: \
 	$(TGTSRC)/pzgstrs.c \
 	$(TGTSRC)/zdistribute.c \
 	$(TGTSRC)/pzdistribute.c \
+	$(TGTSRC)/pzdistribute-aux3d.c \
 	$(TGTSRC)/pzsymbfact_distdata.c \
 	$(TGTSRC)/zlangs_dist.c \
 	$(TGTSRC)/zgsequ_dist.c \
@@ -673,6 +680,8 @@ $(TGTSRC)/pzgstrs.c:	$(SRC)/pxgstrs.c.base
 $(TGTSRC)/zdistribute.c:	$(SRC)/xdistribute.c.base
 	extract -b $? -o $@ precision=dcomplex
 $(TGTSRC)/pzdistribute.c:	$(SRC)/pxdistribute.c.base
+	extract -b $? -o $@ precision=dcomplex
+$(TGTSRC)/pzdistribute-aux3d.c:	$(SRC)/pxdistribute-aux3d.c.base
 	extract -b $? -o $@ precision=dcomplex
 $(TGTSRC)/pzsymbfact_distdata.c: $(SRC)/pxsymbfact_distdata.c.base
 	extract -b $? -o $@ precision=dcomplex
