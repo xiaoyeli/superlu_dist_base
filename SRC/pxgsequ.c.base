@@ -1,3 +1,4 @@
+
 /*! \file
 Copyright (c) 2003, The Regents of the University of California, through
 Lawrence Berkeley National Laboratory (subject to receipt of any required
@@ -83,7 +84,7 @@ at the top-level directory.
 
 void
 p@(pre)gsequ(SuperMatrix *A, @(mod_type) *r, @(mod_type) *c, @(mod_type) *rowcnd,
-	@(mod_type) *colcnd, @(mod_type) *amax, int_t *info, gridinfo_t *grid)
+	@(mod_type) *colcnd, @(mod_type) *amax, int *info, gridinfo_t *grid)
 {
 
     /* Local variables */

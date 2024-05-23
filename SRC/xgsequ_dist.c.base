@@ -89,7 +89,7 @@ at the top-level directory.
  */
 void
 @(pre)gsequ_dist(SuperMatrix *A, @(mod_type) *r, @(mod_type) *c, @(mod_type) *rowcnd,
-	@(mod_type) *colcnd, @(mod_type) *amax, int_t *info)
+	@(mod_type) *colcnd, @(mod_type) *amax, int *info)
 {
 
 

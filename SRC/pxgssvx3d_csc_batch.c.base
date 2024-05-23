@@ -37,9 +37,9 @@ int file_@(pre)Print_CompRowLoc_to_Triples(SuperMatrix *A)
     for (i = 0; i < m; ++i) {
 	for (j = Astore->rowptr[i]; j < Astore->rowptr[i+1]; ++j) {
 @precision SINGLE DOUBLE
-	    fprintf(fp, "%8d %8d %16.8e\n", i, Astore->colind[j], dp[j]);
+	    fprintf(fp, "%8d %8d %16.8e\n", i, (int) Astore->colind[j], dp[j]);
 @precision SCOMPLEX DCOMPLEX
-	    fprintf(fp, "%8d %8d %16.8e\t%16.8e\n", i, Astore->colind[j], dp[j].r, dp[j].i);
+	    fprintf(fp, "%8d %8d %16.8e\t%16.8e\n", i, (int) Astore->colind[j], dp[j].r, dp[j].i);
 @precision !
 	}
     }

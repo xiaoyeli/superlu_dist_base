@@ -1,3 +1,4 @@
+
 /*! \file
 Copyright (c) 2003, The Regents of the University of California, through
 Lawrence Berkeley National Laboratory (subject to receipt of any required
@@ -121,8 +122,7 @@ int main(int argc, char *argv[])
     @(type)   *b, *bsave, *xtrue, *solx;
     int    i, j, m, n, izero = 0;
     int    nprow, npcol;
-    int    iam, info, ldb, ldx, nrhs;
-    int_t  iinfo;
+    int    iam, info, ldb, ldx, nrhs, iinfo;
     char     **cpp, c;
     FILE *fp, *fopen();
     char matrix_type[8], equed[1];
