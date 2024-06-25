@@ -1743,3 +1743,209 @@ void
   24          + 5.0000i	      4.7526 + 2.2605i
 */
 @precision !
+
+
+int @(pre)writeLUtoDisk(int nsupers, int_t *xsup, @(pre)LUstruct_t *LUstruct)
+{
+
+	if (getenv("LUFILE"))
+	{
+		FILE *fp = fopen(getenv("LUFILE"), "w");
+		printf("writing to %s", getenv("LUFILE"));
+		for (int i = 0; i < nsupers; i++)
+		{
+			if (LUstruct->Llu->Lrowind_bc_ptr[i])
+			{
+				int_t *lsub = LUstruct->Llu->Lrowind_bc_ptr[i];
+				@(type) *nzval = LUstruct->Llu->Lnzval_bc_ptr[i];
+
+				int_t len = lsub[1]; /* LDA of the nzval[] */
+				int_t len2 = SuperSize(i) * len;
+				fwrite(nzval, sizeof(@(type)), len2, fp); // assume fp will be incremented
+			}
+
+			if (LUstruct->Llu->Ufstnz_br_ptr[i])
+			{
+				int_t *usub = LUstruct->Llu->Ufstnz_br_ptr[i];
+				@(type) *nzval = LUstruct->Llu->Unzval_br_ptr[i];
+				int_t lenv = usub[1];
+
+				fwrite(nzval, sizeof(@(type)), lenv, fp); // assume fp will be incremented
+			}
+		}
+
+		fclose(fp);
+	}
+	else
+	{
+		printf("Please set environment variable LUFILE to write\n..bye bye");
+		exit(0);
+	}
+
+	return 0;
+} /* end @(pre)writeLUtoDisk */
+
+#define EPSILON 1e-3
+
+int @(pre)checkArr(@(type) *A, @(type) *B, int n)
+{
+	for (int i = 0; i < n; i++)
+	{
+@precision SINGLE DOUBLE
+	assert(fabs(A[i] - B[i]) <= EPSILON * SUPERLU_MIN(fabs(A[i]), fabs(B[i])));
+@precision SCOMPLEX DCOMPLEX
+		@(type) temp;
+        @(pre)_sub(&temp, &A[i], &B[i]);
+		assert(slud_@(pre)_abs(&temp) <= EPSILON * SUPERLU_MIN(slud_@(pre)_abs(&A[i]), slud_@(pre)_abs(&B[i])));
+@precision !
+	}
+
+	return 0;
+}
+
+int @(pre)checkLUFromDisk(int nsupers, int_t *xsup, @(pre)LUstruct_t *LUstruct)
+{
+	@(pre)LocalLU_t *Llu = LUstruct->Llu;
+
+	@(type) *Lval_buf = @(type)Malloc_dist(Llu->bufmax[1]); // DOUBLE_ALLOC(Llu->bufmax[1]);
+	@(type) *Uval_buf = @(type)Malloc_dist(Llu->bufmax[3]); // DOUBLE_ALLOC(Llu->bufmax[3]);
+
+	if (getenv("LUFILE"))
+	{
+		FILE *fp = fopen(getenv("LUFILE"), "r");
+		printf("reading from %s", getenv("LUFILE"));
+		for (int i = 0; i < nsupers; i++)
+		{
+			if (LUstruct->Llu->Lrowind_bc_ptr[i])
+			{
+				int_t *lsub = LUstruct->Llu->Lrowind_bc_ptr[i];
+				@(type) *nzval = LUstruct->Llu->Lnzval_bc_ptr[i];
+
+				int_t len = lsub[1]; /* LDA of the nzval[] */
+				int_t len2 = SuperSize(i) * len;
+				fread(Lval_buf, sizeof(@(type)), len2, fp); // assume fp will be incremented
+				@(pre)checkArr(nzval, Lval_buf, len2);
+			}
+
+			if (LUstruct->Llu->Ufstnz_br_ptr[i])
+			{
+				int_t *usub = LUstruct->Llu->Ufstnz_br_ptr[i];
+				@(type) *nzval = LUstruct->Llu->Unzval_br_ptr[i];
+				int_t lenv = usub[1];
+
+				fread(Uval_buf, sizeof(@(type)), lenv, fp); // assume fp will be incremented
+				@(pre)checkArr(nzval, Uval_buf, lenv);
+			}
+		}
+		printf("CHecking LU from  %s is succesful ", getenv("LUFILE"));
+		fclose(fp);
+	}
+	else
+	{
+		printf("Please set environment variable LUFILE to read\n..bye bye");
+		exit(0);
+	}
+
+	return 0;
+} /* end @(pre)checkLUFromDisk */
+
+/*! \brief Dump the factored matrix L using matlab triple-let format
+ */
+void @(pre)DumpLblocks3D(int_t nsupers, gridinfo3d_t *grid3d,
+		  Glu_persist_t *Glu_persist, @(pre)LocalLU_t *Llu)
+{
+    register int c, extra, gb, j, i, lb, nsupc, nsupr, len, nb, ncb;
+    int k, mycol, r, n, nmax;
+    int_t nnzL;
+    int_t *xsup = Glu_persist->xsup;
+    int_t *index;
+    @(type) *nzval;
+	char filename[256];
+	FILE *fp, *fopen();
+	gridinfo_t *grid = &(grid3d->grid2d);
+	int iam = grid->iam;
+	int iam3d = grid3d->iam;
+
+	// assert(grid->npcol*grid->nprow==1);
+
+	// count nonzeros in the first pass
+	nnzL = 0;
+	n = 0;
+    ncb = nsupers / grid->npcol;
+    extra = nsupers % grid->npcol;
+    mycol = MYCOL( iam, grid );
+    if ( mycol < extra ) ++ncb;
+    for (lb = 0; lb < ncb; ++lb) {
+	index = Llu->Lrowind_bc_ptr[lb];
+	if ( index ) { /* Not an empty column */
+	    nzval = Llu->Lnzval_bc_ptr[lb];
+	    nb = index[0];
+	    nsupr = index[1];
+	    gb = lb * grid->npcol + mycol;
+	    nsupc = SuperSize( gb );
+	    for (c = 0, k = BC_HEADER, r = 0; c < nb; ++c) {
+		len = index[k+1];
+
+		for (j = 0; j < nsupc; ++j) {
+		for (i=0; i<len; ++i){
+
+		if(index[k+LB_DESCRIPTOR+i]+1>=xsup[gb]+j+1){
+			nnzL ++;
+			nmax = SUPERLU_MAX(n,index[k+LB_DESCRIPTOR+i]+1);
+			n = nmax;
+		}
+
+		}
+		}
+		k += LB_DESCRIPTOR + len;
+		r += len;
+	    }
+	}
+    }
+	MPI_Allreduce(MPI_IN_PLACE,&nnzL,1,mpi_int_t,MPI_SUM,grid->comm);
+	MPI_Allreduce(MPI_IN_PLACE,&n,1,mpi_int_t,MPI_MAX,grid->comm);
+
+	snprintf(filename, sizeof(filename), "%s-%d", "L", iam3d);
+    printf("Dumping L factor to --> %s\n", filename);
+ 	if ( !(fp = fopen(filename, "w")) ) {
+			ABORT("File open failed");
+		}
+
+	if(grid->iam==0){
+		fprintf(fp, "%d %d " IFMT "\n", n,n,nnzL);
+	}
+
+     ncb = nsupers / grid->npcol;
+    extra = nsupers % grid->npcol;
+    mycol = MYCOL( iam, grid );
+    if ( mycol < extra ) ++ncb;
+    for (lb = 0; lb < ncb; ++lb) {
+	index = Llu->Lrowind_bc_ptr[lb];
+	if ( index ) { /* Not an empty column */
+	    nzval = Llu->Lnzval_bc_ptr[lb];
+	    nb = index[0];
+	    nsupr = index[1];
+	    gb = lb * grid->npcol + mycol;
+	    nsupc = SuperSize( gb );
+	    for (c = 0, k = BC_HEADER, r = 0; c < nb; ++c) {
+		len = index[k+1];
+
+		for (j = 0; j < nsupc; ++j) {
+		for (i=0; i<len; ++i){
+@precision SINGLE DOUBLE
+			fprintf(fp, IFMT IFMT " %e\n", index[k+LB_DESCRIPTOR+i]+1, xsup[gb]+j+1, nzval[r +i+ j*nsupr]);
+@precision SCOMPLEX DCOMPLEX
+			fprintf(fp, IFMT IFMT " %e %e\n", index[k+LB_DESCRIPTOR+i]+1, xsup[gb]+j+1, nzval[r +i+ j*nsupr].r,nzval[r +i+ j*nsupr].i);
+@precision !
+		}
+		}
+		k += LB_DESCRIPTOR + len;
+		r += len;
+	    }
+	}
+    }
+ 	fclose(fp);
+
+} /* end @(pre)DumpLblocks3D */
+
+
