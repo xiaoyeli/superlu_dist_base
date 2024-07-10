@@ -1429,7 +1429,7 @@ p@(pre)gssvx(superlu_dist_options_t *options, SuperMatrix *A,
 	    int buffer_peak_rank = global_struct.rank;
 	    float buffer_peak = global_struct.val*1e-6;
 
-            if ( iam==0 ) {
+            if ( iam == 0 ) {
                 printf("** Total highmark (MB):\n"
 		       "    Sum-of-all : %8.2f | Avg : %8.2f  | Max : %8.2f\n",
 		       avg * 1e-6,
