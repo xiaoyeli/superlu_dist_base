@@ -560,8 +560,6 @@ p@(pre)gssvx(superlu_dist_options_t *options, SuperMatrix *A,
     double   dmin, dsum, dprod;
 #endif
 
-	LUstruct->dt = '@(pre)';
-
     /* Structures needed for parallel symbolic factorization */
     int_t *sizes, *fstVtxSep, parSymbFact;
     int   noDomains, nprocs_num;
