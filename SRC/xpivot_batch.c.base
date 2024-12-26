@@ -259,7 +259,7 @@ n			    if (!iam) printf("\t product of diagonal %e\n", dprod);
 
 #if ( DEBUGlevel>=1 )
 	    check_perm_dist("perm_r", m, perm_r);
-		PrintInt10("perm_r", m, perm_r);
+            PrintInt32("perm_r", m, perm_r);
 #endif
 	} /* end if (!factored) */
 

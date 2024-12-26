@@ -79,8 +79,8 @@ typedef struct {
     DiagScale_t DiagScale;
     @(mod_type) *R;
     @(mod_type) *C;
-    int_t  *perm_r;
-    int_t  *perm_c;
+    int  *perm_r;
+    int  *perm_c;
 } @(pre)ScalePermstruct_t;
 
 #if 0 // Sherry: move to superlu_defs.h
@@ -372,7 +372,7 @@ typedef struct {
 /*-- Data structure holding the information for the solution phase --*/
 typedef struct {
     int_t *row_to_proc;
-    int_t *inv_perm_c;
+    int *inv_perm_c;
     int_t num_diag_procs, *diag_procs, *diag_len;
     p@(pre)gsmv_comm_t *gsmv_comm; /* communication metadata for SpMV,
          	       		      required by IterRefine.          */
@@ -556,7 +556,7 @@ extern void    p@(pre)gsequ (SuperMatrix *, @(mod_type) *, @(mod_type) *, @(mod_
 extern @(mod_type)  p@(pre)langs (char *, SuperMatrix *, gridinfo_t *);
 extern void    p@(pre)laqgs (SuperMatrix *, @(mod_type) *, @(mod_type) *, @(mod_type),
 			@(mod_type), @(mod_type), char *);
-extern int     p@(pre)Permute_Dense_Matrix(int_t, int_t, int_t [], int_t[],
+extern int     p@(pre)Permute_Dense_Matrix(int_t, int_t, int_t [], int perm[],
 				      @(type) [], int, @(type) [], int, int,
 				      gridinfo_t *);
 
@@ -591,19 +591,20 @@ extern void  p@(pre)gssvx(superlu_dist_options_t *, SuperMatrix *,
 		     int, int, gridinfo_t *, @(pre)LUstruct_t *,
 		     @(pre)SOLVEstruct_t *, @(mod_type) *, SuperLUStat_t *, int *);
 extern void  p@(pre)Compute_Diag_Inv(int_t, @(pre)LUstruct_t *,gridinfo_t *, SuperLUStat_t *, int *);
-extern int  @(pre)SolveInit(superlu_dist_options_t *, SuperMatrix *, int_t [], int_t [],
+extern int  @(pre)SolveInit(superlu_dist_options_t *, SuperMatrix *,
+                       int perm_r[], int perm_c[],
 		       int_t, @(pre)LUstruct_t *, gridinfo_t *, @(pre)SOLVEstruct_t *);
 extern void @(pre)SolveFinalize(superlu_dist_options_t *, @(pre)SOLVEstruct_t *);
 extern void @(pre)Destroy_A3d_gathered_on_2d(@(pre)SOLVEstruct_t *, gridinfo3d_t *);
 extern int_t p@(pre)gstrs_init(int_t, int_t, int_t, int_t,
-                          int_t [], int_t [], gridinfo_t *grid,
+                          int perm_r[], int perm_c[], gridinfo_t *grid,
 	                  Glu_persist_t *, @(pre)SOLVEstruct_t *);
 extern int_t p@(pre)gstrs_init_device_lsum_x(superlu_dist_options_t *, int_t , int_t , int_t , gridinfo_t *,
 	     @(pre)LUstruct_t *, @(pre)SOLVEstruct_t *, int*);
 extern int_t p@(pre)gstrs_delete_device_lsum_x(@(pre)SOLVEstruct_t *);
 extern void pxgstrs_finalize(pxgstrs_comm_t *);
 extern int  @(pre)ldperm_dist(int, int, int_t, int_t [], int_t [],
-		    @(type) [], int_t *, @(mod_type) [], @(mod_type) []);
+		    @(type) [], int *perm, @(mod_type) [], @(mod_type) []);
 extern int  @(pre)static_schedule(superlu_dist_options_t *, int, int,
 		            @(pre)LUstruct_t *, gridinfo_t *, SuperLUStat_t *,
 			    int_t *, int_t *, int *);

@@ -530,8 +530,8 @@ p@(pre)gssvx(superlu_dist_options_t *options, SuperMatrix *A,
     fact_t  Fact;
     @(type) *a;
     int_t   *colptr, *rowind;
-    int_t   *perm_r; /* row permutations from partial pivoting */
-    int_t   *perm_c; /* column permutation vector */
+    int   *perm_r; /* row permutations from partial pivoting */
+    int   *perm_c; /* column permutation vector */
     int_t   *etree;  /* elimination tree */
     int_t   *rowptr, *colind;  /* Local A in NR*/
     int_t   nnz_loc, nnz;
@@ -824,7 +824,8 @@ p@(pre)gssvx(superlu_dist_options_t *options, SuperMatrix *A,
 
                         MPI_Bcast( &iinfo, 1, MPI_INT, 0, grid->comm );
 		        if ( iinfo == 0 ) {
-		            MPI_Bcast( perm_r, m, mpi_int_t, 0, grid->comm );
+			    //MPI_Bcast( perm_r, m, mpi_int_t, 0, grid->comm );
+			    MPI_Bcast( perm_r, m, MPI_INT, 0, grid->comm );
 		            if ( job == 5 && Equil ) {
 		                MPI_Bcast( R1, m, @(MPI_MOD_TYPE), 0, grid->comm );
 		                MPI_Bcast( C1, n, @(MPI_MOD_TYPE), 0, grid->comm );
@@ -833,7 +834,8 @@ p@(pre)gssvx(superlu_dist_options_t *options, SuperMatrix *A,
 	            } else {
 		        MPI_Bcast( &iinfo, 1, MPI_INT, 0, grid->comm );
 			if ( iinfo == 0 ) {
-		            MPI_Bcast( perm_r, m, mpi_int_t, 0, grid->comm );
+		            //MPI_Bcast( perm_r, m, mpi_int_t, 0, grid->comm );
+		            MPI_Bcast( perm_r, m, MPI_INT, 0, grid->comm );
 		            if ( job == 5 && Equil ) {
 		                MPI_Bcast( R1, m, @(MPI_MOD_TYPE), 0, grid->comm );
 		                MPI_Bcast( C1, n, @(MPI_MOD_TYPE), 0, grid->comm );
@@ -963,7 +965,7 @@ p@(pre)gssvx(superlu_dist_options_t *options, SuperMatrix *A,
         }
 
 #if ( DEBUGlevel>=2 )
-        if ( !iam ) PrintInt10("perm_r",  m, perm_r);
+        if ( !iam ) PrintInt32("perm_r",  m, perm_r);
 #endif
     } /* end if (!factored) */
 
