@@ -1357,7 +1357,7 @@ float pddistribute3d(superlu_dist_options_t *options, int_t n, SuperMatrix *A,
 
 
 float
-p@(pre)distribute3d_Yang(superlu_dist_options_t *options, int_t n, SuperMatrix *A,
+p@(pre)distribute3d(superlu_dist_options_t *options, int_t n, SuperMatrix *A,
 	     @(pre)ScalePermstruct_t *ScalePermstruct,
 	     Glu_freeable_t *Glu_freeable, @(pre)LUstruct_t *LUstruct,
 	     gridinfo3d_t *grid3d)
@@ -1564,7 +1564,7 @@ p@(pre)distribute3d_Yang(superlu_dist_options_t *options, int_t n, SuperMatrix *
 //#endif
 
 #if ( DEBUGlevel>=1 )
-    CHECK_MALLOC(iam, "Enter p@(pre)distribute3d_Yang()");
+    CHECK_MALLOC(iam, "Enter p@(pre)distribute3d()");
 #endif
 #if ( PROFlevel>=1 )
     t = SuperLU_timer_();
@@ -2458,13 +2458,31 @@ p@(pre)distribute3d_Yang(superlu_dist_options_t *options, int_t n, SuperMatrix *
     }
     SUPERLU_FREE(xa);
 
+    if ( options->Fact != SamePattern_SameRowPerm ) {
+        // /* Flatten L metadata into one buffer. */
+        p@(pre)flatten_LDATA(options, n, LUstruct, grid);
+
+        // /* Compute communication structure for trisolve. */
+        if (get_new3dsolve()){
+            @(pre)trs_compute_communication_structure(options, n, LUstruct,
+                        trf3Dpart->supernodeMask, grid);
+        }else{
+            int* supernodeMask = int32Malloc_dist(nsupers);
+            for(int ii=0; ii<nsupers; ii++)
+                supernodeMask[ii]=1;
+            @(pre)trs_compute_communication_structure(options, n, LUstruct,
+                        supernodeMask, grid);
+            SUPERLU_FREE(supernodeMask);
+        }
+    }
+
 #if ( DEBUGlevel>=1 )
     /* Memory allocated but not freed:
        ilsum, fmod, fsendx_plist, bmod, bsendx_plist  */
-    CHECK_MALLOC(iam, "Exit p@(pre)distribute3d_Yang()");
+    CHECK_MALLOC(iam, "Exit p@(pre)distribute3d()");
 #endif
 
     return (mem_use+memTRS);
 
-} /* P@(PRE)DISTRIBUTE3D_Yang */
+} /* P@(PRE)DISTRIBUTE3D */
 

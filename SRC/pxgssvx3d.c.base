@@ -24,7 +24,7 @@ at the top-level directory.
 
 /*
  Solve-only setup
-  turn off: equil, rowperm, colperm, 
+  turn off: equil, rowperm, colperm,
   options->ilu_level = 0;
    1. DOFACT -> distribution
    2. FACTORED -> solve
@@ -573,7 +573,6 @@ void p@(pre)gssvx3d(superlu_dist_options_t *options, SuperMatrix *A,
        gpu3dVersion = atoi(getenv("GPU3DVERSION"));
     }
 
-    LUgpu_Handle LUgpu;
 #endif
 
     LUstruct->dt = '@(pre)';
@@ -586,7 +585,7 @@ void p@(pre)gssvx3d(superlu_dist_options_t *options, SuperMatrix *A,
     *info = 0;
 
     if ( options->SolveOnly == YES ) {
-	options->Fact = DOFACT;       // this is set to enable distribution 
+	options->Fact = DOFACT;       // this is set to enable distribution
 	options->Equil = NO;
 	options->RowPerm = NOROWPERM;
 	options->ColPerm = NATURAL;
@@ -859,10 +858,10 @@ void p@(pre)gssvx3d(superlu_dist_options_t *options, SuperMatrix *A,
     MPI_Bcast(&colequ, 1, MPI_INT, 0, grid3d->zscp.comm);
 
     /* Now all processes in 3D grid participate */
-    
+
     /* Broadcast Permuted A and symbolic factorization data from 2d to 3d grid */
     /* Sherry Q: original input A, not permuted yet */
-    
+
     if (Fact != SamePattern_SameRowPerm && !factored) // place the exact conditions later //all the grid must execute this
     {
 	if (parSymbFact == NO) {
@@ -925,7 +924,7 @@ void p@(pre)gssvx3d(superlu_dist_options_t *options, SuperMatrix *A,
 				distribution routine. */
 			t = SuperLU_timer_();
 
-			dist_mem_use = p@(pre)distribute3d_Yang(options, n, A, ScalePermstruct,
+			dist_mem_use = p@(pre)distribute3d(options, n, A, ScalePermstruct,
 											Glu_freeable, LUstruct, grid3d);
 			stat->utime[DIST] = SuperLU_timer_() - t;
 
@@ -955,12 +954,6 @@ void p@(pre)gssvx3d(superlu_dist_options_t *options, SuperMatrix *A,
 
 		}
 
-		/* Flatten L metadata into one buffer. */
-		if ( Fact != SamePattern_SameRowPerm ) {
-			p@(pre)flatten_LDATA(options, n, LUstruct, grid, stat);
-		}
-
-
 		if(Fact != SamePattern_SameRowPerm){
 			// checkDist3DLUStruct(LUstruct, grid3d);
 			// zeros out the Supernodes that are not owned by the grid
@@ -980,7 +973,7 @@ void p@(pre)gssvx3d(superlu_dist_options_t *options, SuperMatrix *A,
 
 		/* Perform numerical factorization in parallel on all process layers.*/
 
-		/* nvshmem related. The nvshmem_malloc has to be called before @(pre)trs_compute_communication_structure, otherwise solve is much slower*/
+		/* nvshmem related */
 		#ifdef HAVE_NVSHMEM
 			int nc = CEILING( nsupers, grid->npcol);
 			int nr = CEILING( nsupers, grid->nprow);
@@ -1027,11 +1020,10 @@ void p@(pre)gssvx3d(superlu_dist_options_t *options, SuperMatrix *A,
 			int ldt = sp_ienv_dist(3, options); /* Size of maximum supernode */
 			double s_eps = smach_dist("Epsilon");
 			double thresh = s_eps * anorm;
-			
+
 			if(options->batchCount == 0)
 			{
-#define TEMPLATED_VERSION
-#ifdef TEMPLATED_VERSION
+#ifdef HAVE_CUDA
 @(pre)LUgpu_Handle @(pre)LUgpu = @(pre)CreateLUgpuHandle(nsupers, ldt, trf3Dpartition, LUstruct, grid3d,
 						  SCT, options, stat, thresh, info);
 
@@ -1040,21 +1032,10 @@ void p@(pre)gssvx3d(superlu_dist_options_t *options, SuperMatrix *A,
 
 			@(pre)CopyLUGPU2Host(@(pre)LUgpu, LUstruct);
 			@(pre)DestroyLUgpuHandle(@(pre)LUgpu);
-		    //TODO: @(pre)CreateLUgpuHandle,p@(pre)gstrf3d_LUpackedInterface,@(pre)CopyLUGPU2Host,@(pre)DestroyLUgpuHandle haven't been created
-#else // non-templated version (not used anymore)
-			/* call constructor in C++ code */
-			LUgpu = @(pre)CreateLUgpuHandle(nsupers, ldt, trf3Dpartition, LUstruct, grid3d,
-						  SCT, options, stat, thresh, info);
-
-			/* call p@(pre)gstrf3d() in C++ code */
-			p@(pre)gstrf3d_LUpackedInterface(LUgpu);
-
-			copyLUGPU2Host(LUgpu, LUstruct);
-			destroyLUgpuHandle(LUgpu);
-#endif /* end if TEMPLATED_VERSION */
+#endif
 
        	      	 } else { /* batched version */
-		 
+
 #ifdef HAVE_MAGMA
 			double tic = SuperLU_timer_();
 			@(pre)BatchFactorize_Handle batch_ws = @(pre)getBatchFactorizeWorkspace(
@@ -1088,9 +1069,9 @@ void p@(pre)gssvx3d(superlu_dist_options_t *options, SuperMatrix *A,
 #else // no MAGMA
 			// TODO: How should we handle this?
 			ABORT("Fatal error: Batched mode requires magma support!\n");
-#endif 
+#endif
 	      	   } /* end if batchCount == 0 */
-		 
+
 		    // print other stuff
 		    // if (!grid3d->zscp.Iam)
 		    // 	SCT_printSummary(grid, SCT);
@@ -1111,21 +1092,6 @@ void p@(pre)gssvx3d(superlu_dist_options_t *options, SuperMatrix *A,
 		if (get_new3dsolve()){
 			@(pre)broadcastAncestor3d(trf3Dpartition, LUstruct, grid3d, SCT);
 		}
-
-		if ( options->Fact != SamePattern_SameRowPerm) {
-			if (get_new3dsolve() && Solve3D==true){
-				@(pre)trs_compute_communication_structure(options, n, LUstruct,
-							ScalePermstruct, trf3Dpartition->supernodeMask, grid, stat);
-			}else{
-				int* supernodeMask = int32Malloc_dist(nsupers);
-				for(int ii=0; ii<nsupers; ii++)
-					supernodeMask[ii]=1;
-				@(pre)trs_compute_communication_structure(options, n, LUstruct,
-							ScalePermstruct, supernodeMask, grid, stat);
-				SUPERLU_FREE(supernodeMask);
-			}
-		}
-
 
 		stat->utime[FACT] = SuperLU_timer_() - t;
 

@@ -2324,6 +2324,20 @@ if ( !iam) printf(".. Construct Reduce tree for U: %.2f\t\n", t);
     SUPERLU_FREE(xa);
 	LUstruct->trf3Dpart=NULL;
 
+	if ( options->Fact != SamePattern_SameRowPerm ) {
+		// /* Flatten L metadata into one buffer. */
+		p@(pre)flatten_LDATA(options, n, LUstruct, grid);
+
+		// /* Compute communication structure for trisolve. */
+		int* supernodeMask = int32Malloc_dist(nsupers);
+		for(int ii=0; ii<nsupers; ii++)
+			supernodeMask[ii]=1;
+		@(pre)trs_compute_communication_structure(options, n, LUstruct,
+					supernodeMask, grid);
+		SUPERLU_FREE(supernodeMask);
+	}
+
+
 #if ( DEBUGlevel>=1 )
     /* Memory allocated but not freed:
        ilsum, fmod, fsendx_plist, bmod, bsendx_plist  */
@@ -2334,6 +2348,7 @@ if ( !iam) printf(".. Construct Reduce tree for U: %.2f\t\n", t);
 
 } /* P@(PRE)DISTRIBUTE */
 
+#if 0
 float
 p@(pre)distribute_allgrid(superlu_dist_options_t *options, int_t n, SuperMatrix *A,
 	     @(pre)ScalePermstruct_t *ScalePermstruct,
@@ -3996,3 +4011,4 @@ p@(pre)distribute_allgrid_index_only(superlu_dist_options_t *options, int_t n, S
     return (mem_use);
 
 } /* P@(PRE)DISTRIBUTE_ALLGRID_INDEX_ONLY */
+#endif

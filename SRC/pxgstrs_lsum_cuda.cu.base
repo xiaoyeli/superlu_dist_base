@@ -697,7 +697,7 @@ __device__ void @(pre)C_BcTree_forwardMessageSimple_Device(C_Tree* tree,  volati
         int iProc = tree->myDests_[idxRecv];
 @precision SINGLE SCOMPLEX
         nvshmemx_float_put_signal_nbi_block((float*)&@(pre)ready_x[data_ofset], (float*)&@(pre)ready_x[data_ofset], my_flag_bc[1],(uint64_t*)(flag_bc_q + my_flag_bc[0]), sig, NVSHMEM_SIGNAL_SET,iProc);
-@precision DOUBLE 
+@precision DOUBLE
         nvshmemx_double_put_signal_nbi_block((double*)&@(pre)ready_x[data_ofset], (double*)&@(pre)ready_x[data_ofset], my_flag_bc[1],(uint64_t*)(flag_bc_q + my_flag_bc[0]), sig, NVSHMEM_SIGNAL_SET,iProc);
 @precision DCOMPLEX
         nvshmemx_double_put_signal_nbi_block((double*)&@(pre)ready_x[data_ofset], (double*)&@(pre)ready_x[data_ofset], my_flag_bc[1]*2,(uint64_t*)(flag_bc_q + my_flag_bc[0]), sig, NVSHMEM_SIGNAL_SET,iProc);
@@ -2883,7 +2883,7 @@ __global__ void @(pre)lsum_fmod_inv_gpu_1rhs_warp
                 }while(tmp>0);
 
             }
-	    
+
 #ifdef HAVE_CUDA
             __syncwarp();
 #endif
@@ -3752,7 +3752,7 @@ gridinfo_t *grid
                         // __threadfence();
                     }while(s_bmod>0);
                 }
-#ifdef HAVE_CUDA		
+#ifdef HAVE_CUDA
                 __syncwarp();
 #endif
 
@@ -4328,7 +4328,7 @@ gridinfo_t *grid
 							}
 #ifdef HAVE_CUDA
                             __syncwarp();
-#endif			    
+#endif
 					}//if(nrhs==1)
 			   //  }
 
@@ -4338,7 +4338,7 @@ gridinfo_t *grid
 
 #ifdef HAVE_CUDA
               __syncwarp();
-#endif	      
+#endif
 		}else{   /* off-diagonal block forward the message*/
 			/* waiting for the x subvector and forward*/
 		}
@@ -4419,7 +4419,7 @@ gridinfo_t *grid
                     }
 #ifdef HAVE_CUDA
                     __syncwarp();
-#endif		    
+#endif
 
                     for (ub = lne; ub < nub; ub+=WARP_SIZE){
                         ik = lloc[ub];
@@ -4429,7 +4429,7 @@ gridinfo_t *grid
 				}//if(nrhs==1)
 #ifdef HAVE_CUDA
                 __syncwarp();
-#endif		
+#endif
 			// } /*if tid<Nchunk*/
 		} /* if nlb>0*/
 

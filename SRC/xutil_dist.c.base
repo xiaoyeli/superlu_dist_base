@@ -204,20 +204,20 @@ void @(pre)Print_CompCol_triplet(SuperMatrix *A)
 
     int n = A->nrow;
     int_t nnz = Astore->nnz;
-    
+
     printf("\nTriplet matrix:\n");
     printf("nrow %d, ncol %lld, nnz %lld\n", n, (long long) A->ncol, nnz);
     dp = (@(type) *) Astore->nzval;
     colptr = Astore->colptr;
     rowind = Astore->rowind;
-    
+
     for (i = 0; i < A->ncol; ++i) {
 	for (j = colptr[i]; j < colptr[i+1]; ++j) {
 @precision SINGLE DOUBLE
 	    printf("%8d %8d\t%f\n", rowind[j], i, dp[j]);
 @precision SCOMPLEX DCOMPLEX
 	    printf("%8d %8d\t%f\t%f\n", rowind[j], i, dp[j].r, dp[j].i);
-@precision !	    
+@precision !
 	}
     }
     printf("\nend triplet matrix\n ");

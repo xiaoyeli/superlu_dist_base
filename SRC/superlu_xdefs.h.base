@@ -775,8 +775,7 @@ extern int_t @(pre)leafForestForwardSolve3d(superlu_dist_options_t *options, int
 
 
 extern int @(pre)trs_compute_communication_structure(superlu_dist_options_t *options, int_t n, @(pre)LUstruct_t * LUstruct,
-                           @(pre)ScalePermstruct_t * ScalePermstruct,
-                           int* supernodeMask, gridinfo_t *grid, SuperLUStat_t * stat);
+                           int* supernodeMask, gridinfo_t *grid);
 extern int_t @(pre)reduceSolvedX_newsolve(int_t treeId, int_t sender, int_t receiver, @(type)* x, int nrhs,
                       @(pre)trf3Dpartition_t*  trf3Dpartition, @(pre)LUstruct_t* LUstruct, gridinfo3d_t* grid3d, @(type)* recvbuf, xtrsTimer_t *xtrsTimer);
 
@@ -997,9 +996,6 @@ extern void @(pre)perform_row_permutation(superlu_dist_options_t *, fact_t Fact,
 	       gridinfo_t *, SuperMatrix *A, SuperMatrix *GA, SuperLUStat_t *,
 	       int job, int Equil, int *rowequ, int *colequ, int *iinfo);
 extern @(mod_type) @(pre)computeA_Norm(int notran, SuperMatrix *, gridinfo_t *);
-extern int @(pre)trs_compute_communication_structure(superlu_dist_options_t *options,
-       int_t n, @(pre)LUstruct_t *, @(pre)ScalePermstruct_t * ScalePermstruct,
-       int* supernodeMask, gridinfo_t *, SuperLUStat_t *);
 
 /* Distribute the data for numerical factorization */
 extern float @(pre)dist_psymbtonum(superlu_dist_options_t *, int_t, SuperMatrix *,
@@ -1566,7 +1562,7 @@ extern int_t checkRecvLDiag(int_t k, commRequests_t *comReqs, gridinfo_t *, SCT_
 
 
 extern int p@(pre)flatten_LDATA(superlu_dist_options_t *options, int_t n, @(pre)LUstruct_t * LUstruct,
-                           gridinfo_t *grid, SuperLUStat_t * stat);
+                           gridinfo_t *grid);
 extern void p@(pre)convert_flatten_skyline2UROWDATA(superlu_dist_options_t *, gridinfo_t *,
 	                 @(pre)LUstruct_t *, SuperLUStat_t *, int n);
 extern void p@(pre)convertUROWDATA2skyline(superlu_dist_options_t *, gridinfo_t *,
@@ -1578,7 +1574,7 @@ extern int_t
                 gridinfo_t *grid, int_t *colptr[], int_t *rowind[],
                 @(type) *a[]);
 extern float
-p@(pre)distribute3d_Yang(superlu_dist_options_t *options, int_t n, SuperMatrix *A,
+p@(pre)distribute3d(superlu_dist_options_t *options, int_t n, SuperMatrix *A,
 	     @(pre)ScalePermstruct_t *ScalePermstruct,
 	     Glu_freeable_t *Glu_freeable, @(pre)LUstruct_t *LUstruct,
 	     gridinfo3d_t *grid3d);
@@ -1635,7 +1631,7 @@ extern void @(pre)DumpLblocks3D(int_t nsupers, gridinfo3d_t *grid3d,
 			   Glu_persist_t *Glu_persist, @(pre)LocalLU_t *Llu);
 extern void @(pre)DumpUblocks3D(int_t nsupers, gridinfo3d_t *grid3d,
 			   Glu_persist_t *Glu_persist, @(pre)LocalLU_t *Llu);
-    
+
 /*== end 3D prototypes ===================*/
 
 extern @(type) *@(pre)ready_x;

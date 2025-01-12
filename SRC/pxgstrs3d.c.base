@@ -154,8 +154,7 @@ int_t @(pre)trs_B_init3d_newsolve(int_t nsupers, @(type)* x, int nrhs, @(pre)LUs
 // #endif
 
 int @(pre)trs_compute_communication_structure(superlu_dist_options_t *options, int_t n, @(pre)LUstruct_t * LUstruct,
-                           @(pre)ScalePermstruct_t * ScalePermstruct,
-                           int* supernodeMask, gridinfo_t *grid, SuperLUStat_t * stat)
+                           int* supernodeMask, gridinfo_t *grid)
 {
     Glu_persist_t *Glu_persist = LUstruct->Glu_persist;
     int kr,kc,nlb,nub;
@@ -3115,7 +3114,7 @@ if ( !(get_new3dsolvetreecomm() && get_acc_solve())){
 	stat_loc[0]->ops[SOLVE]+=Llu->Lnzval_bc_cnt*nrhs*8; // YL: this is a rough estimate
 @precision !
     } else
-    
+
 #endif /* match #if defined(GPU_ACC) && defined(SLU_HAVE_LAPACK) */
     { /* CPU trisolve */
 
