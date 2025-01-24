@@ -584,7 +584,7 @@ void p@(pre)gssvx3d(superlu_dist_options_t *options, SuperMatrix *A,
     /* Test the options choices. */
     *info = 0;
 
-    if ( options->SolveOnly == YES ) {
+    if ( options->SolveOnly == YES && options->Fact != FACTORED) {
 	options->Fact = DOFACT;       // this is set to enable distribution
 	options->Equil = NO;
 	options->RowPerm = NOROWPERM;
