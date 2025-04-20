@@ -598,8 +598,6 @@ void p@(pre)gssvx3d(superlu_dist_options_t *options, SuperMatrix *A,
 
     /* Initialization. */
 
-    options->Algo3d = YES;
-
     /* definition of factored seen by each process layer */
     factored = (Fact == FACTORED);
 
@@ -973,7 +971,7 @@ void p@(pre)gssvx3d(superlu_dist_options_t *options, SuperMatrix *A,
 
 		/* Perform numerical factorization in parallel on all process layers.*/
 
-		/* nvshmem related */
+		/* nvshmem related */ // TODO: Does this work in iterative refinement with rhs>1? Should we associate these data with SOLVEstruct?
 		#ifdef HAVE_NVSHMEM
 			int nc = CEILING( nsupers, grid->npcol);
 			int nr = CEILING( nsupers, grid->nprow);
