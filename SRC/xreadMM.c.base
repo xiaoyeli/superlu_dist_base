@@ -253,7 +253,7 @@ void
 
 static void @(pre)readrhs(int m, @(type) *b)
 {
-    FILE *fp, *fopen();
+    FILE *fp;
     int i;
 
     if ( !(fp = fopen("b.dat", "r")) ) {

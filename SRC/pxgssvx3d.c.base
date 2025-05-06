@@ -1028,6 +1028,10 @@ void p@(pre)gssvx3d(superlu_dist_options_t *options, SuperMatrix *A,
 			/* call p@(pre)gstrf3d() in C++ code */
 			p@(pre)gstrf3d_LUv1(@(pre)LUgpu);
 
+@precision SCOMPLEX DCOMPLEX
+                        stat->ops[FACT] *= 4; /* accommodate complex arithmetic */
+@precision !
+
 			@(pre)CopyLUGPU2Host(@(pre)LUgpu, LUstruct);
 			@(pre)DestroyLUgpuHandle(@(pre)LUgpu);
 #endif
