@@ -23,10 +23,10 @@ BLS = ./CBLAS
 #TGTEXM 	= ../Version-7.git/EXAMPLE
 #TGTF90 	= ../Version-7.git/FORTRAN
 
-TGTSRC 	= ../NEXT/SRC
-TGTTST 	= ../NEXT/TEST
-TGTEXM 	= ../NEXT/EXAMPLE
-TGTF90 	= ../NEXT/FORTRAN
+TGTSRC 	= ./NEXT/SRC
+TGTTST 	= ./NEXT/TEST
+TGTEXM 	= ./NEXT/EXAMPLE
+TGTF90 	= ./NEXT/FORTRAN
 
 #all: single
 all: single double dcomplex
