@@ -950,7 +950,7 @@ void p@(pre)gssvx3d(superlu_dist_options_t *options, SuperMatrix *A,
 		@(pre)LUValSubBuf_t *LUvsb = SUPERLU_MALLOC(sizeof(@(pre)LUValSubBuf_t));
 		@(pre)LluBufInit(LUvsb, LUstruct);
 		trf3Dpartition->LUvsb = LUvsb;
-		trf3Dpartition->iperm_c_supno = create_iperm_c_supno(nsupers, options, LUstruct->Glu_persist, LUstruct->etree, LUstruct->Llu->Lrowind_bc_ptr, LUstruct->Llu->Ufstnz_br_ptr, grid3d);
+		trf3Dpartition->iperm_c_supno = create_iperm_c_supno(nsupers, n, options, LUstruct->Glu_persist, LUstruct->etree, LUstruct->Llu->Lrowind_bc_ptr, LUstruct->Llu->Ufstnz_br_ptr, grid3d);
 	    }
 
 	    /*if (!iam) printf ("\tDISTRIBUTE time  %8.2f\n", stat->utime[DIST]); */

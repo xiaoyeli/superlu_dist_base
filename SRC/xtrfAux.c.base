@@ -567,7 +567,7 @@ int_t @(pre)SchurComplementSetupGPU(
     int_t* iperm_c_supno;
     int_t *xsup;
     if (!grid3d->zscp.Iam){
-        int_t* perm_c_supno = getPerm_c_supno(nsupers, options,
+        int_t* perm_c_supno = getPerm_c_supno(nsupers, n, options,
                                          LUstruct->etree,
     	   		                 LUstruct->Glu_persist,
 		                         LUstruct->Llu->Lrowind_bc_ptr,
@@ -954,7 +954,7 @@ int_t @(pre)SchurComplementSetupGPU(
 #if ( DEBUGlevel>=1 )
     CHECK_MALLOC (iam, "Enter @(pre)initTrf3Dpartition()");
 #endif
-    int_t* perm_c_supno = getPerm_c_supno(nsupers, options,
+    int_t* perm_c_supno = getPerm_c_supno(nsupers, n, options,
                                          LUstruct->etree,
     	   		                 LUstruct->Glu_persist,
 		                         LUstruct->Llu->Lrowind_bc_ptr,
