@@ -1836,7 +1836,7 @@ void p@(pre)gssvx3d(superlu_dist_options_t *options, SuperMatrix *A,
 @precision SCOMPLEX DCOMPLEX
 			    @(pre)@(mod_pre)_mult(&b_col[i], &b_col[i], C[irow]);
 @precision !
-			    +irow;
+			    ++irow;
 			}
 			b_col += ldb;
 		    }
