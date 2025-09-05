@@ -987,9 +987,8 @@ void p@(pre)gssvx3d(superlu_dist_options_t *options, SuperMatrix *A,
 	    }
 #endif
 
-            if ( options->SolveOnly != YES ) { // Now we need factorization
-
 		t = SuperLU_timer_();
+		if ( options->SolveOnly != YES ) { // Now we need factorization
 
 		/*factorize in grid 1*/
 		// if(grid3d->zscp.Iam)
