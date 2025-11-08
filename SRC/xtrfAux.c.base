@@ -543,7 +543,7 @@ int_t @(pre)SchurComplementSetupGPU(
     return bigU;
 } /* @(pre)getBigU */
 
-#if 0
+#if 0 //---------- not used anymore
 /* YL: Initialize 3Dpartition using only LUstruct on grid 0. Note that this is a function modifed based on dinitTrf3Dpartition */
 @(pre)trf3Dpartition_t* @(pre)initTrf3DpartitionLUstructgrid0(int_t n, superlu_dist_options_t *options,
 				      @(pre)LUstruct_t *LUstruct, gridinfo3d_t * grid3d
@@ -938,9 +938,10 @@ int_t @(pre)SchurComplementSetupGPU(
 #endif
     return trf3Dpartition;
 } /* @(pre)initTrf3Dpartition_allgrid */
-#endif
 
-#if 0
+#endif //---------- not used anymore
+
+#if 0 //---------- not used anymore
 /* This routine is called by all 3D processes, in driver pdgssvx3d(). */
 @(pre)trf3Dpartition_t* @(pre)initTrf3Dpartition(int_t nsupers,
 				      superlu_dist_options_t *options,
@@ -1124,7 +1125,8 @@ int_t @(pre)SchurComplementSetupGPU(
 #endif
     return trf3Dpartition;
 } /* end @(pre)initTrf3Dpartition */
-#endif
+
+#endif //---------- not used anymore
 
 /* Free memory allocated for trf3Dpartition structure. Sherry added this routine */
 void @(pre)Destroy_trf3Dpartition(@(pre)trf3Dpartition_t *trf3Dpartition)
