@@ -97,6 +97,11 @@
       endif
       if ( iam == 0 ) then 
          write(*,*) ' Process grid: ', nprow, ' X', npcol, ' X', npdep
+#if (XSDK_INDEX_SIZE==64)
+         write(*,*) ' use 64-bit integer for A matrix'
+#else         
+         write(*,*) ' use 32-bit integer for A matrix'
+#endif 
       endif
 
 ! Read and distribute the matrix to the process gird
