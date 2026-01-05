@@ -348,7 +348,7 @@ void gemm_device_@(pre)lsum_fmod(
 #pragma unroll
                 for (m = 0; m < THR_M; m++) {
 @precision SINGLE DOUBLE
-                    fma(rA[m], rB[n], rC[n][m]);
+                    FMA(rA[m], rB[n], rC[n][m]);
 @precision SCOMPLEX DCOMPLEX
                     @(type) ctemp;
 	                zz_mult(&ctemp, &rA[m], &rB[n]);
@@ -399,7 +399,7 @@ void gemm_device_@(pre)lsum_fmod(
 #pragma unroll
             for (m = 0; m < THR_M; m++) {
 @precision SINGLE DOUBLE
-                fma(rA[m], rB[n], rC[n][m]);
+                FMA(rA[m], rB[n], rC[n][m]);
 @precision SCOMPLEX DCOMPLEX
                 @(type) ctemp;
                 zz_mult(&ctemp, &rA[m], &rB[n]);
@@ -567,7 +567,7 @@ void gemm_device_@(pre)lsum_bmod_stridedB(
 #pragma unroll
                 for (m = 0; m < THR_M; m++) {
 @precision SINGLE DOUBLE
-                    fma(rA[m], rB[n], rC[n][m]);
+                    FMA(rA[m], rB[n], rC[n][m]);
 @precision SCOMPLEX DCOMPLEX
                     @(type) ctemp;
 	                zz_mult(&ctemp, &rA[m], &rB[n]);
@@ -618,7 +618,7 @@ void gemm_device_@(pre)lsum_bmod_stridedB(
 #pragma unroll
             for (m = 0; m < THR_M; m++) {
 @precision SINGLE DOUBLE
-                fma(rA[m], rB[n], rC[n][m]);
+                FMA(rA[m], rB[n], rC[n][m]);
 @precision SCOMPLEX DCOMPLEX
                 @(type) ctemp;
                 zz_mult(&ctemp, &rA[m], &rB[n]);
