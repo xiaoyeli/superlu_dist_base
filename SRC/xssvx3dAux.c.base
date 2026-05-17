@@ -148,6 +148,15 @@ void @(pre)scaleFromScratch(
 
     p@(pre)gsequ(A, R, C, &rowcnd, &colcnd, &amax, iinfo, grid);
 
+#ifdef GPU_ACC
+    if (get_acc_solve()) {
+        checkGPU(gpuMemcpy(ScalePermstruct->d_R, R,
+                           sizeof(@(mod_type)) * (size_t)A->nrow, gpuMemcpyHostToDevice));
+        checkGPU(gpuMemcpy(ScalePermstruct->d_C, C,
+                           sizeof(@(mod_type)) * (size_t)A->ncol, gpuMemcpyHostToDevice));
+    }
+#endif
+
     if (*iinfo > 0) {
 #if (PRNTlevel >= 1)
         fprintf(stderr, "The " IFMT "-th %s of A is exactly zero\n", *iinfo <= m_loc ? *iinfo : *iinfo - m_loc, *iinfo <= m_loc ? "row" : "column");
@@ -458,6 +467,14 @@ void @(pre)perform_LargeDiag_MC64(
                 @(pre)scale_distributed_matrix( *rowequ, *colequ, m, n, m_loc, rowptr, colind, fst_row, a, R, C, R1, C1);
                 ScalePermstruct->DiagScale = BOTH;
                 *rowequ = *colequ = 1;
+#ifdef GPU_ACC
+                if (get_acc_solve()) {
+                    checkGPU(gpuMemcpy(ScalePermstruct->d_R, R,
+                                       sizeof(@(mod_type)) * (size_t)m, gpuMemcpyHostToDevice));
+                    checkGPU(gpuMemcpy(ScalePermstruct->d_C, C,
+                                       sizeof(@(mod_type)) * (size_t)n, gpuMemcpyHostToDevice));
+                }
+#endif
             } /* end if Equil */
             @(pre)permute_global_A( m, n, colptr, rowind, perm_r);
             SUPERLU_FREE(R1);
@@ -618,14 +635,28 @@ void @(pre)allocScalePermstruct_RC(@(pre)ScalePermstruct_t * ScalePermstruct, in
 				ABORT("Malloc fails for R[].");
 			if (!(ScalePermstruct->C = (@(mod_type) *)@(mod_type)Malloc_dist(n)))
 				ABORT("Malloc fails for C[].");
+#ifdef GPU_ACC
+			if (get_acc_solve()) {
+				checkGPU(gpuMalloc((void**)&ScalePermstruct->d_R, sizeof(@(mod_type)) * (size_t)m));
+				checkGPU(gpuMalloc((void**)&ScalePermstruct->d_C, sizeof(@(mod_type)) * (size_t)n));
+			}
+#endif
 			break;
 		case ROW:
 			if (!(ScalePermstruct->C = (@(mod_type) *)@(mod_type)Malloc_dist(n)))
 				ABORT("Malloc fails for C[].");
+#ifdef GPU_ACC
+			if (get_acc_solve())
+				checkGPU(gpuMalloc((void**)&ScalePermstruct->d_C, sizeof(@(type)) * (size_t)n));
+#endif
 			break;
 		case COL:
 			if (!(ScalePermstruct->R = (@(mod_type) *)@(mod_type)Malloc_dist(m)))
 				ABORT("Malloc fails for R[].");
+#ifdef GPU_ACC
+			if (get_acc_solve())
+				checkGPU(gpuMalloc((void**)&ScalePermstruct->d_R, sizeof(@(mod_type)) * (size_t)m));
+#endif
 			break;
 		default:
 			break;
@@ -661,4 +692,3 @@ int @(pre)DistributePermutedMatrix(const superlu_dist_options_t *options,
 
 
 #endif // REFACTOR_DistributePermutedMatrix
-

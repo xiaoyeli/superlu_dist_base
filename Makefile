@@ -377,6 +377,7 @@ double:	\
 	$(TGTSRC)/dequil_batch.c \
 	$(TGTSRC)/dpivot_batch.c \
 	$(TGTSRC)/pdgstrs_lsum_cuda.cu \
+	$(TGTSRC)/pdgstrs_perm_cuda.cu
 
 $(TGTSRC)/dlustruct_gpu.h:	$(SRC)/xlustruct_gpu.h.base
 	extract -b $? -o $@ precision=double
@@ -549,6 +550,8 @@ $(TGTSRC)/dequil_batch.c: $(SRC)/xequil_batch.c.base
 $(TGTSRC)/dpivot_batch.c: $(SRC)/xpivot_batch.c.base
 	extract -b $? -o $@ precision=double
 $(TGTSRC)/pdgstrs_lsum_cuda.cu: $(SRC)/pxgstrs_lsum_cuda.cu.base
+	extract -b $? -o $@ precision=double
+$(TGTSRC)/pdgstrs_perm_cuda.cu: $(SRC)/pxgstrs_perm_cuda.cu.base
 	extract -b $? -o $@ precision=double
 
 dcomplex: \
