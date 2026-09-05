@@ -393,21 +393,20 @@ typedef struct {
     #endif
 } @(pre)SOLVEstruct_t;
 
-/*! \brief Persistent state for repeated variable-size batch solves that share
- *  one sparsity pattern; see p@(pre)gssvx3d_csc_vbatch2().
+/*! \brief Persistent state for repeated batch solves that share one sparsity
+ *  pattern.  Callers hold it only as the opaque handle F[0], see
+ *  p@(pre)gssvx3d_csc_vbatch().
  *
- * The caller owns the struct; zero it with @(pre)vbatch_ctx_init() before the first
- * (Fact = DOFACT) call and release it with @(pre)vbatch_ctx_free() after the last.
- * Everything in here is built on the first call and reused on every subsequent
- * SamePattern_SameRowPerm call: the internal 1x1x1 grid, the stacked
- * block-diagonal matrix A_big and its CSR arrays, and the factorization
- * metadata (etree, perm_c of the big system, symbolic factorization, and the
- * distributed L/U structure).
+ * Everything here is built on the Fact = DOFACT call and reused on every
+ * subsequent SamePattern_SameRowPerm call: the internal 1x1x1 grid, the
+ * stacked block-diagonal matrix A_big and its CSR arrays, and the
+ * factorization metadata (etree, perm_c of the big system, symbolic
+ * factorization, and the distributed L/U structure).
  */
 typedef struct {
-    int       initialized;  /* 0 until the first p@(pre)gssvx3d_csc_vbatch2() call */
-    int       batchCount;   /* batch size the context was built for */
-    int       nrhs;         /* number of RHS the context was built for */
+    int       initialized;  /* 0 until the first factorization is stored */
+    int       batchCount;   /* batch size the state was built for */
+    int       nrhs;         /* number of RHS the state was built for */
     int       m_big;        /* row dimension of the stacked system */
     int       n_big;        /* column dimension of the stacked system */
     int       nnz_big;      /* nonzeros in the stacked system */
@@ -1154,6 +1153,14 @@ extern int @(pre)create_batch_systems(handle_t *SparseMatrix_handles, int batchC
 extern int @(pre)create_batch_systems_multiple(handle_t *SparseMatrix_handles, int batchCount,
                  int nrhs, @(type) **RHSptr, int *ldRHS, @(type) **xtrue, int *ldX,
                  FILE **fp, char * postfix, gridinfo3d_t *grid3d);
+/* One time step of a batch whose right-hand sides (and optionally the reference
+   solutions) are read from their own files rather than generated. */
+extern int @(pre)create_batch_systems_rhsfile(handle_t *SparseMatrix_handles, int batchCount,
+                 int nrhs, @(type) **RHSptr, int *ldRHS, @(type) **xtrue, int *ldX,
+                 FILE **fpA, FILE **fpB, FILE **fpX, char * postfix,
+                 gridinfo3d_t *grid3d);
+extern void @(pre)batch_systems_free(handle_t *SparseMatrix_handles, int batchCount,
+                 @(type) **RHSptr, @(type) **xtrue);
 
 /* Matrix distributed in NRformat_loc in 3D process grid. It converts
    it to a NRformat_loc distributed in 2D grid in grid-0 */
@@ -1666,17 +1673,8 @@ extern int p@(pre)gssvx3d_csc_vbatch(
         gridinfo3d_t *grid3d, SuperLUStat_t *stat, int *info
         //DeviceContext context /* device context including queues, events, dependencies */
         );
-extern int p@(pre)gssvx3d_csc_vbatch2(
-        superlu_dist_options_t *, @(pre)vbatch_ctx_t *ctx,
-        int batchCount, int *m, int *n, int *nnz,
-        int nrhs, handle_t *, @(type) **RHSptr, int *ldRHS,
-        @(mod_type) **ReqPtr, @(mod_type) **CeqPtr,
-        int **RpivPtr, int **CpivPtr, DiagScale_t *DiagScale,
-        handle_t *F, @(type) **Xptr, int *ldX, @(mod_type) **Berrs,
-        gridinfo3d_t *grid3d, SuperLUStat_t *stat, int *info
-        );
-extern void @(pre)vbatch_ctx_init(@(pre)vbatch_ctx_t *ctx);
-extern void @(pre)vbatch_ctx_free(@(pre)vbatch_ctx_t *ctx);
+/* Release the batch state held in F[0] by p@(pre)gssvx3d_csc_vbatch(). */
+extern void @(pre)vbatch_free(handle_t *F);
 extern int @(pre)equil_vbatch(
     superlu_dist_options_t *, int batchCount, int *m, int *n, handle_t *,
     @(mod_type) **ReqPtr, @(mod_type) **CeqPtr, DiagScale_t *, int *info
