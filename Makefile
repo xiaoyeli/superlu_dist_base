@@ -75,6 +75,8 @@ single:	\
 	$(TGTEXM)/psdrive3d1.c \
 	$(TGTEXM)/psdrive3d2.c \
 	$(TGTEXM)/psdrive3d3.c \
+	$(TGTEXM)/psdrive3d_vbatch.c \
+	$(TGTEXM)/psdrive3d_vbatch2.c \
 	$(TGTEXM)/screate_matrix.c \
 	$(TGTEXM)/screate_matrix3d.c \
 	$(TGTEXM)/screate_matrix_perturbed.c \
@@ -102,6 +104,9 @@ single:	\
 	$(TGTSRC)/psgssvx3d_csc_batch.c \
 	$(TGTSRC)/sequil_batch.c \
 	$(TGTSRC)/spivot_batch.c \
+	$(TGTSRC)/psgssvx3d_csc_vbatch.c \
+	$(TGTSRC)/sequil_vbatch.c \
+	$(TGTSRC)/spivot_vbatch.c \
 	$(TGTSRC)/psgstrs_lsum_cuda.cu \
 
 $(TGTSRC)/slustruct_gpu.h:	$(SRC)/xlustruct_gpu.h.base
@@ -244,6 +249,10 @@ $(TGTEXM)/psdrive3d2.c:	$(EXM)/pxdrive3d2.c.base
 	extract -b $? -o $@ precision=single
 $(TGTEXM)/psdrive3d3.c:	$(EXM)/pxdrive3d3.c.base
 	extract -b $? -o $@ precision=single
+$(TGTEXM)/psdrive3d_vbatch.c:	$(EXM)/pxdrive3d_vbatch.c.base
+	extract -b $? -o $@ precision=single
+$(TGTEXM)/psdrive3d_vbatch2.c:	$(EXM)/pxdrive3d_vbatch2.c.base
+	extract -b $? -o $@ precision=single
 $(TGTEXM)/screate_matrix.c:	$(EXM)/xcreate_matrix.c.base
 	extract -b $? -o $@ precision=single
 $(TGTEXM)/screate_matrix3d.c:	$(EXM)/xcreate_matrix3d.c.base
@@ -271,6 +280,12 @@ $(TGTSRC)/psgssvx3d_csc_batch.c: $(SRC)/pxgssvx3d_csc_batch.c.base
 $(TGTSRC)/sequil_batch.c: $(SRC)/xequil_batch.c.base
 	extract -b $? -o $@ precision=single
 $(TGTSRC)/spivot_batch.c: $(SRC)/xpivot_batch.c.base
+	extract -b $? -o $@ precision=single
+$(TGTSRC)/psgssvx3d_csc_vbatch.c: $(SRC)/pxgssvx3d_csc_vbatch.c.base
+	extract -b $? -o $@ precision=single
+$(TGTSRC)/sequil_vbatch.c: $(SRC)/xequil_vbatch.c.base
+	extract -b $? -o $@ precision=single
+$(TGTSRC)/spivot_vbatch.c: $(SRC)/xpivot_vbatch.c.base
 	extract -b $? -o $@ precision=single
 $(TGTSRC)/psgstrs_lsum_cuda.cu: $(SRC)/pxgstrs_lsum_cuda.cu.base
 	extract -b $? -o $@ precision=single
@@ -342,6 +357,9 @@ double:	\
 	$(TGTEXM)/pddrive3d1.c \
 	$(TGTEXM)/pddrive3d2.c \
 	$(TGTEXM)/pddrive3d3.c \
+	$(TGTEXM)/pddrive3d_vbatch.c \
+	$(TGTEXM)/pddrive3d_vbatch2.c \
+	$(TGTEXM)/pddrive3d_block_diag_vbatch.c \
 	$(TGTSRC)/dscatter3d.c \
 	$(TGTSRC)/dgather.c \
 	$(TGTSRC)/pd3dcomm.c \
@@ -361,6 +379,9 @@ double:	\
 	$(TGTSRC)/pdgssvx3d_csc_batch.c \
 	$(TGTSRC)/dequil_batch.c \
 	$(TGTSRC)/dpivot_batch.c \
+	$(TGTSRC)/pdgssvx3d_csc_vbatch.c \
+	$(TGTSRC)/dequil_vbatch.c \
+	$(TGTSRC)/dpivot_vbatch.c \
 	$(TGTSRC)/pdgstrs_lsum_cuda.cu \
 
 $(TGTSRC)/dlustruct_gpu.h:	$(SRC)/xlustruct_gpu.h.base
@@ -503,6 +524,12 @@ $(TGTEXM)/pddrive3d2.c:	$(EXM)/pxdrive3d2.c.base
 	extract -b $? -o $@ precision=double
 $(TGTEXM)/pddrive3d3.c:	$(EXM)/pxdrive3d3.c.base
 	extract -b $? -o $@ precision=double
+$(TGTEXM)/pddrive3d_vbatch.c:	$(EXM)/pxdrive3d_vbatch.c.base
+	extract -b $? -o $@ precision=double
+$(TGTEXM)/pddrive3d_vbatch2.c:	$(EXM)/pxdrive3d_vbatch2.c.base
+	extract -b $? -o $@ precision=double
+$(TGTEXM)/pddrive3d_block_diag_vbatch.c:	$(EXM)/pxdrive3d_block_diag_vbatch.c.base
+	extract -b $? -o $@ precision=double
 $(TGTEXM)/dcreate_matrix.c:	$(EXM)/xcreate_matrix.c.base
 	extract -b $? -o $@ precision=double
 $(TGTEXM)/dcreate_matrix3d.c:	$(EXM)/xcreate_matrix3d.c.base
@@ -532,6 +559,12 @@ $(TGTSRC)/pdgssvx3d_csc_batch.c: $(SRC)/pxgssvx3d_csc_batch.c.base
 $(TGTSRC)/dequil_batch.c: $(SRC)/xequil_batch.c.base
 	extract -b $? -o $@ precision=double
 $(TGTSRC)/dpivot_batch.c: $(SRC)/xpivot_batch.c.base
+	extract -b $? -o $@ precision=double
+$(TGTSRC)/pdgssvx3d_csc_vbatch.c: $(SRC)/pxgssvx3d_csc_vbatch.c.base
+	extract -b $? -o $@ precision=double
+$(TGTSRC)/dequil_vbatch.c: $(SRC)/xequil_vbatch.c.base
+	extract -b $? -o $@ precision=double
+$(TGTSRC)/dpivot_vbatch.c: $(SRC)/xpivot_vbatch.c.base
 	extract -b $? -o $@ precision=double
 $(TGTSRC)/pdgstrs_lsum_cuda.cu: $(SRC)/pxgstrs_lsum_cuda.cu.base
 	extract -b $? -o $@ precision=double
