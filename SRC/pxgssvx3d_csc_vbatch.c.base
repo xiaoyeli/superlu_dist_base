@@ -20,7 +20,7 @@ at the top-level directory.
 #include "superlu_upacked.h"
 #include <stdbool.h>
 
-/*! rief Drop the factorization but keep the internal process grid, so a new
+/*! \brief Drop the factorization but keep the internal process grid, so a new
  *  Fact = DOFACT call can rebuild on top of it.
  *
  * Tearing the grid down and recreating it per call is what this avoids: on a
@@ -51,7 +51,7 @@ static void @(pre)vbatch_ctx_release_factors(@(pre)vbatch_ctx_t *ctx)
     ctx->initialized = 0;  /* the grid stays; gridalloc is left set */
 } /* end @(pre)vbatch_ctx_release_factors */
 
-/*! rief Release the contents of a context, grid included. */
+/*! \brief Release the contents of a context, grid included. */
 static void @(pre)vbatch_ctx_destroy(@(pre)vbatch_ctx_t *ctx)
 {
     @(pre)vbatch_ctx_release_factors(ctx);

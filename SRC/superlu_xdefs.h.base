@@ -732,6 +732,21 @@ extern void p@(pre)gsrfs3d(superlu_dist_options_t *, int_t,
 	        @(pre)trf3Dpartition_t*  , @(type) *, int_t, @(type) *, int_t, int,
 	        @(pre)SOLVEstruct_t *, @(mod_type) *, SuperLUStat_t *, int *);
 
+/* GMRES inner-solve kernels for iterative refinement (IterRefine==SLU_GMRES).
+   Each solves A d = r (r in/out via the X argument; d returned) with the LU
+   factors as left preconditioner. */
+extern void p@(pre)gmres(superlu_dist_options_t *, int_t, SuperMatrix *,
+                    @(pre)LUstruct_t *, @(pre)ScalePermstruct_t *, gridinfo_t *,
+                    p@(pre)gsmv_comm_t *, @(type) *X, int_t m_loc, int_t fst_row,
+                    int restart, int maxit, double rtol, double atol, int gs,
+                    @(pre)SOLVEstruct_t *, int *totit, SuperLUStat_t *, int *);
+
+extern void p@(pre)gmres3d(superlu_dist_options_t *, int_t, SuperMatrix *,
+                    @(pre)LUstruct_t *, @(pre)ScalePermstruct_t *, gridinfo3d_t *,
+                    @(pre)trf3Dpartition_t *, p@(pre)gsmv_comm_t *,
+                    @(type) *X, int_t m_loc, int_t fst_row,
+                    int restart, int maxit, double rtol, double atol, int gs,
+                    @(pre)SOLVEstruct_t *, int *totit, SuperLUStat_t *, int *);
 
 extern void p@(pre)gsrfs_ABXglobal(superlu_dist_options_t *, int_t,
                   SuperMatrix *, @(mod_type), @(pre)LUstruct_t *,
@@ -1014,7 +1029,10 @@ extern void  @(pre)readMM_dist(FILE *, int_t *, int_t *, int_t *,
 	                  @(type) **, int_t **, int_t **);
 extern int  @(pre)read_binary(FILE *, int_t *, int_t *, int_t *,
 	                  @(type) **, int_t **, int_t **);
-
+extern int
+@(pre)write_binary_withname(int_t n, int_t nnz,
+	      @(type) *values, int_t *rowind, int_t *colptr, char *newfile);
+	      
 extern void validateInput_p@(pre)gssvx3d(superlu_dist_options_t *, SuperMatrix *A,
        int ldb, int nrhs, gridinfo3d_t *, int *info);
 extern void @(pre)allocScalePermstruct_RC(@(pre)ScalePermstruct_t *, int_t m, int_t n);
@@ -1657,12 +1675,12 @@ extern int p@(pre)gssvx3d_csc_batch(
 extern int @(pre)equil_batch(
     superlu_dist_options_t *, int batchCount, int m, int n, handle_t *,
     @(mod_type) **ReqPtr, @(mod_type) **CeqPtr, DiagScale_t *
-    //    DeviceContext context /* device context including queues, events, dependencies */
+    // DeviceContext context /* device context including queues, events, dependencies */
     );
 extern int @(pre)pivot_batch(
     superlu_dist_options_t *, int batchCount, int m, int n, handle_t *,
     @(mod_type) **ReqPtr, @(mod_type) **CeqPtr, DiagScale_t *, int **RpivPtr
-    //    DeviceContext context /* device context including queues, events, dependencies */
+    // DeviceContext context /* device context including queues, events, dependencies */
     );
 extern int p@(pre)gssvx3d_csc_vbatch(
         superlu_dist_options_t *, int batchCount, int *m, int *n, int *nnz,

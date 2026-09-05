@@ -10,10 +10,10 @@ at the top-level directory.
 */
 @extract -b Typedef.inc
 /*! @file
- * \brief Driver program for P@(PRE)GSSVX3D example
+ * \brief Example program for P@(PRE)GSSVX3D_CSC_VBATCH
  *
  * <pre>
- * -- Distributed SuperLU routine (version 9.0) --
+ * -- Distributed SuperLU routine (version 9.3) --
  * Lawrence Berkeley National Lab, Georgia Institute of Technology,
  * Oak Ridge National Lab
  * May 12, 2021
@@ -31,16 +31,14 @@ at the top-level directory.
  * Purpose
  * =======
  *
- * The driver program P@(PRE)DRIVE3D.
- *
- * This example illustrates how to use P@(PRE)GSSVX3D with the full
+ * This example illustrates how to use P@(PRE)GSSVX3D_CSC_VBATCH with the full
  * (default) options to solve a linear system.
  *
  * Five basic steps are required:
  *   1. Initialize the MPI environment and the SuperLU process grid
  *   2. Set up the input matrix and the right-hand side
  *   3. Set the options argument
- *   4. Call p@(pre)gssvx
+ *   4. Call p@(pre)gssvx3d_csc_vbatch
  *   5. Release the process grid and terminate the MPI environment
  *
  * The program may be run by typing
@@ -84,9 +82,9 @@ static void checkNRFMT(NRformat_loc*A, NRformat_loc*B)
     assert(A->fst_row == B->fst_row);
 
 #if 0
-    double *Aval = (double *)A->nzval, *Bval = (double *)B->nzval;
-    Printdouble5("A", A->nnz_loc, Aval);
-    Printdouble5("B", B->nnz_loc, Bval);
+    @(type) *Aval = (@(type) *)A->nzval, *Bval = (@(type) *)B->nzval;
+    Print@(type)5("A", A->nnz_loc, Aval);
+    Print@(type)5("B", B->nnz_loc, Bval);
     fflush(stdout);
 #endif
 
@@ -385,7 +383,7 @@ main (int argc, char *argv[])
 	printf("batchCount %d\n", batchCount);
 	// @(pre)create_block_diag_3d(&A, batchCount, nrhs, &b, &ldb, &xtrue, &ldx, fp, suffix, &grid);
 
-	handle_t *F;
+        handle_t *F = NULL; /* NULL = single-shot, no state kept */
 	@(type) **RHSptr;
 	int *ldRHS, *md, *nd, *nnzd;
 	@(mod_type) **ReqPtr;

@@ -6,22 +6,7 @@ EXM = ./EXAMPLE
 F90 = ./FORTRAN
 BLS = ./CBLAS
 
-#TGTSRC 	= ../superlu_dist.git/SRC
-#TGTTST 	= ../superlu_dist.git/TEST
-#TGTEXM 	= ../superlu_dist.git/EXAMPLE
-#TGTF90 	= ../superlu_dist.git/FORTRAN
 #GTSRC	= ../Mixed-Prec-slud.git/SRC
-#TGTTST 	= ../Mixed-Prec-slud.git/TEST
-#TGTEXM 	= ../Mixed-Prec-slud.git/EXAMPLE
-#TGTF90 	= ../Mixed-Prec-slud.git/FORTRAN
-#TGTSRC 	= ../ssg1-superlu_dist.git/SRC
-#TGTTST 	= ../ssg1-superlu_dist.git/TEST
-#TGTEXM 	= ../ssg1-superlu_dist.git/EXAMPLE
-#TGTF90 	= ../ssg1-superlu_dist.git/FORTRAN
-#TGTSRC 	= ../Version-7.git/SRC
-#TGTTST 	= ../Version-7.git/TEST
-#TGTEXM 	= ../Version-7.git/EXAMPLE
-#TGTF90 	= ../Version-7.git/FORTRAN
 
 TGTSRC 	= ./NEXT/SRC
 TGTTST 	= ./NEXT/TEST
@@ -86,6 +71,10 @@ single:	\
 	$(TGTEXM)/psdrive2.c \
 	$(TGTEXM)/psdrive3.c \
 	$(TGTEXM)/psdrive4.c \
+	$(TGTEXM)/psdrive3d.c \
+	$(TGTEXM)/psdrive3d1.c \
+	$(TGTEXM)/psdrive3d2.c \
+	$(TGTEXM)/psdrive3d3.c \
 	$(TGTEXM)/screate_matrix.c \
 	$(TGTEXM)/screate_matrix3d.c \
 	$(TGTEXM)/screate_matrix_perturbed.c \
@@ -94,10 +83,6 @@ single:	\
 	$(TGTF90)/c2f_screate_matrix_x_b.c \
 	$(TGTTST)/pstest.c \
 	$(TGTTST)/pscompute_resid.c \
-	$(TGTEXM)/psdrive3d.c \
-	$(TGTEXM)/psdrive3d1.c \
-	$(TGTEXM)/psdrive3d2.c \
-	$(TGTEXM)/psdrive3d3.c \
 	$(TGTSRC)/sscatter3d.c \
 	$(TGTSRC)/sgather.c \
 	$(TGTSRC)/ps3dcomm.c \
