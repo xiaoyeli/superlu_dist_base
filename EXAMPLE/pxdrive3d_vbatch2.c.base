@@ -308,7 +308,7 @@ main (int argc, char *argv[])
     handle_t Fstate[1] = {0}; /* carries the state reused across steps */
     handle_t *F = Fstate;
     @(type) **RHSptr = (@(type) **) SUPERLU_MALLOC( batchCount * sizeof(@(type) *) );
-    @(mod_type) **xtrues = (@(mod_type) **) SUPERLU_MALLOC( batchCount * sizeof(@(mod_type) *) );
+    @(type) **xtrues = (@(type) **) SUPERLU_MALLOC( batchCount * sizeof(@(type) *) );
     int *ldRHS = int32Malloc_dist(batchCount);
     int *ldX = int32Malloc_dist(batchCount);
     int *md = int32Malloc_dist(batchCount);
@@ -410,8 +410,16 @@ main (int argc, char *argv[])
 		if ( havex ) {
 		    @(type) *xc = Xptr[d], *xt = xtrues[d];
 		    for (int i = 0; i < nd[d]; ++i) {
-			double diff = fabs(xc[i] - xt[i]);
-			double axt  = fabs(xt[i]);
+@precision SINGLE DOUBLE
+			@(mod_type) diff = fabs(xc[i] - xt[i]);
+			@(mod_type) axt  = fabs(xt[i]);
+@precision SCOMPLEX DCOMPLEX
+	   	        @(type) temp;
+                        @(pre)_sub(&temp, &xc[i], &xt[i]);
+			@(mod_type) diff = slud_@(pre)_abs(&temp);
+			@(mod_type) axt  = slud_@(pre)_abs(&xt[i]);
+@precision !
+		    
 			if ( axt > 0.0 && diff/axt > ferr_cw ) ferr_cw = diff/axt;
 			if ( diff > dxmax ) dxmax = diff;
 			if ( axt  > xtmax ) xtmax = axt;

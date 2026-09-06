@@ -548,9 +548,37 @@ p@(pre)gssvx3d_csc_vbatch(
      * since b[] is transormed back to the solution of the original BIG system,
      * we do not need to consider perm_c_big outside p@(pre)gssvx3d().
      */
+@precision SINGLE
+    if ( ctx->options_big.IterRefine >= SLU_DOUBLE ) {
+	/* Double-precision iterative refinement on the stacked system.
+	 * err_bounds[] is scratch/output for the d2 refine; xtrue_big is only
+	 * touched under PRNTlevel>=2 diagnostics, so a zeroed dummy suffices.
+	 * Both are per-call scratch and are not worth keeping in the state. */
+	extern double *doubleCalloc_dist(int_t);
+	float *err_bounds;
+	double *xtrue_big;
+	if (!(err_bounds = floatCalloc_dist(3 * nrhs)))
+	    ABORT("Malloc fails for err_bounds[].");
+	if (!(xtrue_big = doubleCalloc_dist((int_t) m_big * nrhs)))
+	    ABORT("Malloc fails for xtrue_big[].");
+
+	psgssvx3d_d2 (&(ctx->options_big), &(ctx->A_big), &(ctx->ScalePermstruct),
+		      b, m_big, nrhs, &(ctx->grid),
+		      &(ctx->LUstruct), &(ctx->SOLVEstruct), ctx->berr,
+		      err_bounds, stat, info, xtrue_big);
+
+	SUPERLU_FREE(err_bounds);
+	SUPERLU_FREE(xtrue_big);
+    } else {
+	psgssvx3d (&(ctx->options_big), &(ctx->A_big), &(ctx->ScalePermstruct),
+		   b, m_big, nrhs, &(ctx->grid),
+		   &(ctx->LUstruct), &(ctx->SOLVEstruct), ctx->berr, stat, info);
+    }
+@precision DOUBLE SCOMPLEX DCOMPLEX
     p@(pre)gssvx3d (&(ctx->options_big), &(ctx->A_big), &(ctx->ScalePermstruct),
 	       b, m_big, nrhs, &(ctx->grid),
 	       &(ctx->LUstruct), &(ctx->SOLVEstruct), ctx->berr, stat, info);
+@precision !
 
 #if (PRNTlevel >= 1)
     printf("\tBIG system: berr[0] %e\n", ctx->berr[0]);

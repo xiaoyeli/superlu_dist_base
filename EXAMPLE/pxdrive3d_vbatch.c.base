@@ -391,14 +391,14 @@ main (int argc, char *argv[])
 	DiagScale_t *DiagScale;
 	int **RpivPtr;
 	int **CpivPtr;
-	@(type) **Xptr;
+	@(type) **Xptr, **xtrues;
 	int *ldX;
-	@(mod_type) **Berrs, **xtrues;
+	@(mod_type) **Berrs;
 
 	handle_t *SparseMatrix_handles = SUPERLU_MALLOC( batchCount *  sizeof(handle_t) );
 	RHSptr = (@(type) **) SUPERLU_MALLOC( batchCount *  sizeof(@(type) *) );
 	ldRHS = int32Malloc_dist(batchCount);
-	xtrues = (@(mod_type) **) SUPERLU_MALLOC( batchCount *  sizeof(@(mod_type) *) );
+	xtrues = (@(type) **) SUPERLU_MALLOC( batchCount *  sizeof(@(type) *) );
 	ldX = int32Malloc_dist(batchCount);
 
     if (dir) {
@@ -461,8 +461,15 @@ main (int argc, char *argv[])
 	    @(type) *xc = Xptr[d], *xt = xtrues[d];
 	    @(mod_type) ferr_cw = 0.0, dxmax = 0.0, xtmax = 0.0;
 	    for (int i = 0; i < nd[d]; ++i) {
+@precision SINGLE DOUBLE
 		@(mod_type) diff = fabs(xc[i] - xt[i]);
-		@(mod_type) axt  = fabs(xt[i]);
+			@(mod_type) axt  = fabs(xt[i]);
+@precision SCOMPLEX DCOMPLEX
+	   	@(type) temp;
+                @(pre)_sub(&temp, &xc[i], &xt[i]);
+		@(mod_type) diff = slud_@(pre)_abs(&temp);
+		@(mod_type) axt  = slud_@(pre)_abs(&xt[i]);
+@precision !
 		if ( axt > 0.0 && diff/axt > ferr_cw ) ferr_cw = diff/axt;
 		if ( diff > dxmax ) dxmax = diff;
 		if ( axt  > xtmax ) xtmax = axt;

@@ -732,6 +732,32 @@ extern void p@(pre)gsrfs3d(superlu_dist_options_t *, int_t,
 	        @(pre)trf3Dpartition_t*  , @(type) *, int_t, @(type) *, int_t, int,
 	        @(pre)SOLVEstruct_t *, @(mod_type) *, SuperLUStat_t *, int *);
 
+@precision SINGLE
+extern void psgssvx3d_d2(superlu_dist_options_t *options, SuperMatrix *A,
+			   sScalePermstruct_t *ScalePermstruct,
+			   float B[], int ldb, int nrhs, gridinfo3d_t *grid3d,
+			   sLUstruct_t *LUstruct, sSOLVEstruct_t *SOLVEstruct,
+			   float *berr, float *err_bounds, SuperLUStat_t *stat,
+			   int *info, double *xtrue);
+extern void
+psgsrfs3d_d2(superlu_dist_options_t *options, int_t n, SuperMatrix *A,
+	     float anorm, sLUstruct_t *LUstruct,
+	     sScalePermstruct_t *ScalePermstruct, gridinfo3d_t *grid3d,
+	     strf3Dpartition_t *trf3Dpartition,
+	     float *B, int_t ldb, float *X, int_t ldx, int nrhs,
+	     sSOLVEstruct_t *SOLVEstruct, float *err_bounds,
+	     SuperLUStat_t *stat, int *info,
+	     double *xtrue);
+extern void
+psgssvx_d2(superlu_dist_options_t *options, SuperMatrix *A,
+	     sScalePermstruct_t *ScalePermstruct,
+	     float B[], int ldb, int nrhs, gridinfo_t *grid,
+	     sLUstruct_t *LUstruct, sSOLVEstruct_t *SOLVEstruct,
+	     float *err_bounds, SuperLUStat_t *stat, int *info,
+	     double *xtrue);
+			   
+@precision !			   
+
 /* GMRES inner-solve kernels for iterative refinement (IterRefine==SLU_GMRES).
    Each solves A d = r (r in/out via the X argument; d returned) with the LU
    factors as left preconditioner. */
