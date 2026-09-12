@@ -421,7 +421,7 @@ typedef struct {
     int_t    *colind;       /* A_big colind,  size nnz_big */
     int_t    *rowptr;       /* A_big rowptr,  size m_big+1 */
     @(type)   *b;            /* stacked RHS / solution workspace, m_big*nrhs */
-    @(type)   *berr;         /* backward error of the stacked solve, size nrhs */
+    @(mod_type)   *berr;         /* backward error of the stacked solve, size nrhs */
 } @(pre)vbatch_ctx_t;
 
 /*==== For 3D code ====*/
