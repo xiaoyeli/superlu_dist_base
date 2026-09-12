@@ -44,6 +44,7 @@ sed -i 's/[[:blank:]]*$//' TEST/*.*
 ./extract -b SRC/xssvx3dAux.c.base -o ../output/SRC/dssvx3dAux.c precision=DOUBLE
 ./extract -b SRC/xsuperlu_gpu.cu.base -o ../output/SRC/dsuperlu_gpu.cu precision=DOUBLE
 ./extract -b SRC/pxgsequ.c.base -o ../output/SRC/pdgsequ.c precision=DOUBLE
+./extract -b SRC/pxgmres.c.base -o ../output/SRC/pdgmres.c precision=DOUBLE
 ./extract -b SRC/xmyblas2.c.base -o ../output/SRC/xmyblas2.c precision=DOUBLE
 ./extract -b SRC/xmyblas2_dist.c.base -o ../output/SRC/xmyblas2_dist.c precision=DOUBLE
 ./extract -b SRC/xmyblas2_dist.c.base -o ../output/SRC/xmyblas2_dist.c precision=DOUBLE
@@ -242,6 +243,7 @@ sed -i 's/[[:blank:]]*$//' TEST/*.*
 ./extract -b SRC/xssvx3dAux.c.base -o ../output/SRC/sssvx3dAux.c precision=SINGLE
 ./extract -b SRC/xsuperlu_gpu.cu.base -o ../output/SRC/ssuperlu_gpu.cu precision=SINGLE
 ./extract -b SRC/pxgsequ.c.base -o ../output/SRC/psgsequ.c precision=SINGLE
+./extract -b SRC/pxgmres.c.base -o ../output/SRC/psgmres.c precision=SINGLE
 ./extract -b SRC/xmyblas2.c.base -o ../output/SRC/xmyblas2.c precision=SINGLE
 ./extract -b SRC/xmyblas2_dist.c.base -o ../output/SRC/xmyblas2_dist.c precision=SINGLE
 ./extract -b SRC/xmyblas2_dist.c.base -o ../output/SRC/xmyblas2_dist.c precision=SINGLE
