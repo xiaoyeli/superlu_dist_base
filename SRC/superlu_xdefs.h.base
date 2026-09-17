@@ -81,6 +81,12 @@ typedef struct {
     @(mod_type) *C;
     int  *perm_r;
     int  *perm_c;
+#ifdef GPU_ACC
+    int  *d_perm_r ;
+    int  *d_perm_c ;
+    @(mod_type) *d_R;
+    @(mod_type) *d_C;
+#endif
 } @(pre)ScalePermstruct_t;
 
 #if 0 // Sherry: move to superlu_defs.h
@@ -588,6 +594,23 @@ extern void    p@(pre)laqgs (SuperMatrix *, @(mod_type) *, @(mod_type) *, @(mod_
 extern int     p@(pre)Permute_Dense_Matrix(int_t, int_t, int_t [], int perm[],
 				      @(type) [], int, @(type) [], int, int,
 				      gridinfo_t *);
+extern int p@(pre)Permute_Dense_Matrix_gpu_wrap(int_t fst_row,
+                                    int_t m_loc,
+                                    int_t n,
+                                    @(type) *d_X,
+                                    int_t ldx,
+                                    @(type) *d_B,
+                                    int_t ldb,
+                                    int nrhs,
+                                    gridinfo_t *grid, @(pre)SOLVEstruct_t *SOLVEstruct);
+
+extern void @(pre)undo_equilibration_rhs_wrap(@(type) *B, int_t ldb, int_t m_loc, int nrhs,
+    int_t fst_row, int notran,int rowequ, int colequ,
+    @(pre)ScalePermstruct_t *ScalePermstruct);
+
+extern void @(pre)scale_and_copy_rhs_wrap(@(type) *B, int_t ldb, @(type) *X, int_t ldx, int_t m_loc, int nrhs,
+    int_t fst_row, int notran,int rowequ, int colequ,
+    @(pre)ScalePermstruct_t *ScalePermstruct);
 
 extern int     sp_@(pre)trsv_dist (char *, char *, char *, SuperMatrix *,
 			      SuperMatrix *, @(type) *, int *);
@@ -622,7 +645,7 @@ extern void  p@(pre)gssvx(superlu_dist_options_t *, SuperMatrix *,
 extern void  p@(pre)Compute_Diag_Inv(int_t, @(pre)LUstruct_t *,gridinfo_t *, SuperLUStat_t *, int *);
 extern int  @(pre)SolveInit(superlu_dist_options_t *, SuperMatrix *,
                        int perm_r[], int perm_c[],
-		       int_t, @(pre)LUstruct_t *, gridinfo_t *, @(pre)SOLVEstruct_t *);
+		       int_t, int_t, @(pre)LUstruct_t *, gridinfo_t *, @(pre)SOLVEstruct_t *, @(pre)ScalePermstruct_t *);
 extern void @(pre)SolveFinalize(superlu_dist_options_t *, @(pre)SOLVEstruct_t *);
 extern void @(pre)Destroy_A3d_gathered_on_2d(@(pre)SOLVEstruct_t *, gridinfo3d_t *);
 extern int_t p@(pre)gstrs_init(int_t, int_t, int_t, int_t,
