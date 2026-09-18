@@ -1047,13 +1047,13 @@ p@(pre)gssvx(superlu_dist_options_t *options, SuperMatrix *A,
 
 	    if ( permc_spec == NATURAL || permc_spec == MY_PERMC ) {
 		if ( permc_spec == NATURAL ) {
-		     for (j = 0; j < n; ++j) perm_c[j] = j;
+		    for (j = 0; j < n; ++j) perm_c[j] = j;
 #ifdef GPU_ACC
 			if (get_acc_solve()){
 				checkGPU(gpuMemcpy(ScalePermstruct->d_perm_c, ScalePermstruct->perm_c, sizeof(int) * (size_t)n, gpuMemcpyHostToDevice));
 			}
 #endif
-                }
+        }
 		if ( !(sizes = intMalloc_dist(2 * noDomains)) )
 		     ABORT("SUPERLU_MALLOC fails for sizes.");
 		if ( !(fstVtxSep = intMalloc_dist(2 * noDomains)) )
@@ -1152,14 +1152,13 @@ p@(pre)gssvx(superlu_dist_options_t *options, SuperMatrix *A,
 
 	    	/* Every process does this.
 		   returned value (-iinfo) is the size of lsub[], incuding pruned graph.*/
-		int_t linfo;
+			int_t linfo;
 			if ( options->ILU_level != SLU_EMPTY ) { /* for any level-based ILU */
-							linfo = ilu_level_symbfact(options, &GAC, perm_c, etree, Glu_persist, Glu_freeable);
+				linfo = ilu_level_symbfact(options, &GAC, perm_c, etree, Glu_persist, Glu_freeable);
 			} else { /* for complete LU */
-							linfo = symbfact(options, iam, &GAC, perm_c, etree, Glu_persist, Glu_freeable);
+				linfo = symbfact(options, iam, &GAC, perm_c, etree, Glu_persist, Glu_freeable);
 			}
-
-		nnzLU = Glu_freeable->nnzLU;
+			nnzLU = Glu_freeable->nnzLU;
 	    	stat->utime[SYMBFAC] = SuperLU_timer_() - t;
 	    	if ( linfo <= 0 ) { /* Successful return */
 		    QuerySpace_dist(n, -linfo, Glu_freeable, &symb_mem_usage);
@@ -1539,7 +1538,7 @@ p@(pre)gssvx(superlu_dist_options_t *options, SuperMatrix *A,
 	if ( options->SolveInitialized == YES ) { /* Initialized before */
 	    @(pre)SolveFinalize(options, SOLVEstruct); /* Clean up structure */
 	    if (get_acc_solve()) p@(pre)gstrs_delete_device_lsum_x(SOLVEstruct);
-	}
+	 }
      }
 #if 0
     /* Need to revisit: Why the following is not good enough for X-to-B
@@ -1614,19 +1613,19 @@ if ( options->GPURES == YES ){
 	   ------------------------------------------------------------*/
 	if ( notran ) {
 	    if ( rowequ ) {
-		b_col = B;
-		for (j = 0; j < nrhs; ++j) {
-		    irow = fst_row;
-		    for (i = 0; i < m_loc; ++i) {
+			b_col = B;
+			for (j = 0; j < nrhs; ++j) {
+				irow = fst_row;
+				for (i = 0; i < m_loc; ++i) {
 @precision SINGLE DOUBLE
-		        b_col[i] *= R[irow];
+			b_col[i] *= R[irow];
 @precision SCOMPLEX DCOMPLEX
-                        @(pre)@(mod_pre)_mult(&b_col[i], &b_col[i], R[irow]);
+                    @(pre)@(mod_pre)_mult(&b_col[i], &b_col[i], R[irow]);
 @precision !
-		        ++irow;
-		    }
-		    b_col += ldb;
-		}
+					++irow;
+				}
+				b_col += ldb;
+			}
 	    }
 	} else if ( colequ ) {
 	    b_col = B;
@@ -1810,7 +1809,7 @@ if ( options->GPURES == YES ){
             /* Deallocate the storage associated with SOLVEstruct1 */
 	    if ( nrhs > 1 ) {
 	        if (get_acc_solve()) p@(pre)gstrs_delete_device_lsum_x(SOLVEstruct1);
-		pxgstrs_finalize(SOLVEstruct1->gstrs_comm);
+			pxgstrs_finalize(SOLVEstruct1->gstrs_comm);
 	        SUPERLU_FREE(SOLVEstruct1);
 	    }
 
