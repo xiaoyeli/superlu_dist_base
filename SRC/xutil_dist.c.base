@@ -232,14 +232,14 @@ void file_@(pre)Print_NCPformat_triplet(FILE *fp, SuperMatrix *A)
 
     int n = A->nrow;
     int_t nnz = Astore->nnz;
-
+    
     //    printf("\nTriplet matrix:\n");
     //    printf("nrow %d, ncol %lld, nnz %lld\n", n, (long long) A->ncol, nnz);
     dp = (@(type) *) Astore->nzval;
     colbeg = Astore->colbeg;
     colend = Astore->colend;
     rowind = Astore->rowind;
-
+    
     for (j = 0; j < A->ncol; ++j) {
 	for (i = colbeg[j]; i < colend[j]; ++i) {
 @precision SINGLE DOUBLE
@@ -2036,4 +2036,5 @@ void @(pre)DumpLblocks3D(int_t nsupers, gridinfo3d_t *grid3d,
  	fclose(fp);
 
 } /* end @(pre)DumpLblocks3D */
+
 

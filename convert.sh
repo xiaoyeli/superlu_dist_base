@@ -8,7 +8,6 @@ sed -i 's/[[:blank:]]*$//' TEST/*.*
 
 ./extract -b SRC/pxgstrs_lsum.c.base -o ../output/SRC/pdgstrs_lsum.c precision=DOUBLE
 ./extract -b SRC/pxgstrs_lsum_cuda.cu.base -o ../output/SRC/pdgstrs_lsum_cuda.cu precision=DOUBLE
-./extract -b SRC/pxgstrs_perm_cuda.cu.base -o ../output/SRC/pdgstrs_perm_cuda.cu precision=DOUBLE
 ./extract -b SRC/pxdistribute.c.base -o ../output/SRC/pddistribute.c precision=DOUBLE
 ./extract -b SRC/pxdistribute3d.c.base -o ../output/SRC/pddistribute3d.c precision=DOUBLE
 ./extract -b SRC/x3DPartition.c.base -o ../output/SRC/d3DPartition.c precision=DOUBLE
@@ -104,7 +103,6 @@ sed -i 's/[[:blank:]]*$//' TEST/*.*
 
 ./extract -b SRC/pxgstrs_lsum.c.base -o ../output/SRC/pzgstrs_lsum.c precision=DCOMPLEX
 ./extract -b SRC/pxgstrs_lsum_cuda.cu.base -o ../output/SRC/pzgstrs_lsum_cuda.cu precision=DCOMPLEX
-./extract -b SRC/pxgstrs_perm_cuda.cu.base -o ../output/SRC/pzgstrs_perm_cuda.cu precision=DCOMPLEX
 ./extract -b SRC/pxdistribute.c.base -o ../output/SRC/pzdistribute.c precision=DCOMPLEX
 ./extract -b SRC/xdistribute.c.base -o ../output/SRC/zdistribute.c precision=DCOMPLEX
 ./extract -b SRC/pxgstrs.c.base -o ../output/SRC/pzgstrs.c precision=DCOMPLEX
@@ -209,7 +207,6 @@ sed -i 's/[[:blank:]]*$//' TEST/*.*
 
 ./extract -b SRC/pxgstrs_lsum.c.base -o ../output/SRC/psgstrs_lsum.c precision=SINGLE
 ./extract -b SRC/pxgstrs_lsum_cuda.cu.base -o ../output/SRC/psgstrs_lsum_cuda.cu precision=SINGLE
-./extract -b SRC/pxgstrs_perm_cuda.cu.base -o ../output/SRC/psgstrs_perm_cuda.cu precision=SINGLE
 ./extract -b SRC/pxdistribute.c.base -o ../output/SRC/psdistribute.c precision=SINGLE
 ./extract -b SRC/pxdistribute3d.c.base -o ../output/SRC/psdistribute3d.c precision=SINGLE
 ./extract -b SRC/x3DPartition.c.base -o ../output/SRC/s3DPartition.c precision=SINGLE
@@ -291,5 +288,3 @@ sed -i 's/[[:blank:]]*$//' TEST/*.*
 ./extract -b EXAMPLE/xcreate_matrix.c.base -o ../output/EXAMPLE/screate_matrix.c precision=SINGLE
 ./extract -b EXAMPLE/xreadhb.c.base -o ../output/EXAMPLE/sreadhb.c precision=SINGLE
 ./extract -b EXAMPLE/xreadtriple.c.base -o ../output/EXAMPLE/sreadtriple.c precision=SINGLE
-
-./extract -b TEST/pxtest.c.base -o ../output/TEST/pstest.c precision=SINGLE

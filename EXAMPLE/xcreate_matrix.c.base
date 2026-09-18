@@ -149,9 +149,9 @@ int @(pre)create_matrix_postfix(SuperMatrix *A, int nrhs, @(type) **rhs,
               count=remainder;
            } else {
               count=chunk;
-           }
+           }  
            MPI_Bcast( &nzval[idx],  count, @(MPI_TYPE), 0, grid->comm );
-           MPI_Bcast( &rowind[idx], count, mpi_int_t,  0, grid->comm );
+           MPI_Bcast( &rowind[idx], count, mpi_int_t,  0, grid->comm );       
         }
 
 	MPI_Bcast( colptr, n+1, mpi_int_t,  0, grid->comm );
@@ -173,11 +173,11 @@ int @(pre)create_matrix_postfix(SuperMatrix *A, int nrhs, @(type) **rhs,
                 count=remainder;
             }else{
                 count=chunk;
-            }
+            } 
             MPI_Bcast( &nzval[idx],  count, @(MPI_TYPE), 0, grid->comm );
-            MPI_Bcast( &rowind[idx], count, mpi_int_t,  0, grid->comm );
+            MPI_Bcast( &rowind[idx], count, mpi_int_t,  0, grid->comm );       
         }
-
+    
 	MPI_Bcast( colptr,  n+1, mpi_int_t,  0, grid->comm );
     }
 

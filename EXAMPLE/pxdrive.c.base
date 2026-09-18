@@ -9,8 +9,6 @@ The source code is distributed under BSD license, see the file License.txt
 at the top-level directory.
 */
 @extract -b Typedef.inc
-
-
 /*! @file
  * \brief Driver program for P@(PRE)GSSVX example
  *
@@ -159,9 +157,9 @@ int main(int argc, char *argv[])
                 printf("\t-s <int>: parallel symbolic? (default %4d)\n", options.ParSymbFact);
                 printf("\t-l <int>: lookahead level    (default %4d)\n", options.num_lookaheads);
                 printf("\t-i <int>: iter. refinement   (default %4d)\n", options.IterRefine);
+                printf("\t-b <int>: use batch mode?    (default %4d)\n", batch);
                 printf("\t-g <int>: gpu-resident solve?   (default %4d)\n", options.GPURES);
                 printf("\t-G <int>: solve with GMRES (LU-preconditioned)? (0 direct, 1 GMRES) (default %4d)\n", gmres);
-                printf("\t-b <int>: use batch mode?    (default %4d)\n", batch);
                 exit(0);
                 break;
             case 'r': nprow = atoi(*cpp);
@@ -332,6 +330,7 @@ int main(int argc, char *argv[])
 		postfix = &((*cpp)[ii+1]);
 	}
     }
+    // printf("%s\n", postfix);
 
     /* ------------------------------------------------------------
        GET THE MATRIX FROM FILE AND SETUP THE RIGHT HAND SIDE.
