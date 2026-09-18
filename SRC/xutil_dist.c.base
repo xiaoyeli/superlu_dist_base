@@ -243,9 +243,9 @@ void file_@(pre)Print_NCPformat_triplet(FILE *fp, SuperMatrix *A)
     for (j = 0; j < A->ncol; ++j) {
 	for (i = colbeg[j]; i < colend[j]; ++i) {
 @precision SINGLE DOUBLE
-	    fprintf(fp, "%8d %8d\t%f\n", rowind[i], j, dp[i]);
+	    fprintf(fp, "%8lld %8d\t%f\n", (long long)rowind[i], j, dp[i]);
 @precision SCOMPLEX DCOMPLEX
-	    fprintf(fp, "%8d %8d\t%f\t%f\n", rowind[i], j, dp[i].r, dp[i].i);
+	    fprintf(fp, "%8lld %8d\t%f\t%f\n", (long long)rowind[i], j, dp[i].r, dp[i].i);
 @precision !
 	}
     }
