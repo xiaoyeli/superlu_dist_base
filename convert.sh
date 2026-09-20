@@ -6,12 +6,17 @@ sed -i 's/[[:blank:]]*$//' SRC/*.*
 sed -i 's/[[:blank:]]*$//' EXAMPLE/*.*
 sed -i 's/[[:blank:]]*$//' TEST/*.*
 
+TGTSRC 	= ./NEXT/SRC
+TGTTST 	= ./NEXT/TEST
+TGTEXM 	= ./NEXT/EXAMPLE
+TGTF90 	= ./NEXT/FORTRAN
+
 ./extract -b SRC/pxgstrs_lsum.c.base -o ../output/SRC/pdgstrs_lsum.c precision=DOUBLE
 ./extract -b SRC/pxgstrs_lsum_cuda.cu.base -o ../output/SRC/pdgstrs_lsum_cuda.cu precision=DOUBLE
 ./extract -b SRC/pxgstrs_perm_cuda.cu.base -o ../output/SRC/pdgstrs_perm_cuda.cu precision=DOUBLE
 ./extract -b SRC/pxdistribute.c.base -o ../output/SRC/pddistribute.c precision=DOUBLE
 ./extract -b SRC/pxdistribute3d.c.base -o ../output/SRC/pddistribute3d.c precision=DOUBLE
-./extract -b SRC/x3DPartition.c.base -o ../output/SRC/d3DPartition.c precision=DOUBLE
+extract -b SRC/x3DPartition.c.base -o $(TGTSRC)/d3DPartition.c precision=DOUBLE
 ./extract -b SRC/xdistribute.c.base -o ../output/SRC/ddistribute.c precision=DOUBLE
 ./extract -b SRC/pxgstrs.c.base -o ../output/SRC/pdgstrs.c precision=DOUBLE
 ./extract -b SRC/pxgstrs3d.c.base -o ../output/SRC/pdgstrs3d.c precision=DOUBLE
