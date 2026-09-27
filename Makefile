@@ -110,6 +110,7 @@ single:	\
 	$(TGTSRC)/spivot_vbatch.c \
 	$(TGTSRC)/psgstrs_lsum_cuda.cu \
 	$(TGTSRC)/psgmres.c \
+	$(TGTSRC)/psgstrs_perm_cuda.cu \
 
 $(TGTSRC)/slustruct_gpu.h:	$(SRC)/xlustruct_gpu.h.base
 	extract -b $? -o $@ precision=single
@@ -294,6 +295,8 @@ $(TGTSRC)/spivot_vbatch.c: $(SRC)/xpivot_vbatch.c.base
 $(TGTSRC)/psgstrs_lsum_cuda.cu: $(SRC)/pxgstrs_lsum_cuda.cu.base
 	extract -b $? -o $@ precision=single
 $(TGTSRC)/psgmres.c: $(SRC)/pxgmres.c.base
+	extract -b $? -o $@ precision=single
+$(TGTSRC)/psgstrs_perm_cuda.cu: $(SRC)/pxgstrs_perm_cuda.cu.base
 	extract -b $? -o $@ precision=single
 
 double:	\
@@ -675,6 +678,7 @@ dcomplex: \
 	$(TGTSRC)/zequil_vbatch.c \
 	$(TGTSRC)/zpivot_vbatch.c \
 	$(TGTSRC)/pzgmres.c \
+	$(TGTSRC)/pzgstrs_perm_cuda.cu \
 
 $(TGTSRC)/zlustruct_gpu.h:	$(SRC)/xlustruct_gpu.h.base
 	extract -b $? -o $@ precision=dcomplex
@@ -861,4 +865,6 @@ $(TGTSRC)/zequil_vbatch.c: $(SRC)/xequil_vbatch.c.base
 $(TGTSRC)/zpivot_vbatch.c: $(SRC)/xpivot_vbatch.c.base
 	extract -b $? -o $@ precision=dcomplex
 $(TGTSRC)/pzgmres.c: $(SRC)/pxgmres.c.base
+	extract -b $? -o $@ precision=dcomplex
+$(TGTSRC)/pzgstrs_perm_cuda.cu: $(SRC)/pxgstrs_perm_cuda.cu.base
 	extract -b $? -o $@ precision=dcomplex
