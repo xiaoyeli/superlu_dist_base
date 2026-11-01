@@ -59,7 +59,7 @@ int main(int argc, char *argv[])
     @(pre)LUstruct_t LUstruct;
     @(pre)SOLVEstruct_t SOLVEstruct;
     gridinfo_t grid;
-    @(mod_type)   *berr;
+    @(mod_type)   *berr, *err_bounds;
     @(type)   *b, *xtrue, *d_b;
     int    m, n;
     int      nprow, npcol, lookahead, colperm, rowperm, ir, symbfact, batch, gpures, gmres;

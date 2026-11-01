@@ -396,7 +396,7 @@ double:	\
 	$(TGTSRC)/dpivot_vbatch.c \
 	$(TGTSRC)/pdgstrs_lsum_cuda.cu \
 	$(TGTSRC)/pdgmres.c \
-	$(TGTSRC)/pdgstrs_perm_cuda.cu
+	$(TGTSRC)/pdgstrs_perm_cuda.cu \
 	$(TGTSRC)/pdgstrs_perm_cuda.hip.cpp
 
 $(TGTSRC)/dlustruct_gpu.h:	$(SRC)/xlustruct_gpu.h.base
@@ -584,6 +584,8 @@ $(TGTSRC)/dpivot_vbatch.c: $(SRC)/xpivot_vbatch.c.base
 $(TGTSRC)/pdgstrs_lsum_cuda.cu: $(SRC)/pxgstrs_lsum_cuda.cu.base
 	extract -b $? -o $@ precision=double
 $(TGTSRC)/pdgmres.c: $(SRC)/pxgmres.c.base
+	extract -b $? -o $@ precision=double
+$(TGTSRC)/pdgstrs_perm_cuda.cu: $(SRC)/pxgstrs_perm_cuda.cu.base
 	extract -b $? -o $@ precision=double
 $(TGTSRC)/pdgstrs_perm_cuda.hip.cpp: $(SRC)/pxgstrs_perm_cuda.hip.cpp.base
 	extract -b $? -o $@ precision=double
@@ -873,5 +875,5 @@ $(TGTSRC)/pzgmres.c: $(SRC)/pxgmres.c.base
 	extract -b $? -o $@ precision=dcomplex
 $(TGTSRC)/pzgstrs_perm_cuda.cu: $(SRC)/pxgstrs_perm_cuda.cu.base
 	extract -b $? -o $@ precision=dcomplex
-$(TGTSRC)/pzgstrs_perm_cuda.hip.cpp $(SRC)/pxgstrs_perm_cuda.hip.cpp.base
+$(TGTSRC)/pzgstrs_perm_cuda.hip.cpp: $(SRC)/pxgstrs_perm_cuda.hip.cpp.base
 	extract -b $? -o $@ precision=dcomplex
