@@ -218,6 +218,7 @@ void @(pre)scaleMatrixDiagonally(fact_t Fact, @(pre)ScalePermstruct_t *ScalePerm
 
     if (Fact == SamePattern_SameRowPerm) {
         @(pre)scalePrecomputed(A, ScalePermstruct);
+        *iinfo = 0;
     } else {
         @(pre)scaleFromScratch(A, ScalePermstruct, grid, rowequ, colequ, iinfo);
     }
