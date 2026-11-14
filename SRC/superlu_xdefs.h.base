@@ -26,8 +26,8 @@ at the top-level directory.
  * </pre>
  */
 
-#ifndef __SUPERLU_@(PRE)DEFS /* allow multiple inclusions */
-#define __SUPERLU_@(PRE)DEFS
+#ifndef SUPERLU_@(PRE)DEFS_H /* allow multiple inclusions */
+#define SUPERLU_@(PRE)DEFS_H
 
 /*
  * File name:	superlu_@(pre)defs.h
@@ -1826,4 +1826,4 @@ extern @(type) *@(pre)ready_lsum;
   }
 #endif
 
-#endif /* __SUPERLU_@(pre)DEFS */
+#endif /* SUPERLU_@(PRE)DEFS_H */
