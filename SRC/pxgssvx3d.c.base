@@ -10,7 +10,7 @@ at the top-level directory.
 */
 @extract -b Typedef.inc
 
-/*
+/*! @file
  * \brief Solves a system of linear equations A*X=B using 3D process grid.
  *
  * <pre>
