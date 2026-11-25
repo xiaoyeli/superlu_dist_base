@@ -90,6 +90,49 @@ void @(pre)lsum_set_solve_stream(void *stream)
 {
     g_solve_stream = (cudaStream_t) stream;
 }
+/* Multi-process GPU solve: the order of the local block columns in the single
+   spin-wait launch of each process (device array of CEILING(nsupers, npcol)
+   entries; NULL: natural order).  Set before each call of the L and U
+   wrappers, which take it and clear it. */
+static int *g_solve_order = NULL;
+void @(pre)lsum_set_solve_order(int *d_bcorder)
+{
+    g_solve_order = d_bcorder;
+}
+#ifdef HAVE_NVSHMEM
+/* The receive kernels @(pre)wait_bcrd and @(pre)wait_bcrd_u are cooperative launches on
+   one stream, the compute kernel follows on another, and its thread blocks
+   spin on what the receive kernel takes in.  If those blocks fill the GPU
+   first, the cooperative launch never starts and the solve hangs: it did in
+   most first solves on a 1x4 grid with lazy module loading, the flags of the
+   arrived messages set and never read.  So the receive kernel's first thread
+   sets this flag (mapped host memory), and the host launches the compute
+   kernel only after it is set. */
+static __device__ int *@(pre)wait_started_d = NULL;
+static volatile int *@(pre)wait_started_h = NULL;
+static void @(pre)wait_started_reset(void)
+{
+    if ( !@(pre)wait_started_h ) {
+        int *h, *d;
+        CUDA_CHECK(cudaHostAlloc((void**)&h, sizeof(int), cudaHostAllocMapped));
+        CUDA_CHECK(cudaHostGetDevicePointer((void**)&d, h, 0));
+        CUDA_CHECK(cudaMemcpyToSymbol(@(pre)wait_started_d, &d, sizeof(int *)));
+        @(pre)wait_started_h = h;
+    }
+    *@(pre)wait_started_h = 0;
+}
+static void @(pre)wait_started_wait(void)
+{
+    while ( *@(pre)wait_started_h == 0 ) ;
+}
+static __device__ __forceinline__ void @(pre)wait_started_set(void)
+{
+    if ( blockIdx.x == 0 && threadIdx.x == 0 && threadIdx.y == 0 && @(pre)wait_started_d ) {
+        *(volatile int *) @(pre)wait_started_d = 1;
+        __threadfence_system();
+    }
+}
+#endif
 /* SLU_SOLVE_PROF=1: synchronize after every level launch and print its time */
 static int solve_prof_on(void)
 { static int on = -1; if (on < 0) { const char *e = getenv("SLU_SOLVE_PROF"); on = e ? atoi(e) : 0; } return on; }
@@ -238,6 +281,540 @@ __device__ @(type) @(pre)_atomicAdd(@(type)* a, @(type) b){
   out.r=atomicAdd(x, b.r);
   out.i=atomicAdd(y, b.i);
   return out;
+}
+@precision !
+@precision SINGLE
+
+/******************************************************************************/
+/* Several right-hand sides (nrhs > 1, SUPERLU_ACC_SOLVE=1): the dense block
+   products of the solve in 8x8 tiles (8 rows x 8 right-hand sides), one tile
+   per warp at a time, with FP32 FMAs (the tensor-core path of the double
+   precisions is FP64 only).  A lane reads each matrix entry once for 2
+   right-hand sides, and the tiles of a supernode are dealt to all the warps of
+   its thread block, where the per-row loops give each row to one thread that
+   loops over the right-hand sides.  The kernels take this path for
+   gemmflag == 2, which ssolve_gemmflag() sets; one right-hand side,
+   SUPERLU_ACC_SOLVE=2 and HIP keep the other paths.  The thread block size
+   must be a multiple of 32.  Lane (g = lane/4, t = lane%4) computes
+   C[g][2t..2t+1]. */
+/******************************************************************************/
+/* One 8x8 tile of C = A * B, rows r0..r0+7 and columns c0..c0+7, rows >= M and
+   columns >= N zero.  A is M x K, column major (lda); B(k,j) = B[kb + j*ldb]
+   with kb = k, or gat[k] - rel when gat != NULL.  c[u] = C[g][2t+u]. */
+static __device__ __forceinline__
+void s_tile_gemm(int M, int N, int K, int r0, int c0,
+                 const float *A, int lda,
+                 const float *B, int ldb, const int_t *gat, int_t rel,
+                 float *c)
+{
+    const int lane = (threadIdx_x + threadIdx_y * blockDim_x) & 31;
+    const int g = lane >> 2, t = lane & 3;
+    const int row = r0 + g;
+    const int j0 = c0 + 2 * t, j1 = j0 + 1;
+    float s0 = 0.f, s1 = 0.f;
+    if (row < M) {
+        for (int k = 0; k < K; ++k) {
+            const float a = A[(size_t) k * lda + row];
+            const int_t kb = gat ? gat[k] - rel : k;
+            if (j0 < N) s0 += a * B[kb + (size_t) j0 * ldb];
+            if (j1 < N) s1 += a * B[kb + (size_t) j1 * ldb];
+        }
+    }
+    c[0] = s0; c[1] = s1;
+}
+
+/* x_k <- Inv * x_k for the n x n inverse of a diagonal block (column major) and
+   x_k n x nrhs (ld n); tmp (n x nrhs, ld n) is scratch.  Called by all threads
+   of the block after x_k is complete; returns synchronized. */
+static __device__ void s_tile_diag_inv(int n, int nrhs, const float *Inv,
+                                       float *xk, float *tmp)
+{
+    const int tid = threadIdx_x + threadIdx_y * blockDim_x;
+    const int bs = blockDim_x * blockDim_y, warp = tid >> 5, nwarps = bs >> 5;
+    const int g = (tid & 31) >> 2, t = tid & 3;
+    const int ct = (nrhs + 7) >> 3, ntiles = ((n + 7) >> 3) * ct;
+    for (int tile = warp; tile < ntiles; tile += nwarps) {
+        const int r0 = (tile / ct) * 8, c0 = (tile % ct) * 8, row = r0 + g;
+        float c[2];
+        s_tile_gemm(n, nrhs, n, r0, c0, Inv, n, xk, n, NULL, 0, c);
+        for (int u = 0; u < 2; ++u) {
+            const int j = c0 + 2 * t + u;
+            if (row < n && j < nrhs) tmp[row + j * n] = c[u];
+        }
+    }
+    __syncthreads();
+    for (int e = tid; e < n * nrhs; e += bs) xk[e] = tmp[e];
+    __syncthreads();
+}
+
+/* lsum -= L(:,k) * x_k for the m rows of block column k below its diagonal
+   block: lval = their first entry (ld nsupr), row i of L block lb is
+   added to lsum[LSUM_BLK(lk) + irow + j*iknsupc] as in the per-row loops;
+   xk = x_k (ld knsupc).  idx_i as in the kernels (lloc[lb+idx_i] = start of
+   block lb in lsub).  All threads of the block; no synchronization. */
+static __device__ void s_tile_lsum_fmod(int m, int knsupc, int nrhs,
+        const float *lval, int nsupr, const float *xk,
+        float *lsum, const int_t *lsub, const int_t *lloc, int_t idx_i,
+        const int_t *ilsum, const int_t *xsup, gridinfo_t *grid)
+{
+    const int tid = threadIdx_x + threadIdx_y * blockDim_x;
+    const int bs = blockDim_x * blockDim_y, warp = tid >> 5, nwarps = bs >> 5;
+    const int g = (tid & 31) >> 2, t = tid & 3;
+    const int ct = (nrhs + 7) >> 3, rt = (m + 7) >> 3;
+    int_t lb = 0, nbrow = 0, lptr1 = lloc[idx_i];    /* block of this lane's row */
+    int_t il = 0, irow = 0, iknsupc = 0;
+    for (int r = warp; r < rt; r += nwarps) {          /* rows increase */
+        const int row = r * 8 + g;
+        if (row < m) {
+            while (nbrow + lsub[lptr1 + 1] <= row) {
+                nbrow += lsub[lptr1 + 1];
+                ++lb;
+                lptr1 = lloc[lb + idx_i];
+            }
+            const int_t ik = lsub[lptr1];               /* global block row */
+            const int_t lk = LBi(ik, grid);
+            iknsupc = SuperSize(ik);
+            il = LSUM_BLK(lk);
+            irow = lsub[lptr1 + 2 + row - nbrow] - xsup[ik];
+        }
+        for (int cc = 0; cc < ct; ++cc) {
+            float c[2];
+            s_tile_gemm(m, nrhs, knsupc, r * 8, cc * 8, lval, nsupr, xk, knsupc, NULL, 0, c);
+            for (int u = 0; u < 2; ++u) {
+                const int j = cc * 8 + 2 * t + u;
+                if (row < m && j < nrhs) s_atomicAdd(&lsum[il + irow + j * iknsupc], -c[u]);
+            }
+        }
+    }
+}
+
+/* lsum -= U(:,k) * x_k block by block: U block ub (block row lloc[ub], local)
+   has iknsupc rows (lusup + lloc[2*nub+ub], ld iknsupc) and ncol columns,
+   column l multiplying row usub[lptr+l] - rel of x_k (ld knsupc), lptr =
+   lloc[nub+ub] + 2; the columns are in increasing order (psconvertU).  The
+   tiles of all blocks are dealt to the warps in turn.  All threads; no sync. */
+static __device__ void s_tile_lsum_bmod(int nub, int knsupc, int nrhs,
+        const float *lusup, const float *xk, float *lsum,
+        const int_t *usub, const int_t *lloc, int_t rel,
+        const int_t *ilsum, const int_t *xsup, gridinfo_t *grid, int myrow)
+{
+    const int tid = threadIdx_x + threadIdx_y * blockDim_x;
+    const int bs = blockDim_x * blockDim_y, warp = tid >> 5, nwarps = bs >> 5;
+    const int g = (tid & 31) >> 2, t = tid & 3;
+    const int ct = (nrhs + 7) >> 3;
+    int base = 0;                                      /* tiles of the blocks before ub */
+    for (int ub = 0; ub < nub; ++ub) {
+        const int_t ik = lloc[ub];
+        const int_t gik = ik * grid->nprow + myrow;
+        const int iknsupc = SuperSize(gik);
+        const int_t luptr = lloc[2 * nub + ub], lptr1 = lloc[nub + ub];
+        const int ncol = usub[lptr1 + 1];
+        const int_t il = LSUM_BLK(ik);
+        const int ntiles = ((iknsupc + 7) >> 3) * ct;
+        /* the columns are in increasing order: all knsupc of them, no gather */
+        const int_t *gat = (ncol == knsupc) ? NULL : &usub[lptr1 + 2];
+        for (int tile = (warp - base % nwarps + nwarps) % nwarps; tile < ntiles; tile += nwarps) {
+            const int r0 = (tile / ct) * 8, c0 = (tile % ct) * 8, row = r0 + g;
+            float c[2];
+            s_tile_gemm(iknsupc, nrhs, ncol, r0, c0, &lusup[luptr], iknsupc,
+                        xk, knsupc, gat, rel, c);
+            for (int u = 0; u < 2; ++u) {
+                const int j = c0 + 2 * t + u;
+                if (row < iknsupc && j < nrhs) s_atomicAdd(&lsum[il + row + j * iknsupc], -c[u]);
+            }
+        }
+        base += ntiles;
+    }
+}
+@precision DOUBLE
+
+/******************************************************************************/
+/* Several right-hand sides (nrhs > 1, SUPERLU_ACC_SOLVE=1): the dense block
+   products of the solve in 8x8 tiles (8 rows x 8 right-hand sides), one tile
+   per warp at a time, on FP64 tensor cores (DMMA m8n8k4, sm_80 and newer).  A
+   lane then reads each matrix entry once for up to 8 right-hand sides, where
+   the per-row loops read it once per right-hand side.  Without DMMA (an older
+   NVIDIA architecture) the same tiles are computed with FP64 FMAs.  The
+   kernels take this path for gemmflag == 2, which dsolve_gemmflag() sets; one
+   right-hand side, SUPERLU_ACC_SOLVE=2 and HIP keep the other paths.  The
+   thread block size must be a multiple of 32.
+   Lane fragments (g = lane/4, t = lane%4): A[g][t], B[t][g], C[g][2t..2t+1]. */
+/******************************************************************************/
+/* -DSLU_SOLVE_NO_DMMA: the FMA tiles on any architecture (for testing) */
+#if defined(__CUDA_ARCH__) && (__CUDA_ARCH__ >= 800) && !defined(__HIP_PLATFORM_AMD__) && !defined(SLU_SOLVE_NO_DMMA)
+#define SLU_SOLVE_DMMA 1
+static __device__ __forceinline__
+void d_dmma884(double &c0, double &c1, double a, double b)
+{
+    asm volatile("mma.sync.aligned.m8n8k4.row.col.f64.f64.f64.f64 {%0,%1}, {%2}, {%3}, {%0,%1};\n"
+                 : "+d"(c0), "+d"(c1) : "d"(a), "d"(b));
+}
+#endif
+
+/* One 8x8 tile of C = A * B, rows r0..r0+7 and columns c0..c0+7, rows >= M and
+   columns >= N zero.  A is M x K, column major (lda); B(k,j) = B[kb + j*ldb]
+   with kb = k, or gat[k] - rel when gat != NULL.  Every lane of the warp calls
+   it with the same arguments; c[u] = C[g][2t+u]. */
+static __device__ __forceinline__
+void d_tile_gemm(int M, int N, int K, int r0, int c0,
+                 const double *A, int lda,
+                 const double *B, int ldb, const int_t *gat, int_t rel,
+                 double *c)
+{
+    const int lane = (threadIdx_x + threadIdx_y * blockDim_x) & 31;
+    const int g = lane >> 2, t = lane & 3;
+    const int row = r0 + g;
+#ifdef SLU_SOLVE_DMMA
+    __syncwarp();                                      /* mma.sync needs the whole warp */
+    const int col = c0 + g;
+    const int rok = row < M, cok = col < N;
+    double e0 = 0., e1 = 0., o0 = 0., o1 = 0.;         /* even and odd k-steps */
+    /* 8 k-steps at a time, their loads issued before their DMMAs: the time of
+       a tile is then about one memory latency per 32 columns of A. */
+    for (int k0 = 0; k0 < K; k0 += 32) {
+        double a[8], b[8];
+#pragma unroll
+        for (int q = 0; q < 8; ++q) {
+            const int k = k0 + 4 * q + t;
+            a[q] = 0.; b[q] = 0.;
+            if (k < K) {
+                if (rok) a[q] = A[(size_t) k * lda + row];
+                if (cok) {
+                    const int_t kb = gat ? gat[k] - rel : k;
+                    b[q] = B[kb + (size_t) col * ldb];
+                }
+            }
+        }
+#pragma unroll
+        for (int q = 0; q < 8; ++q) {
+            if (k0 + 4 * q < K) {                     /* the same in every lane */
+                if (q & 1) d_dmma884(o0, o1, a[q], b[q]);
+                else       d_dmma884(e0, e1, a[q], b[q]);
+            }
+        }
+    }
+    c[0] = e0 + o0; c[1] = e1 + o1;
+#else
+    const int j0 = c0 + 2 * t, j1 = j0 + 1;
+    double s0 = 0., s1 = 0.;
+    if (row < M) {
+        for (int k = 0; k < K; ++k) {
+            const double a = A[(size_t) k * lda + row];
+            const int_t kb = gat ? gat[k] - rel : k;
+            if (j0 < N) s0 += a * B[kb + (size_t) j0 * ldb];
+            if (j1 < N) s1 += a * B[kb + (size_t) j1 * ldb];
+        }
+    }
+    c[0] = s0; c[1] = s1;
+#endif
+}
+
+/* x_k <- Inv * x_k for the n x n inverse of a diagonal block (column major) and
+   x_k n x nrhs (ld n); tmp (n x nrhs, ld n) is scratch.  Called by all threads
+   of the block after x_k is complete; returns synchronized. */
+static __device__ void d_tile_diag_inv(int n, int nrhs, const double *Inv,
+                                       double *xk, double *tmp)
+{
+    const int tid = threadIdx_x + threadIdx_y * blockDim_x;
+    const int bs = blockDim_x * blockDim_y, warp = tid >> 5, nwarps = bs >> 5;
+    const int g = (tid & 31) >> 2, t = tid & 3;
+    const int ct = (nrhs + 7) >> 3, ntiles = ((n + 7) >> 3) * ct;
+    for (int tile = warp; tile < ntiles; tile += nwarps) {
+        const int r0 = (tile / ct) * 8, c0 = (tile % ct) * 8, row = r0 + g;
+        double c[2];
+        d_tile_gemm(n, nrhs, n, r0, c0, Inv, n, xk, n, NULL, 0, c);
+        for (int u = 0; u < 2; ++u) {
+            const int j = c0 + 2 * t + u;
+            if (row < n && j < nrhs) tmp[row + j * n] = c[u];
+        }
+    }
+    __syncthreads();
+    for (int e = tid; e < n * nrhs; e += bs) xk[e] = tmp[e];
+    __syncthreads();
+}
+
+/* lsum -= L(:,k) * x_k for the m rows of block column k below its diagonal
+   block: lval = their first entry (ld nsupr), row i of L block lb is
+   added to lsum[LSUM_BLK(lk) + irow + j*iknsupc] as in the per-row loops;
+   xk = x_k (ld knsupc).  idx_i as in the kernels (lloc[lb+idx_i] = start of
+   block lb in lsub).  All threads of the block; no synchronization. */
+static __device__ void d_tile_lsum_fmod(int m, int knsupc, int nrhs,
+        const double *lval, int nsupr, const double *xk,
+        double *lsum, const int_t *lsub, const int_t *lloc, int_t idx_i,
+        const int_t *ilsum, const int_t *xsup, gridinfo_t *grid)
+{
+    const int tid = threadIdx_x + threadIdx_y * blockDim_x;
+    const int bs = blockDim_x * blockDim_y, warp = tid >> 5, nwarps = bs >> 5;
+    const int g = (tid & 31) >> 2, t = tid & 3;
+    const int ct = (nrhs + 7) >> 3, rt = (m + 7) >> 3;
+    int_t lb = 0, nbrow = 0, lptr1 = lloc[idx_i];    /* block of this lane's row */
+    int_t il = 0, irow = 0, iknsupc = 0;
+    for (int r = warp; r < rt; r += nwarps) {          /* rows increase */
+        const int row = r * 8 + g;
+        if (row < m) {
+            while (nbrow + lsub[lptr1 + 1] <= row) {
+                nbrow += lsub[lptr1 + 1];
+                ++lb;
+                lptr1 = lloc[lb + idx_i];
+            }
+            const int_t ik = lsub[lptr1];               /* global block row */
+            const int_t lk = LBi(ik, grid);
+            iknsupc = SuperSize(ik);
+            il = LSUM_BLK(lk);
+            irow = lsub[lptr1 + 2 + row - nbrow] - xsup[ik];
+        }
+        for (int cc = 0; cc < ct; ++cc) {
+            double c[2];
+            d_tile_gemm(m, nrhs, knsupc, r * 8, cc * 8, lval, nsupr, xk, knsupc, NULL, 0, c);
+            for (int u = 0; u < 2; ++u) {
+                const int j = cc * 8 + 2 * t + u;
+                if (row < m && j < nrhs) d_atomicAdd(&lsum[il + irow + j * iknsupc], -c[u]);
+            }
+        }
+    }
+}
+
+/* lsum -= U(:,k) * x_k block by block: U block ub (block row lloc[ub], local)
+   has iknsupc rows (lusup + lloc[2*nub+ub], ld iknsupc) and ncol columns,
+   column l multiplying row usub[lptr+l] - rel of x_k (ld knsupc), lptr =
+   lloc[nub+ub] + 2; the columns are in increasing order (pdconvertU).  The
+   tiles of all blocks are dealt to the warps in turn.  All threads; no sync. */
+static __device__ void d_tile_lsum_bmod(int nub, int knsupc, int nrhs,
+        const double *lusup, const double *xk, double *lsum,
+        const int_t *usub, const int_t *lloc, int_t rel,
+        const int_t *ilsum, const int_t *xsup, gridinfo_t *grid, int myrow)
+{
+    const int tid = threadIdx_x + threadIdx_y * blockDim_x;
+    const int bs = blockDim_x * blockDim_y, warp = tid >> 5, nwarps = bs >> 5;
+    const int g = (tid & 31) >> 2, t = tid & 3;
+    const int ct = (nrhs + 7) >> 3;
+    int base = 0;                                      /* tiles of the blocks before ub */
+    for (int ub = 0; ub < nub; ++ub) {
+        const int_t ik = lloc[ub];
+        const int_t gik = ik * grid->nprow + myrow;
+        const int iknsupc = SuperSize(gik);
+        const int_t luptr = lloc[2 * nub + ub], lptr1 = lloc[nub + ub];
+        const int ncol = usub[lptr1 + 1];
+        const int_t il = LSUM_BLK(ik);
+        const int ntiles = ((iknsupc + 7) >> 3) * ct;
+        /* the columns are in increasing order: all knsupc of them, no gather */
+        const int_t *gat = (ncol == knsupc) ? NULL : &usub[lptr1 + 2];
+        for (int tile = (warp - base % nwarps + nwarps) % nwarps; tile < ntiles; tile += nwarps) {
+            const int r0 = (tile / ct) * 8, c0 = (tile % ct) * 8, row = r0 + g;
+            double c[2];
+            d_tile_gemm(iknsupc, nrhs, ncol, r0, c0, &lusup[luptr], iknsupc,
+                        xk, knsupc, gat, rel, c);
+            for (int u = 0; u < 2; ++u) {
+                const int j = c0 + 2 * t + u;
+                if (row < iknsupc && j < nrhs) d_atomicAdd(&lsum[il + row + j * iknsupc], -c[u]);
+            }
+        }
+        base += ntiles;
+    }
+}
+@precision DCOMPLEX
+
+/******************************************************************************/
+/* Several right-hand sides (nrhs > 1, SUPERLU_ACC_SOLVE=1): the dense block
+   products of the solve in 8x8 tiles (8 rows x 8 right-hand sides), one tile
+   per warp at a time, on FP64 tensor cores (DMMA m8n8k4, sm_80 and newer; a
+   complex multiply-add is 4 real DMMAs).  A lane then reads each matrix entry
+   once for up to 8 right-hand sides, where the per-row loops read it once per
+   right-hand side.  Without DMMA (an older NVIDIA architecture) the same tiles
+   are computed with FP64 FMAs.  The kernels take this path for gemmflag == 2,
+   which zsolve_gemmflag() sets; one right-hand side, SUPERLU_ACC_SOLVE=2 and
+   HIP keep the other paths.  The thread block size must be a multiple of 32.
+   Lane fragments (g = lane/4, t = lane%4): A[g][t], B[t][g], C[g][2t..2t+1]. */
+/******************************************************************************/
+/* -DSLU_SOLVE_NO_DMMA: the FMA tiles on any architecture (for testing) */
+#if defined(__CUDA_ARCH__) && (__CUDA_ARCH__ >= 800) && !defined(__HIP_PLATFORM_AMD__) && !defined(SLU_SOLVE_NO_DMMA)
+#define SLU_SOLVE_DMMA 1
+static __device__ __forceinline__
+void z_dmma884(double &c0, double &c1, double a, double b)
+{
+    asm volatile("mma.sync.aligned.m8n8k4.row.col.f64.f64.f64.f64 {%0,%1}, {%2}, {%3}, {%0,%1};\n"
+                 : "+d"(c0), "+d"(c1) : "d"(a), "d"(b));
+}
+#endif
+
+/* One 8x8 tile of C = A * B, rows r0..r0+7 and columns c0..c0+7, rows >= M and
+   columns >= N zero.  A is M x K, column major (lda); B(k,j) = B[kb + j*ldb]
+   with kb = k, or gat[k] - rel when gat != NULL.  Every lane of the warp calls
+   it with the same arguments; c[u] = C[g][2t+u]. */
+static __device__ __forceinline__
+void z_tile_gemm(int M, int N, int K, int r0, int c0,
+                 const doublecomplex *A, int lda,
+                 const doublecomplex *B, int ldb, const int_t *gat, int_t rel,
+                 doublecomplex *c)
+{
+    const int lane = (threadIdx_x + threadIdx_y * blockDim_x) & 31;
+    const int g = lane >> 2, t = lane & 3;
+    const int row = r0 + g;
+#ifdef SLU_SOLVE_DMMA
+    __syncwarp();                                      /* mma.sync needs the whole warp */
+    const int col = c0 + g;
+    const int rok = row < M, cok = col < N;
+    double rr0 = 0., rr1 = 0., ii0 = 0., ii1 = 0.;   /* sum ar*br, sum ar*bi */
+    double ri0 = 0., ri1 = 0., ir0 = 0., ir1 = 0.;   /* sum -ai*bi, sum ai*br */
+    /* 8 k-steps at a time, their loads issued before their DMMAs: the time of
+       a tile is then about one memory latency per 32 columns of A. */
+    for (int k0 = 0; k0 < K; k0 += 32) {
+        double ar[8], ai[8], br[8], bi[8];
+#pragma unroll
+        for (int q = 0; q < 8; ++q) {
+            const int k = k0 + 4 * q + t;
+            ar[q] = 0.; ai[q] = 0.; br[q] = 0.; bi[q] = 0.;
+            if (k < K) {
+                if (rok) { ar[q] = A[(size_t) k * lda + row].r; ai[q] = A[(size_t) k * lda + row].i; }
+                if (cok) {
+                    const int_t kb = gat ? gat[k] - rel : k;
+                    br[q] = B[kb + (size_t) col * ldb].r; bi[q] = B[kb + (size_t) col * ldb].i;
+                }
+            }
+        }
+#pragma unroll
+        for (int q = 0; q < 8; ++q) {
+            if (k0 + 4 * q < K) {                     /* the same in every lane */
+                z_dmma884(rr0, rr1, ar[q], br[q]);
+                z_dmma884(ri0, ri1, -ai[q], bi[q]);
+                z_dmma884(ii0, ii1, ar[q], bi[q]);
+                z_dmma884(ir0, ir1, ai[q], br[q]);
+            }
+        }
+    }
+    c[0].r = rr0 + ri0; c[0].i = ii0 + ir0;
+    c[1].r = rr1 + ri1; c[1].i = ii1 + ir1;
+#else
+    const int j0 = c0 + 2 * t, j1 = j0 + 1;
+    double s0r = 0., s0i = 0., s1r = 0., s1i = 0.;
+    if (row < M) {
+        for (int k = 0; k < K; ++k) {
+            const doublecomplex a = A[(size_t) k * lda + row];
+            const int_t kb = gat ? gat[k] - rel : k;
+            if (j0 < N) {
+                const doublecomplex b = B[kb + (size_t) j0 * ldb];
+                s0r += a.r * b.r - a.i * b.i; s0i += a.r * b.i + a.i * b.r;
+            }
+            if (j1 < N) {
+                const doublecomplex b = B[kb + (size_t) j1 * ldb];
+                s1r += a.r * b.r - a.i * b.i; s1i += a.r * b.i + a.i * b.r;
+            }
+        }
+    }
+    c[0].r = s0r; c[0].i = s0i; c[1].r = s1r; c[1].i = s1i;
+#endif
+}
+
+/* x_k <- Inv * x_k for the n x n inverse of a diagonal block (column major) and
+   x_k n x nrhs (ld n); tmp (n x nrhs, ld n) is scratch.  Called by all threads
+   of the block after x_k is complete; returns synchronized. */
+static __device__ void z_tile_diag_inv(int n, int nrhs, const doublecomplex *Inv,
+                                       doublecomplex *xk, doublecomplex *tmp)
+{
+    const int tid = threadIdx_x + threadIdx_y * blockDim_x;
+    const int bs = blockDim_x * blockDim_y, warp = tid >> 5, nwarps = bs >> 5;
+    const int g = (tid & 31) >> 2, t = tid & 3;
+    const int ct = (nrhs + 7) >> 3, ntiles = ((n + 7) >> 3) * ct;
+    for (int tile = warp; tile < ntiles; tile += nwarps) {
+        const int r0 = (tile / ct) * 8, c0 = (tile % ct) * 8, row = r0 + g;
+        doublecomplex c[2];
+        z_tile_gemm(n, nrhs, n, r0, c0, Inv, n, xk, n, NULL, 0, c);
+        for (int u = 0; u < 2; ++u) {
+            const int j = c0 + 2 * t + u;
+            if (row < n && j < nrhs) tmp[row + j * n] = c[u];
+        }
+    }
+    __syncthreads();
+    for (int e = tid; e < n * nrhs; e += bs) xk[e] = tmp[e];
+    __syncthreads();
+}
+
+/* lsum -= L(:,k) * x_k for the m rows of block column k below its diagonal
+   block: lval = their first entry (ld nsupr), row i of L block lb is
+   added to lsum[LSUM_BLK(lk) + irow + j*iknsupc] as in the per-row loops;
+   xk = x_k (ld knsupc).  idx_i as in the kernels (lloc[lb+idx_i] = start of
+   block lb in lsub).  All threads of the block; no synchronization. */
+static __device__ void z_tile_lsum_fmod(int m, int knsupc, int nrhs,
+        const doublecomplex *lval, int nsupr, const doublecomplex *xk,
+        doublecomplex *lsum, const int_t *lsub, const int_t *lloc, int_t idx_i,
+        const int_t *ilsum, const int_t *xsup, gridinfo_t *grid)
+{
+    const int tid = threadIdx_x + threadIdx_y * blockDim_x;
+    const int bs = blockDim_x * blockDim_y, warp = tid >> 5, nwarps = bs >> 5;
+    const int g = (tid & 31) >> 2, t = tid & 3;
+    const int ct = (nrhs + 7) >> 3, rt = (m + 7) >> 3;
+    int_t lb = 0, nbrow = 0, lptr1 = lloc[idx_i];    /* block of this lane's row */
+    int_t il = 0, irow = 0, iknsupc = 0;
+    for (int r = warp; r < rt; r += nwarps) {          /* rows increase */
+        const int row = r * 8 + g;
+        if (row < m) {
+            while (nbrow + lsub[lptr1 + 1] <= row) {
+                nbrow += lsub[lptr1 + 1];
+                ++lb;
+                lptr1 = lloc[lb + idx_i];
+            }
+            const int_t ik = lsub[lptr1];               /* global block row */
+            const int_t lk = LBi(ik, grid);
+            iknsupc = SuperSize(ik);
+            il = LSUM_BLK(lk);
+            irow = lsub[lptr1 + 2 + row - nbrow] - xsup[ik];
+        }
+        for (int cc = 0; cc < ct; ++cc) {
+            doublecomplex c[2];
+            z_tile_gemm(m, nrhs, knsupc, r * 8, cc * 8, lval, nsupr, xk, knsupc, NULL, 0, c);
+            for (int u = 0; u < 2; ++u) {
+                const int j = cc * 8 + 2 * t + u;
+                if (row < m && j < nrhs) {
+                    doublecomplex mc;
+                    mc.r = -c[u].r; mc.i = -c[u].i;
+                    z_atomicAdd(&lsum[il + irow + j * iknsupc], mc);
+                }
+            }
+        }
+    }
+}
+
+/* lsum -= U(:,k) * x_k block by block: U block ub (block row lloc[ub], local)
+   has iknsupc rows (lusup + lloc[2*nub+ub], ld iknsupc) and ncol columns,
+   column l multiplying row usub[lptr+l] - rel of x_k (ld knsupc), lptr =
+   lloc[nub+ub] + 2; the columns are in increasing order (pzconvertU).  The tiles
+   of all blocks are dealt to the warps in turn.  All threads; no sync. */
+static __device__ void z_tile_lsum_bmod(int nub, int knsupc, int nrhs,
+        const doublecomplex *lusup, const doublecomplex *xk, doublecomplex *lsum,
+        const int_t *usub, const int_t *lloc, int_t rel,
+        const int_t *ilsum, const int_t *xsup, gridinfo_t *grid, int myrow)
+{
+    const int tid = threadIdx_x + threadIdx_y * blockDim_x;
+    const int bs = blockDim_x * blockDim_y, warp = tid >> 5, nwarps = bs >> 5;
+    const int g = (tid & 31) >> 2, t = tid & 3;
+    const int ct = (nrhs + 7) >> 3;
+    int base = 0;                                      /* tiles of the blocks before ub */
+    for (int ub = 0; ub < nub; ++ub) {
+        const int_t ik = lloc[ub];
+        const int_t gik = ik * grid->nprow + myrow;
+        const int iknsupc = SuperSize(gik);
+        const int_t luptr = lloc[2 * nub + ub], lptr1 = lloc[nub + ub];
+        const int ncol = usub[lptr1 + 1];
+        const int_t il = LSUM_BLK(ik);
+        const int ntiles = ((iknsupc + 7) >> 3) * ct;
+        /* the columns are in increasing order: all knsupc of them, no gather */
+        const int_t *gat = (ncol == knsupc) ? NULL : &usub[lptr1 + 2];
+        for (int tile = (warp - base % nwarps + nwarps) % nwarps; tile < ntiles; tile += nwarps) {
+            const int r0 = (tile / ct) * 8, c0 = (tile % ct) * 8, row = r0 + g;
+            doublecomplex c[2];
+            z_tile_gemm(iknsupc, nrhs, ncol, r0, c0, &lusup[luptr], iknsupc,
+                        xk, knsupc, gat, rel, c);
+            for (int u = 0; u < 2; ++u) {
+                const int j = c0 + 2 * t + u;
+                if (row < iknsupc && j < nrhs) {
+                    doublecomplex mc;
+                    mc.r = -c[u].r; mc.i = -c[u].i;
+                    z_atomicAdd(&lsum[il + row + j * iknsupc], mc);
+                }
+            }
+        }
+        base += ntiles;
+    }
 }
 @precision !
 
@@ -786,6 +1363,146 @@ __device__ void @(pre)C_RdTree_forwardMessageSimple_Device(C_Tree* Tree, volatil
     #endif
     }
 
+#ifdef HAVE_NVSHMEM
+/* Forward the partial sum of block row lib, staged in @(pre)ready_lsum at lib's
+   first slot, to the parent in the reduction tree: count entries, put by the
+   whole warp (every lane calls it). */
+static __device__ __forceinline__ void @(pre)rd_forward_warp(C_Tree *Tree, volatile uint64_t *flag_rd_q, int lib, int count,
+                                                        @(type) *@(pre)ready_lsum, int_t maxrecvsz)
+{
+    const int s = Tree->myIdx % 2;
+@precision SINGLE DOUBLE
+    nvshmemx_@(type)_put_signal_nbi_warp(&@(pre)ready_lsum[lib * maxrecvsz * 2 + s * maxrecvsz],
+                                        &@(pre)ready_lsum[lib * maxrecvsz * 2], count,
+@precision DCOMPLEX
+    nvshmemx_double_put_signal_nbi_warp((double *) &zready_lsum[lib * maxrecvsz * 2 + s * maxrecvsz],
+                                        (double *) &zready_lsum[lib * maxrecvsz * 2], count * 2,
+@precision !
+                                        (uint64_t *) flag_rd_q + lib * 2 + s, 1, NVSHMEM_SIGNAL_SET, Tree->myRoot_);
+}
+
+/* The reduction messages of a receive kernel (one thread block of nthreads).
+   Each warp serves a share of the nrows block rows that expect messages
+   (colnummod[0:nrows]): its lanes scan the rows for one whose messages have
+   all arrived, add them to lsum together, decrement the row's count (mod) and,
+   when that completes the row on a process that is not the root of its
+   reduction tree, copy the sum to the send buffer and put it with the warp.
+   One thread per row did all of this alone before: knsupc*nrhs additions and
+   copies in a row, on the critical path of every reduction.  statusmod[2*lib]
+   marks a row done. */
+static __device__ void @(pre)recv_rd_warp(int nthreads, int nrhs, C_Tree *Rtree_ptr, int_t maxrecvsz,
+                                     uint64_t *flag_rd_q, @(type) *@(pre)ready_lsum,
+                                     int nrows, const int *colnummod, int *statusmod,
+                                     @(type) *lsum, int *mod, gridinfo_t *grid,
+                                     int_t *xsup, int_t *ilsum)
+{
+    const unsigned FULL = 0xffffffffu;
+    const int tid = threadIdx.x + threadIdx.y * blockDim.x;
+    const int lane = tid & 31, w = tid >> 5, nw = nthreads >> 5;
+    if (w >= nw) return;                          /* only whole warps */
+    const int rs = (int) ((long) nrows * w / nw), re = (int) ((long) nrows * (w + 1) / nw);
+    const int myrow = MYROW(grid->iam, grid);
+    volatile uint64_t *flag = (volatile uint64_t *) flag_rd_q;
+    int left = re - rs;
+    while (left > 0) {
+        for (int base = rs; base < re; base += 32) {
+            int r = base + lane, lib = -1, hit = 0;
+            if (r < re) {
+                lib = colnummod[r];
+                if (statusmod[lib * 2] == 0)
+                    hit = ((flag[lib * 2] == 1) + (flag[lib * 2 + 1] == 1)) == Rtree_ptr[lib].destCnt_;
+            }
+            unsigned m = __ballot_sync(FULL, hit);
+            while (m) {
+                const int src = __ffs(m) - 1;
+                m &= m - 1;
+                const int lb = __shfl_sync(FULL, lib, src);
+                const int k = myrow + lb * grid->nprow;   /* global block row */
+                const int knsupc = SuperSize(k), cnt = Rtree_ptr[lb].destCnt_, n = knsupc * nrhs;
+                const int_t il = LSUM_BLK(lb);
+                __threadfence();                          /* the data arrived before the flags */
+                for (int s = 0; s < 2; ++s) {
+                    if (flag[lb * 2 + s] != 1) continue;  /* one message: either slot */
+@precision SINGLE DOUBLE
+                    const @(type) *in = &@(pre)ready_lsum[maxrecvsz * lb * 2 + s * maxrecvsz];
+                    for (int e = lane; e < n; e += 32) atomicAdd(&lsum[il + e], __ldcg(in + e));
+@precision DCOMPLEX
+                    const double *in = (const double *) &zready_lsum[maxrecvsz * lb * 2 + s * maxrecvsz];
+                    for (int e = lane; e < n; e += 32) {
+                        doublecomplex v;
+                        v.r = __ldcg(in + 2 * e);
+                        v.i = __ldcg(in + 2 * e + 1);
+                        z_atomicAdd(&lsum[il + e], v);
+                    }
+@precision !
+                }
+                __threadfence();                          /* the additions before the count */
+                __syncwarp();
+                int old = 0;
+                if (lane == 0) {
+                    statusmod[lb * 2] = 1;
+                    statusmod[lb * 2 + 1] = 1;
+                    old = atomicSub(&mod[lb], cnt);
+                }
+                old = __shfl_sync(FULL, old, 0);
+                if (old == cnt && Rtree_ptr[lb].myRoot_ != Rtree_ptr[lb].myRank_) {
+                    __threadfence();                      /* every addition to the row is in */
+@precision SINGLE DOUBLE
+                    @(type) *out = &@(pre)ready_lsum[lb * maxrecvsz * 2];
+                    for (int e = lane; e < n; e += 32) out[e] = __ldcg(&lsum[il + e]);
+@precision DCOMPLEX
+                    const double *ls = (const double *) &lsum[il];
+                    double *out = (double *) &zready_lsum[lb * maxrecvsz * 2];
+                    for (int e = lane; e < 2 * n; e += 32) out[e] = __ldcg(ls + e);
+@precision !
+                    __syncwarp();
+                    @(pre)rd_forward_warp(&Rtree_ptr[lb], flag_rd_q, lb, Rtree_ptr[lb].msgSize_ * nrhs,
+                                     @(pre)ready_lsum, maxrecvsz);
+                }
+                --left;
+            }
+        }
+    }
+}
+#endif
+
+#define RD_FWD_MAX 64
+#ifdef HAVE_NVSHMEM
+/* Rows a thread block of a solve kernel completes and must forward to the
+   parent in their reduction tree: listed in shared memory by the thread that
+   completes each one, then copied and put by the block's warps together. */
+static __device__ void @(pre)rd_forward_list(const int *list, int n, C_Tree *Rtree_ptr, volatile uint64_t *flag_rd_q,
+                                        @(type) *@(pre)ready_lsum, @(type) *lsum, int_t maxrecvsz,
+                                        int nrhs, int_t *ilsum, int_t *xsup, gridinfo_t *grid)
+{
+    const int tid = threadIdx.x + threadIdx.y * blockDim.x;
+    const int lane = tid & 31, w = tid >> 5, nw = (blockDim.x * blockDim.y) >> 5;
+    if (n == 0) return;
+    __threadfence();                              /* every addition to the rows is in */
+    const int myrow = MYROW(grid->iam, grid);
+    for (int q = w; q < n; q += nw) {
+        const int lk = list[q];
+@precision SINGLE DOUBLE
+        const int cnt = SuperSize(lk * grid->nprow + myrow) * nrhs;
+        const @(type) *ls = &lsum[LSUM_BLK(lk)];
+        @(type) *out = &@(pre)ready_lsum[lk * maxrecvsz * 2];
+        for (int e = lane; e < cnt; e += 32) out[e] = __ldcg(ls + e);
+@precision DCOMPLEX
+        const int knsupc = SuperSize(lk * grid->nprow + myrow), cnt = knsupc * nrhs;
+        const double *ls = (const double *) &lsum[LSUM_BLK(lk)];
+        double *out = (double *) &zready_lsum[lk * maxrecvsz * 2];
+        for (int e = lane; e < 2 * cnt; e += 32) out[e] = __ldcg(ls + e);
+@precision !
+        __syncwarp();
+        @(pre)rd_forward_warp(&Rtree_ptr[lk], flag_rd_q, lk, Rtree_ptr[lk].msgSize_ * nrhs, @(pre)ready_lsum, maxrecvsz);
+    }
+}
+#else
+/* The multi-process solve kernels run only with NVSHMEM; they still compile without it. */
+static __device__ __forceinline__ void @(pre)rd_forward_list(const int *, int, C_Tree *, volatile uint64_t *,
+                                                        @(type) *, @(type) *, int_t, int, int_t *, int_t *, gridinfo_t *) {}
+#endif
+
 
 
 
@@ -976,6 +1693,7 @@ __global__ void @(pre)wait_bcrd
                 int_t  nsupers
         ) {
 #ifdef HAVE_NVSHMEM
+    @(pre)wait_started_set();
     int bid = blockIdx.x;
 //int global_id= blockIdx.x * blockDim.x * blockDim.y + threadIdx.x + threadIdx.y * blockDim.x;
     int tid = threadIdx.x + threadIdx.y * blockDim.x;
@@ -1025,9 +1743,6 @@ __global__ void @(pre)wait_bcrd
     if (bid >=4) { // for RD recv
         tid=(bid-4)*WAIT_NUM_THREADS+tid;
         WAIT_NUM_THREADS=WAIT_NUM_THREADS*4;
-#else
-    if (bid == 1) { // for RD recv
-#endif
         //if (tid==0) printf("RD---(%d) WAIT_NUM_THREADS=%d,tot_wait_col=%d\n",mype,WAIT_NUM_THREADS,d_nfrecvmod[1]);
        int j, iam, lib, myrow, k, knsupc, il, cnt;
        int fmod_tmp, aln_i;
@@ -1274,6 +1989,11 @@ __global__ void @(pre)wait_bcrd
            }//for
        } // else WAIT_NUM_THREAD<recv
    }
+#else
+    if (bid == 1)   /* RD recv */
+        @(pre)recv_rd_warp(blockDim.x * blockDim.y, nrhs, LRtree_ptr, maxrecvsz, flag_rd_q, @(pre)ready_lsum,
+                      d_nfrecvmod[1], d_colnummod, d_statusmod, lsum, fmod, grid, xsup, ilsum);
+#endif
 #if 0
     if (bid==2){
         int tot_threads=blockDim.x * blockDim.y;
@@ -1418,6 +2138,7 @@ __global__ void @(pre)wait_bcrd_u
                 int_t  nsupers
         ) {
 #ifdef HAVE_NVSHMEM
+    @(pre)wait_started_set();
     int bid = blockIdx.x;
 //int global_id= blockIdx.x * blockDim.x * blockDim.y + threadIdx.x + threadIdx.y * blockDim.x;
     int tid = threadIdx.x + threadIdx.y * blockDim.x;
@@ -1464,9 +2185,6 @@ __global__ void @(pre)wait_bcrd_u
      if (bid >=4) { // for RD recv
         tid=(bid-4)*WAIT_NUM_THREADS+tid;
         WAIT_NUM_THREADS=WAIT_NUM_THREADS*4;
-#else
-     if (bid == 1) { // for RD recv
-#endif
         //if (tid==0) printf("RD---(%d) WAIT_NUM_THREADS=%d,tot_wait_col=%d\n",mype,WAIT_NUM_THREADS,d_nfrecvmod[1]);
         int j, iam, lib, myrow, k, knsupc, il, cnt;
         int bmod_tmp, aln_i;
@@ -1714,6 +2432,11 @@ __global__ void @(pre)wait_bcrd_u
             }//for
         } // else WAIT_NUM_THREAD<recv
     }
+#else
+    if (bid == 1)   /* RD recv */
+        @(pre)recv_rd_warp(blockDim.x * blockDim.y, nrhs, URtree_ptr, maxrecvsz, flag_rd_q, @(pre)ready_lsum,
+                      d_nfrecvmod[1], d_colnummod, d_statusmod, lsum, bmod, grid, xsup, ilsum);
+#endif
 #if 0
     if (bid==2){
         int tot_threads=blockDim.x * blockDim.y;
@@ -1936,7 +2659,8 @@ __global__ void @(pre)lsum_fmod_inv_gpu_mrhs_nvshmem
                 volatile int* d_status,
                 volatile int* d_statusmod,
                 int* d_flag_mod,
-                int gemmflag
+                int gemmflag,
+                const int *bcorder   /* order of the block columns, or NULL */
         )
 {
 @precision SINGLE DOUBLE
@@ -1960,9 +2684,10 @@ __global__ void @(pre)lsum_fmod_inv_gpu_mrhs_nvshmem
     int   knsupc;    /* Size of supernode k.                               */
     int_t nlb;       /* Number of L blocks.                                */
 
-    int bid=blockIdx_x;
+    int bid = bcorder ? bcorder[blockIdx_x] : blockIdx_x;
     int_t tmp;
     int tid = threadIdx_x + threadIdx_y * blockDim_x;
+    __shared__ int rd_fwd[RD_FWD_MAX], rd_nfwd;   /* rows this block forwards */
 // int_t lock = 0;
     const int block_size = blockDim_x*blockDim_y; /* number of threads per warp*/
     @(type) rC[THR_N][THR_M];
@@ -2032,6 +2757,18 @@ __global__ void @(pre)lsum_fmod_inv_gpu_mrhs_nvshmem
         il = LSUM_BLK(lib);
         ii = X_BLK(lib);
 
+        if(gemmflag==2){
+@precision SINGLE
+            for (i = tid; i < knsupc*nrhs; i+=block_size)
+                x[i + ii] += lsum[i + il];
+@precision DOUBLE
+            for (i = tid; i < knsupc*nrhs; i += block_size)
+                x[i + ii] += lsum[i + il];
+@precision DCOMPLEX
+            for (i = tid; i < knsupc*nrhs; i += block_size)
+                z_add(&x[i + ii], &x[i + ii], &lsum[i + il]);
+@precision !
+        }else
         RHS_ITERATE(j)
             for (i = tid; i < knsupc; i += block_size) {
                 //@(pre)_atomicAdd(&@(pre)ready_x[0],lsum[i + il + j * knsupc]);
@@ -2052,7 +2789,9 @@ __global__ void @(pre)lsum_fmod_inv_gpu_mrhs_nvshmem
 
         Linv = &Linv_bc_dat[Linv_bc_offset[lk]];
 
-        if(gemmflag==0 || nrhs==1){
+        if(gemmflag==2){
+            @(pre)_tile_diag_inv(knsupc, nrhs, Linv, &x[ii], &lsum[il]);
+        }else if(gemmflag==0 || nrhs==1){
             RHS_ITERATE(j){
             for (i = tid; i < knsupc; i += block_size) {
                 temp1 = zero;
@@ -2107,6 +2846,14 @@ __global__ void @(pre)lsum_fmod_inv_gpu_mrhs_nvshmem
             __syncthreads();
         }//if(nrhs==1)
 
+        if(gemmflag==2){
+@precision SINGLE
+            for (i = tid; i < knsupc*nrhs; i+=block_size)
+@precision DOUBLE DCOMPLEX
+            for (i = tid; i < knsupc*nrhs; i += block_size)
+@precision !
+                @(pre)ready_x[i + maxrecvsz * lk] = x[i + ii];
+        }else
         RHS_ITERATE(j)for (i = tid; i < knsupc; i += block_size)
                 @(pre)ready_x[i + maxrecvsz * lk + j * knsupc] = x[i + ii + j * knsupc];
 
@@ -2139,9 +2886,9 @@ __global__ void @(pre)lsum_fmod_inv_gpu_mrhs_nvshmem
     cnt = LBtree_ptr[lk].destCnt_;
     if (cnt > 0) {
         //cnt=LBtree_ptr[lk].msgSize_;
-        my_flag_bc[gc * RDMA_FLAG_SIZE] = lk;
-        my_flag_bc[gc * RDMA_FLAG_SIZE + 1] = LBtree_ptr[lk].msgSize_ * nrhs + XK_H;
-        @(pre)C_BcTree_forwardMessageSimple_Device(&LBtree_ptr[lk], flag_bc_q, &my_flag_bc[gc * RDMA_FLAG_SIZE],
+        my_flag_bc[lk * RDMA_FLAG_SIZE] = lk;
+        my_flag_bc[lk * RDMA_FLAG_SIZE + 1] = LBtree_ptr[lk].msgSize_ * nrhs + XK_H;
+        @(pre)C_BcTree_forwardMessageSimple_Device(&LBtree_ptr[lk], flag_bc_q, &my_flag_bc[lk * RDMA_FLAG_SIZE],
                                              mype, tid, &@(pre)ready_x[0], maxrecvsz);
         //printf("(%d,%d,%d), lk=%d, gc=%d\n",mype,bid,tid,lk,gc);
         //@(pre)C_BcTree_forwardMessageSimple_Device(&LBtree_ptr[lk],&@(pre)ready_x[maxrecvsz*lk],cnt*nrhs+XK_H);
@@ -2154,7 +2901,11 @@ __global__ void @(pre)lsum_fmod_inv_gpu_mrhs_nvshmem
         lib = LBi(k, grid); /* Local block number, row-wise. */
         ii = X_BLK(lib);
 
-        if(gemmflag==0 || nrhs==1){
+        if(gemmflag!=1 || nrhs==1){
+            if(gemmflag==2){
+                @(pre)_tile_lsum_fmod(m, knsupc, nrhs, &lusup[lloc[idx_v]], nsupr, &@(pre)ready_x[maxrecvsz * keep_lk],
+                                 lsum, lsub, lloc, idx_i, ilsum, xsup, grid);
+            }else{
             luptr_tmp1 = lloc[idx_v];
             lb = 0;
             nbrow = 0;
@@ -2212,6 +2963,9 @@ __global__ void @(pre)lsum_fmod_inv_gpu_mrhs_nvshmem
 
 
             }
+            } /* gemmflag != 2 */
+            if (tid == 0) rd_nfwd = 0;
+            __threadfence();   /* the additions before the counts */
             __syncthreads();
 
             luptr_tmp1 = lloc[idx_v];
@@ -2252,8 +3006,12 @@ __global__ void @(pre)lsum_fmod_inv_gpu_mrhs_nvshmem
                         if(LRtree_ptr[lk].myRoot_ != LRtree_ptr[lk].myRank_){
                             //cnt=LRtree_ptr[lib].msgSize_;
 
-                            my_flag_rd[ik*RDMA_FLAG_SIZE]=lk;
-                            my_flag_rd[ik*RDMA_FLAG_SIZE+1]=LRtree_ptr[lk].msgSize_ * nrhs;
+                            int q = atomicAdd(&rd_nfwd, 1);
+                            if (q < RD_FWD_MAX) {
+                                rd_fwd[q] = lk;   /* the block forwards it below */
+                            } else {          /* list full: this thread alone */
+                            my_flag_rd[lk*RDMA_FLAG_SIZE]=lk;
+                            my_flag_rd[lk*RDMA_FLAG_SIZE+1]=LRtree_ptr[lk].msgSize_ * nrhs;
                             //@(type) tmp_sum=0;
                             RHS_ITERATE(j) {
                                 for (int aab = 0; aab < iknsupc; aab++) {
@@ -2274,11 +3032,15 @@ __global__ void @(pre)lsum_fmod_inv_gpu_mrhs_nvshmem
                             //       temp_mysendcout,temp_flag_mod,
                             //       maxrecvsz);
                             //printf("(%d,%d,%d) in solve,lib=%d,gr=%d,ik=%d,myflagrd=%d,%d\n",mype,bid,tid,lk,gr,ik,my_flag_rd[ik*RDMA_FLAG_SIZE],my_flag_rd[ik*RDMA_FLAG_SIZE+1]);
-                            @(pre)C_RdTree_forwardMessageSimple_Device(&LRtree_ptr[lk], flag_rd_q, &my_flag_rd[RDMA_FLAG_SIZE*ik], mype, bid, tid, &@(pre)ready_lsum[0],maxrecvsz,LRtree_ptr[lk].myRoot_);
+                            @(pre)C_RdTree_forwardMessageSimple_Device(&LRtree_ptr[lk], flag_rd_q, &my_flag_rd[RDMA_FLAG_SIZE*lk], mype, bid, tid, &@(pre)ready_lsum[0],maxrecvsz,LRtree_ptr[lk].myRoot_);
+                            }
                         }
                     }
                 }
             }
+            __syncthreads();
+            @(pre)rd_forward_list(rd_fwd, rd_nfwd < RD_FWD_MAX ? rd_nfwd : RD_FWD_MAX, LRtree_ptr, flag_rd_q,
+                             @(pre)ready_lsum, lsum, maxrecvsz, nrhs, ilsum, xsup, grid);
             //__syncthreads();
 
         } else {
@@ -2335,18 +3097,19 @@ __global__ void @(pre)lsum_fmod_inv_gpu_mrhs_nvshmem
                 /* All the threads have added their updates of block lk to lsum. */
                 __syncthreads();
                 if (tid == 0) {
+                    __threadfence();   /* release: the block's additions to lsum before the count */
                     fmod_tmp = atomicSub(&fmod[lk * aln_i], 1);
                     /* Last update of block row lk on this process: send the
                        partial sum to the process of the diagonal block, as
                        the branch without GEMM does. */
                     if (fmod_tmp == 1 && LRtree_ptr[lk].myRoot_ != LRtree_ptr[lk].myRank_) {
-                        my_flag_rd[ik*RDMA_FLAG_SIZE] = lk;
-                        my_flag_rd[ik*RDMA_FLAG_SIZE+1] = LRtree_ptr[lk].msgSize_ * nrhs;
+                        my_flag_rd[lk*RDMA_FLAG_SIZE] = lk;
+                        my_flag_rd[lk*RDMA_FLAG_SIZE+1] = LRtree_ptr[lk].msgSize_ * nrhs;
                         RHS_ITERATE(j) {
                             for (int aab = 0; aab < iknsupc; aab++)
                                 @(pre)ready_lsum[lk * maxrecvsz * 2 + aab + j * iknsupc] = lsum[il + aab + j * iknsupc];
                         }
-                        @(pre)C_RdTree_forwardMessageSimple_Device(&LRtree_ptr[lk], flag_rd_q, &my_flag_rd[RDMA_FLAG_SIZE*ik], mype, bid, tid, &@(pre)ready_lsum[0], maxrecvsz, LRtree_ptr[lk].myRoot_);
+                        @(pre)C_RdTree_forwardMessageSimple_Device(&LRtree_ptr[lk], flag_rd_q, &my_flag_rd[RDMA_FLAG_SIZE*lk], mype, bid, tid, &@(pre)ready_lsum[0], maxrecvsz, LRtree_ptr[lk].myRoot_);
                     }
                 }
 
@@ -2500,6 +3263,15 @@ __global__ void @(pre)lsum_fmod_inv_gpu_mrhs
                 il = LSUM_BLK( lib );
                 ii = X_BLK( lib );
 
+                if(gemmflag==2){
+@precision SINGLE DOUBLE
+                    for (i = tid; i < knsupc*nrhs; i+=block_size)
+                        x[i + ii] += lsum[i + il];
+@precision DCOMPLEX
+                    for (i = tid; i < knsupc*nrhs; i += block_size)
+                        z_add(&x[i + ii], &x[i + ii], &lsum[i + il]);
+@precision !
+                }else
                 RHS_ITERATE(j)
                     for (i = tid; i < knsupc; i+=block_size)
 @precision SINGLE DOUBLE
@@ -2516,7 +3288,9 @@ __global__ void @(pre)lsum_fmod_inv_gpu_mrhs
 
                     Linv = &Linv_bc_dat[Linv_bc_offset[lk]];
 
-                    if(gemmflag==0 || nrhs==1){
+                    if(gemmflag==2){
+                        @(pre)_tile_diag_inv(knsupc, nrhs, Linv, &x[ii], &lsum[il]);
+                    }else if(gemmflag==0 || nrhs==1){
                         RHS_ITERATE(j){
 
                         for (i = tid; i < knsupc; i+=block_size){
@@ -2609,7 +3383,11 @@ __global__ void @(pre)lsum_fmod_inv_gpu_mrhs
                 lib = LBi( k, grid ); /* Local block number, row-wise. */
                 ii = X_BLK( lib );
 
-                if(gemmflag==0 || nrhs==1){
+                if(gemmflag!=1 || nrhs==1){
+                    if(gemmflag==2){
+                        @(pre)_tile_lsum_fmod(m, knsupc, nrhs, &lusup[lloc[idx_v]], nsupr, &x[ii],
+                                         lsum, lsub, lloc, idx_i, ilsum, xsup, grid);
+                    }else{
                     luptr_tmp1 = lloc[idx_v];
                     lb = 0;
                     nbrow=0;
@@ -2666,9 +3444,11 @@ __global__ void @(pre)lsum_fmod_inv_gpu_mrhs
 
 
                     }
+                    } /* gemmflag != 2 */
                     __syncthreads();
 
                     if (!nowait) {   /* fmod counters are only read by spinning blocks */
+                    __threadfence();   /* release: the block's additions to lsum before the counts */
                     luptr_tmp1 = lloc[idx_v];
                     lb = 0;
                     nbrow=0;
@@ -2787,7 +3567,7 @@ __global__ void @(pre)lsum_fmod_inv_gpu_mrhs
 
                         /* All the threads have added their updates of block lk to lsum. */
                         __syncthreads();
-                        if(tid==0)atomicSub(&fmod[lk*aln_i],1);
+                        if(tid==0){ __threadfence(); atomicSub(&fmod[lk*aln_i],1); }   /* release, as above */
 
 
 
@@ -3063,14 +3843,23 @@ __global__ void @(pre)lsum_fmod_inv_gpu_1rhs_warp
 @precision !
                         }
 
-                        if(!nowait && i==nbrow+lsub[lptr1_tmp+1]-1){
-                       	 atomicSub(&fmod[lk*aln_i],1);
-                       	 // __threadfence();
-                        }
 
 
 
 }
+                    /* Release: the lane with a block's last row decremented the
+                       block's count right after its own addition, unordered with
+                       the other lanes' additions to the block.  Now the warp
+                       synchronizes and each count, one per L block, is decremented
+                       after a fence. */
+                    if (!nowait) {
+#ifdef HAVE_CUDA
+                        __syncwarp();
+#endif
+                        __threadfence();
+                        for (lb = lne; lb < nlb; lb += WARP_SIZE)
+                            atomicSub(&fmod[LBi(lsub[lloc[lb+idx_i]], grid)*aln_i], 1);
+                    }
                     // __syncwarp();
 
                 //     luptr_tmp1 = lloc[idx_v];
@@ -3121,6 +3910,28 @@ __global__ void @(pre)lsum_fmod_inv_gpu_1rhs_warp
 } /* @(pre)lsum_fmod_inv_gpu_1rhs_warp */
 
 
+
+/* gemmflag of the solve kernels: 1 = SUPERLU_ACC_SOLVE=2 (gemm_device_* tiles,
+@precision SINGLE
+   several right-hand sides); 2 = several right-hand sides on the 8x8 FMA
+   tiles of s_tile_gemm; 0 = the per-row loops.  SLU_SOLVE_TC=0 turns the
+   8x8 tiles off. */
+@precision DOUBLE DCOMPLEX
+   several right-hand sides); 2 = several right-hand sides on the 8x8 tiles
+   of @(pre)_tile_gemm (tensor cores from sm_80); 0 = the per-row loops.
+   SLU_SOLVE_TC=0 turns the 8x8 tiles off. */
+@precision !
+int @(pre)solve_gemmflag(int nrhs)
+{
+    if ( get_acc_solve() == 2 ) return 1;
+#ifdef HAVE_HIP
+    return 0;
+#else
+    static int tc = -1;
+    if ( tc < 0 ) { const char *e = getenv("SLU_SOLVE_TC"); tc = e ? atoi(e) : 1; }
+    return ( nrhs > 1 && tc ) ? 2 : 0;
+#endif
+}
 
 void @(pre)lsum_fmod_inv_gpu_wrap
         (
@@ -3177,7 +3988,9 @@ void @(pre)lsum_fmod_inv_gpu_wrap
     int nblock_ex = CEILING(nbrow_loc, ((nthread_x * nthread_y) / 32)); //32 (warp) * 8 =256
 
     int mype;
-    int gemmflag = get_acc_solve()==2;
+    int gemmflag = @(pre)solve_gemmflag(nrhs);
+    const int *bcorder = g_solve_order;
+    g_solve_order = NULL;
 
     if(procs==1){
         nblock_ex=0;
@@ -3259,6 +4072,8 @@ void @(pre)lsum_fmod_inv_gpu_wrap
                         &d_recv_cnt, &d_msgnum, &d_flag_mod, &lsum,&fmod,&grid,&xsup,&ilsum,&nbrow_loc,&nsupers};
 
         int status=1;
+        double t_prof = solve_prof_on() ? SuperLU_timer_() : 0.0;
+        @(pre)wait_started_reset();
         status = nvshmemx_collective_launch((const void *) @(pre)wait_bcrd, dimGrid_bc, dimBlock_bc, args, 0, stream[0]);
         //status1 = nvshmemx_collective_launch((const void *) send_rd, dimGrid_rd, dimBlock_bc, args, 0, stream[1]);
         //printf("(%d), status=%d\n",mype, status);
@@ -3268,6 +4083,7 @@ void @(pre)lsum_fmod_inv_gpu_wrap
             fprintf(stderr, "shmemx_collective_launch failed %d\n", status);
             exit(-1);
         }else{
+            @(pre)wait_started_wait();
             @(pre)lsum_fmod_inv_gpu_mrhs_nvshmem<<< dimGrid, dimBlock, 0, stream[1] >>>(nbcol_loc,nblock_ex,
                                                                                 lsum,x,nrhs,maxsup,nsupers,fmod,
                                                                                 LBtree_ptr,LRtree_ptr,ilsum,
@@ -3281,11 +4097,20 @@ void @(pre)lsum_fmod_inv_gpu_wrap
                                                                                 @(pre)ready_x, @(pre)ready_lsum,
                                                                                 my_flag_bc, my_flag_rd,
                                                                                 d_nfrecv, d_status,
-                                                                                d_statusmod,d_flag_mod,gemmflag);
+                                                                                d_statusmod,d_flag_mod,gemmflag,bcorder);
             CUDA_CHECK(cudaGetLastError());
         } // if status
     //} // if npes==1
     CUDA_CHECK(cudaDeviceSynchronize());
+    if ( solve_prof_on() )
+        printf("[solve-prof] L multi-GPU pe %d: %.3f ms\n", mype, 1e3 * (SuperLU_timer_() - t_prof));
+    /* The puts of the kernels above are non-blocking.  To another node they go
+       through NVSHMEM's proxy and can still be in flight here; the caller then
+       resets @(pre)ready_x/@(pre)ready_lsum, which are their source and destination, and
+       the receiver gets zeros with a valid flag.  Complete them first. */
+    nvshmemx_quiet_on_stream(0);
+    CUDA_CHECK(cudaStreamSynchronize(0));
+    nvshmem_quiet();
     for (int i = 0; i < 2; ++i) {
         CUDA_CHECK(cudaStreamDestroy(stream[i]));
     }
@@ -3424,6 +4249,18 @@ int nowait   /* 1: dependencies already satisfied (level-synchronous launch) */
 				il = LSUM_BLK( lib );
 				ii = X_BLK( lib );
 
+				if(gemmflag==2){
+@precision SINGLE
+				    for (i = tid; i < knsupc*nrhs; i+=block_size)
+				        x[i + ii] += lsum[i + il];
+@precision DOUBLE
+					for (i = tid; i < knsupc*nrhs; i+=block_size)
+						x[i + ii] += lsum[i + il];
+@precision DCOMPLEX
+					for (i = tid; i < knsupc*nrhs; i += block_size)
+						z_add(&x[i + ii], &x[i + ii], &lsum[i + il]);
+@precision !
+				}else
 				RHS_ITERATE(j)
 					for (i = tid; i < knsupc; i+=block_size){
 @precision SINGLE DOUBLE
@@ -3446,7 +4283,13 @@ int nowait   /* 1: dependencies already satisfied (level-synchronous launch) */
 
 					Uinv = &Uinv_bc_dat[Uinv_bc_offset[lk]];
 
-					if(gemmflag==0 || nrhs==1){
+					if(gemmflag==2){
+@precision SINGLE
+					    s_tile_diag_inv(knsupc, nrhs, Uinv, &x[ii], &lsum[il]);
+@precision DOUBLE DCOMPLEX
+						@(pre)_tile_diag_inv(knsupc, nrhs, Uinv, &x[ii], &lsum[il]);
+@precision !
+					}else if(gemmflag==0 || nrhs==1){
                         RHS_ITERATE(j){
 						for (i = tid; i < knsupc; i+=block_size){
 							temp1=zero;
@@ -3535,7 +4378,15 @@ int nowait   /* 1: dependencies already satisfied (level-synchronous launch) */
 				lib = LBi( k, grid ); /* Local block number, row-wise. */
 				ii = X_BLK( lib );
 
-				if(gemmflag==0 || nrhs==1){
+				if(gemmflag==2){
+@precision SINGLE
+				    s_tile_lsum_bmod(nub, knsupc, nrhs, lusup, &x[ii], lsum, usub, lloc, rel,
+				                     ilsum, xsup, grid, myrow);
+@precision DOUBLE DCOMPLEX
+					@(pre)_tile_lsum_bmod(nub, knsupc, nrhs, lusup, &x[ii], lsum, usub, lloc, rel,
+					                 ilsum, xsup, grid, myrow);
+@precision !
+				}else if(gemmflag==0 || nrhs==1){
 				// if(0){
                     RHS_ITERATE(j){
 					for (i=tid;i<knsupc;i+=block_size)
@@ -3637,11 +4488,13 @@ int nowait   /* 1: dependencies already satisfied (level-synchronous launch) */
 
 					}//if(nrhs==1)
 	                __syncthreads();
-                    if (!nowait)
+                    if (!nowait) {
+                        __threadfence();   /* release: the additions to lsum before the counts */
                     for (ub = tid; ub < nub; ub+=block_size){
                         ik = lloc[ub];
                         atomicSub(&bmod[ik*aln_i],1);
                         // printf("ik %5d bmod[ik*aln_i] %5d\n",ik,bmod[ik*aln_i]);
+                    }
                     }
 	                __syncthreads();
 				// } /*if tid<Nchunk*/
@@ -4533,11 +5386,13 @@ int nowait   /* 1: dependencies already satisfied (level-synchronous launch) */
                     __syncwarp();
                     #endif
 
-                    if (!nowait)
+                    if (!nowait) {
+                        __threadfence();   /* release: the additions to lsum before the counts */
                     for (ub = lne; ub < nub; ub+=WARP_SIZE){
                         ik = lloc[ub];
                         atomicSub(&bmod[ik*aln_i],1);
                         // printf("ik %5d bmod[ik*aln_i] %5d\n",ik,bmod[ik*aln_i]);
+                    }
                     }
 				}//if(nrhs==1)
                 #ifdef HAVE_CUDA
@@ -4607,7 +5462,8 @@ int nowait   /* 1: dependencies already satisfied (level-synchronous launch) */
                  int nblock_ex,
                  int maxsuper,
                  int* d_flag_mod_u,
-                 int gemmflag
+                 int gemmflag,
+                 const int *bcorder   /* order of the block columns, or NULL */
          )
  {
 @precision SINGLE DOUBLE
@@ -4631,11 +5487,13 @@ int nowait   /* 1: dependencies already satisfied (level-synchronous launch) */
      int_t tmp;
      int bmod_tmp;
      int tid = threadIdx_x + threadIdx_y * blockDim_x;
+     __shared__ int rd_fwd[RD_FWD_MAX], rd_nfwd;   /* rows this block forwards */
      const int block_size = blockDim_x*blockDim_y; /* number of threads per warp*/
      @(type) rC[THR_N][THR_M];
      // __shared__ @(type) x_share[DIM_X*DIM_Y];
 
      bid= nbcol_loc-blockIdx_x-1;  // This makes sure higher block IDs are checked first in spin wait
+     if (bcorder) bid = bcorder[bid];   /* the U solve runs the order backwards */
      int idx = threadIdx_x;  // thread's m dimension
      int idy = threadIdx_y;  // thread's n dimension
      int ni,mi;
@@ -4698,6 +5556,15 @@ int nowait   /* 1: dependencies already satisfied (level-synchronous launch) */
          il = LSUM_BLK( lib );
          ii = X_BLK( lib );
 
+         if(gemmflag==2){
+@precision SINGLE DOUBLE
+             for (i = tid; i < knsupc*nrhs; i+=block_size)
+                 x[i + ii] += lsum[i + il];
+@precision DCOMPLEX
+             for (i = tid; i < knsupc*nrhs; i += block_size)
+                 z_add(&x[i + ii], &x[i + ii], &lsum[i + il]);
+@precision !
+         }else
          RHS_ITERATE(j)
              for (i = tid; i < knsupc; i+=block_size){
 @precision SINGLE DOUBLE
@@ -4720,7 +5587,9 @@ int nowait   /* 1: dependencies already satisfied (level-synchronous launch) */
 
          Uinv = &Uinv_bc_dat[Uinv_bc_offset[lk]];
 
-         if(gemmflag==0 || nrhs==1){
+         if(gemmflag==2){
+             @(pre)_tile_diag_inv(knsupc, nrhs, Uinv, &x[ii], &lsum[il]);
+         }else if(gemmflag==0 || nrhs==1){
             RHS_ITERATE(j){
              for (i = tid; i < knsupc; i+=block_size){
                  temp1=zero;
@@ -4776,6 +5645,18 @@ int nowait   /* 1: dependencies already satisfied (level-synchronous launch) */
              __syncthreads();
          }//if(nrhs==1)
 
+         if(gemmflag==2){
+@precision SINGLE
+             for (i = tid; i < knsupc*nrhs; i+=block_size)
+                 sready_x[i + maxrecvsz * lk] = x[i + ii];
+@precision DOUBLE
+             for (i = tid; i < knsupc*nrhs; i+=block_size)
+                 dready_x[i + maxrecvsz*lk] = x[i + ii];
+@precision DCOMPLEX
+             for (i = tid; i < knsupc*nrhs; i += block_size)
+                 zready_x[i + maxrecvsz*lk] = x[i + ii];
+@precision !
+         }else
          RHS_ITERATE(j)
              for (i = tid; i < knsupc; i+=block_size)
                  @(pre)ready_x[i + maxrecvsz*lk + j*knsupc ] = x[i + ii + j*knsupc];
@@ -4806,9 +5687,9 @@ int nowait   /* 1: dependencies already satisfied (level-synchronous launch) */
      //if (tid==0) printf("in solve forward (%d,%d) done my col %d, cnt=%d, nub=%d\n", mype, bid, gc, cnt,nub);
      if (cnt > 0) {
          //cnt=LBtree_ptr[lk].msgSize_;
-         my_flag_bc[k * RDMA_FLAG_SIZE] = lk;
-         my_flag_bc[k * RDMA_FLAG_SIZE + 1] = UBtree_ptr[lk].msgSize_ * nrhs + XK_H;
-         @(pre)C_BcTree_forwardMessageSimple_Device(&UBtree_ptr[lk], flag_bc_q, &my_flag_bc[k * RDMA_FLAG_SIZE],
+         my_flag_bc[lk * RDMA_FLAG_SIZE] = lk;
+         my_flag_bc[lk * RDMA_FLAG_SIZE + 1] = UBtree_ptr[lk].msgSize_ * nrhs + XK_H;
+         @(pre)C_BcTree_forwardMessageSimple_Device(&UBtree_ptr[lk], flag_bc_q, &my_flag_bc[lk * RDMA_FLAG_SIZE],
                                               mype, tid, &@(pre)ready_x[0], maxrecvsz);
          //if (tid==0) printf("(%d,%d,%d), lk=%d, gc=%d\n",mype,bid,tid,lk,gc);
      }
@@ -4827,7 +5708,10 @@ int nowait   /* 1: dependencies already satisfied (level-synchronous launch) */
          lib = LBi( k, grid ); /* Local block number, row-wise. */
          ii = X_BLK( lib );
 
-         if(gemmflag==0 || nrhs==1){
+         if(gemmflag==2){
+             @(pre)_tile_lsum_bmod(nub, knsupc, nrhs, lusup, &@(pre)ready_x[maxrecvsz*keep_lk], lsum, usub, lloc, rel,
+                              ilsum, xsup, grid, myrow);
+         }else if(gemmflag==0 || nrhs==1){
              RHS_ITERATE(j){
              for (i=tid;i<knsupc;i+=block_size)
                  temp2[i]=@(pre)ready_x[i + maxrecvsz*keep_lk + j*knsupc]; // Nan
@@ -4925,6 +5809,8 @@ int nowait   /* 1: dependencies already satisfied (level-synchronous launch) */
                  }
              }
          }
+         if (tid == 0) rd_nfwd = 0;
+         __threadfence();   /* the additions before the counts */
          __syncthreads();
 
          for (ub = tid; ub < nub; ub+=block_size){
@@ -4939,6 +5825,10 @@ int nowait   /* 1: dependencies already satisfied (level-synchronous launch) */
                  if(URtree_ptr[ik].myRoot_ != URtree_ptr[ik].myRank_){
                      //cnt=LRtree_ptr[lib].msgSize_;
 
+                     int q = atomicAdd(&rd_nfwd, 1);
+                     if (q < RD_FWD_MAX) {
+                         rd_fwd[q] = ik;   /* the block forwards it below */
+                     } else {          /* list full: this thread alone */
                      my_flag_rd[ik*RDMA_FLAG_SIZE]=ik;
                      my_flag_rd[ik*RDMA_FLAG_SIZE+1]=URtree_ptr[ik].msgSize_ * nrhs;
                      // @(type) tmp_sum=0;
@@ -4963,10 +5853,13 @@ int nowait   /* 1: dependencies already satisfied (level-synchronous launch) */
                      //       maxrecvsz);
                      //printf("(%d,%d,%d) in u solve,lib=%d,gr=%d,myflagrd=%d,%d, sum=%lf\n",mype,bid,tid,ik,gik,my_flag_rd[gik*RDMA_FLAG_SIZE],my_flag_rd[gik*RDMA_FLAG_SIZE+1], tmp_sum);
                      @(pre)C_RdTree_forwardMessageSimple_Device(&URtree_ptr[ik], flag_rd_q, &my_flag_rd[RDMA_FLAG_SIZE*ik], mype, bid, tid, &@(pre)ready_lsum[0],maxrecvsz,URtree_ptr[ik].myRoot_);
+                     }
                  }
              }
          }
          __syncthreads();
+         @(pre)rd_forward_list(rd_fwd, rd_nfwd < RD_FWD_MAX ? rd_nfwd : RD_FWD_MAX, URtree_ptr, flag_rd_q,
+                          @(pre)ready_lsum, lsum, maxrecvsz, nrhs, ilsum, xsup, grid);
          // } /*if tid<Nchunk*/
      } /* if nub>0*/
 
@@ -5045,7 +5938,9 @@ if (MAXSUPER < maxsuper) {
 printf("increase MAXSUPER\n");
 exit(1);
 }
-int gemmflag = get_acc_solve()==2;
+int gemmflag = @(pre)solve_gemmflag(nrhs);
+const int *bcorder = g_solve_order;
+g_solve_order = NULL;
 
 
 if(procs==1){
@@ -5149,6 +6044,8 @@ if(procs==1){
             &nsupers};
 
     int status = 1;
+    double t_prof = solve_prof_on() ? SuperLU_timer_() : 0.0;
+    @(pre)wait_started_reset();
     status = nvshmemx_collective_launch((const void *) @(pre)wait_bcrd_u, dimGrid_nv, dimBlock_nv, args, 0, stream[0]);
     //status1 = nvshmemx_collective_launch((const void *) send_rd, dimGrid_rd, dimBlock_bc, args, 0, stream[1]);
     //printf("(%d), status=%d,%d\n",mype, status,status1);
@@ -5158,6 +6055,7 @@ if(procs==1){
         fprintf(stderr, "shmemx_collective_launch U failed %d\n", status);
         exit(-1);
     } else {
+        @(pre)wait_started_wait();
         @(pre)lsum_bmod_inv_gpu_mrhs_nvshmem<<< dimGrid, dimBlock, 0, stream[1] >>>(nbcol_loc,
                                                                     lsum, x,
                                                                     nrhs, nsupers, bmod,
@@ -5176,7 +6074,7 @@ if(procs==1){
                                                                     my_flag_bc, my_flag_rd,
                                                                     d_nfrecv_u, d_status,
                                                                     d_statusmod, nblock_ex,
-                                                                    maxsuper, d_flag_mod_u,gemmflag); //temp2_offset, temp2,maxsuper);
+                                                                    maxsuper, d_flag_mod_u,gemmflag,bcorder); //temp2_offset, temp2,maxsuper);
         CUDA_CHECK(cudaGetLastError());
     }
 
@@ -5184,6 +6082,15 @@ if(procs==1){
     //CUDA_CHECK(cudaDeviceSynchronize());
     //@(pre)lsum_bmod_inv_gpu_mrhs<<< nbcol_loc, dimBlock >>>(nbcol_loc,lsum,x,nrhs,nsupers,bmod, UBtree_ptr,URtree_ptr,ilsum,Urbs,Ufstnz_br_dat,Ufstnz_br_offset,Unzval_br_dat,Unzval_br_offset,Ucb_valdat,Ucb_valoffset,Ucb_inddat,Ucb_indoffset,Uinv_bc_dat,Uinv_bc_offset,xsup,grid);
     gpuDeviceSynchronize();
+    if ( solve_prof_on() )
+        printf("[solve-prof] U multi-GPU pe %d: %.3f ms\n", mype, 1e3 * (SuperLU_timer_() - t_prof));
+    /* The puts of the kernels above are non-blocking.  To another node they go
+       through NVSHMEM's proxy and can still be in flight here; the caller then
+       resets @(pre)ready_x/@(pre)ready_lsum, which are their source and destination, and
+       the receiver gets zeros with a valid flag.  Complete them first. */
+    nvshmemx_quiet_on_stream(0);
+    CUDA_CHECK(cudaStreamSynchronize(0));
+    nvshmem_quiet();
     //printf("(%d) back to CPU !!!!! \n",mype);
     //}
     for (int i = 0; i < 2; ++i) {
