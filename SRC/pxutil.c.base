@@ -414,6 +414,7 @@ void @(pre)LUstructInit(const int_t n, @(pre)LUstruct_t *LUstruct)
 	   SUPERLU_MALLOC(sizeof(@(pre)LocalLU_t))) )
 	ABORT("Malloc fails for LocalLU_t.");
     LUstruct->Llu->inv = 0;
+    LUstruct->Llu->d_bcorder = NULL;
     LUstruct->dt = '@(pre)';
     LUstruct->trf3Dpart = NULL;
     LUstruct->batch_dev = NULL;
@@ -554,6 +555,7 @@ void
     SUPERLU_FREE(Llu->bcols_masked);
 
 #ifdef GPU_ACC
+if ( Llu->d_bcorder ) { checkGPU (gpuFree (Llu->d_bcorder)); Llu->d_bcorder = NULL; }
 if (get_acc_solve()){
     checkGPU (gpuFree (Llu->d_xsup));
     checkGPU (gpuFree (Llu->d_supno));
@@ -1390,9 +1392,13 @@ void @(pre)Destroy_A3d_gathered_on_2d(@(pre)SOLVEstruct_t *SOLVEstruct, gridinfo
     SUPERLU_FREE(A3d->b_disp);
 #ifdef GPU_ACC
     if ( A3d->B2d_dev_bytes > 0 && A3d->B2d ) checkGPU(gpuFree(A3d->B2d));
+    for (int w = 0; w < 2; ++w)
+        if ( A3d->Bwork_dev[w] ) checkGPU(gpuFree(A3d->Bwork_dev[w]));
 #endif
     int rankorder = grid3d->rankorder;
-    if ( rankorder == 0 ) { /* Z-major in 3D grid */
+    /* Z-major in 3D grid: the lists are allocated by the first solve
+       (@(pre)Scatter_B3d); there are none after a factorization alone (nrhs = 0) */
+    if ( rankorder == 0 && A3d->num_procs_to_send != SLU_EMPTY ) {
         SUPERLU_FREE(A3d->procs_to_send_list);
         SUPERLU_FREE(A3d->send_count_list);
         SUPERLU_FREE(A3d->procs_recv_from_list);
@@ -1441,7 +1447,7 @@ void p@(pre)inf_norm_error(int iam, int_t n, int_t nrhs, @(type) x[], int_t ldx,
       tempxnorm = xnorm;
       MPI_Allreduce( &tempxnorm, &xnorm, 1, @(MPI_MOD_TYPE), MPI_MAX, slucomm);
       temperr = errcomp;
-      MPI_Allreduce( &temperr, &errcomp, 1, MPI_FLOAT, MPI_MAX, slucomm);
+      MPI_Allreduce( &temperr, &errcomp, 1, @(MPI_MOD_TYPE), MPI_MAX, slucomm);
 
       err = err / xnorm;
       if ( !iam ) {
